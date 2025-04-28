@@ -13,6 +13,7 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\PurchaseController ;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\StockAdjustmentController;
 
 
 
@@ -46,6 +47,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/company/delete/{id}', [CompanyController::class, 'destroy'])->name('company.delete');
 
 
+
     // Category
     Route::get('/category/list', [CategoryController::class, 'index'])->name('category.list');
     Route::get('/category/create', [CategoryController::class, 'create'])->name('category.create');
@@ -55,6 +57,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/category/delete/{id}', [CategoryController::class, 'destroy'])->name('category.delete');
 
     
+
     // Vendor
     Route::get('/vendor/list', [VendorController::class, 'index'])->name('vendor.list');
     Route::get('/vendor/create', [VendorController::class, 'create'])->name('vendor.create');
@@ -62,6 +65,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/vendor/edit/{id}', [VendorController::class, 'edit'])->name('vendor.edit');
     Route::post('/vendor/edit/{id}', [VendorController::class, 'update'])->name('vendor.update');
     Route::get('/vendor/delete/{id}', [VendorController::class, 'destroy'])->name('vendor.delete');
+
 
 
     // Customer
@@ -73,6 +77,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/customer/delete/{id}', [CustomerController::class, 'destroy'])->name('customer.delete');
 
 
+
     // Product
     Route::get('/product/list', [ProductController::class, 'index'])->name('product.list');
     Route::get('/product/create', [ProductController::class, 'create'])->name('product.create');
@@ -80,6 +85,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/product/edit/{id}', [ProductController::class, 'edit'])->name('product.edit');
     Route::post('/product/edit/{id}', [ProductController::class, 'update'])->name('product.update');
     Route::get('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');
+
 
 
     // Loan
@@ -92,6 +98,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/get-users-by-type', [LoanController::class, 'getUsersByType'])->name('get.users.by.type'); // for loans
 
 
+
     // Expense
     Route::get('/expense/list', [ExpenseController::class, 'index'])->name('expense.list');
     Route::get('/expense/create', [ExpenseController::class, 'create'])->name('expense.create');
@@ -99,6 +106,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/expense/edit/{id}', [ExpenseController::class, 'edit'])->name('expense.edit');
     Route::post('/expense/edit/{id}', [ExpenseController::class, 'update'])->name('expense.update');
     Route::get('/expense/delete/{id}', [ExpenseController::class, 'destroy'])->name('expense.delete');
+
 
 
     // Sales
@@ -112,6 +120,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/sale/items/{id}', [SaleController::class, 'showItems'])->name('sale.items');
 
 
+
     // Purchases
     Route::get('/purchase/list', [PurchaseController::class, 'index'])->name('purchase.list');
     Route::get('/purchase/create', [PurchaseController::class, 'create'])->name('purchase.create');
@@ -121,6 +130,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::delete('/purchase/delete/{id}', [PurchaseController::class, 'destroy'])->name('purchase.delete');
     // Purchase Items View
     Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('purchase.items');
+
 
 
     // Payments
@@ -140,6 +150,16 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/profit/edit/{id}', [FinanceController::class, 'editProfit'])->name('profit.edit');
     Route::post('/profit/update/{id}', [FinanceController::class, 'updateProfit'])->name('profit.update');
     Route::get('/profit/delete/{id}', [FinanceController::class, 'deleteProfit'])->name('profit.delete');
+
+
+
+    // Stock Adjustements
+    Route::get('stock-adjustments/list', [StockAdjustmentController::class, 'index'])->name('stock_adjustments.list');
+    Route::get('stock-adjustments/create', [StockAdjustmentController::class, 'create'])->name('stock_adjustments.create');
+    Route::post('stock-adjustments/store', [StockAdjustmentController::class, 'store'])->name('stock_adjustments.store');
+    Route::get('stock-adjustments/edit/{id}', [StockAdjustmentController::class, 'edit'])->name('stock_adjustments.edit');
+    Route::put('stock-adjustments/update/{id}', [StockAdjustmentController::class, 'update'])->name('stock_adjustments.update');
+    Route::get('stock-adjustments/delete/{id}', [StockAdjustmentController::class, 'destroy'])->name('stock_adjustments.destroy');
 
 
 

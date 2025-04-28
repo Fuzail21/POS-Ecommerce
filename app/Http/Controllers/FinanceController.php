@@ -13,7 +13,7 @@ class FinanceController extends Controller
 {
     // ---------- PAYMENTS ----------
 
-    public function payments() {
+    public function payments(){
         $title =  "Payments List";
         $payments = Payment::with(['customer','vendor'])
                            ->paginate(20);
@@ -21,17 +21,13 @@ class FinanceController extends Controller
         return view('admin.finance.payment.list', compact('payments', 'title'));
     }
     
-
-    public function createPayment()
-    {
+    public function createPayment(){
         $title =  "Add Payment";
         $loans = Loan::with(['customer', 'vendor'])->get();
         return view('admin.finance.payment.add', compact('loans', 'title'));
     }
 
-
-    public function storePayment(Request $request)
-    {
+    public function storePayment(Request $request){
         $request->validate([
             'loan_id' => 'required|integer',
             'amount_paid' => 'required|numeric|min:0.01',
@@ -67,10 +63,7 @@ class FinanceController extends Controller
         return redirect()->route('payment.list')->with('success', 'Payment added and loan updated successfully.');
     }
     
-
-
-    public function editPayment($id)
-    {
+    public function editPayment($id){
         $title =  "Edit Payment";
         $payment = Payment::findOrFail($id);
         $payment->load(['customer', 'vendor']);
@@ -81,11 +74,7 @@ class FinanceController extends Controller
         return view('admin.finance.payment.add', compact('payment', 'loans', 'title'));
     }
 
-
-
-
-    public function updatePayment(Request $request, $id)
-    {
+    public function updatePayment(Request $request, $id){
         $request->validate([
             'loan_id' => 'required|integer',
             'amount_paid' => 'required|numeric|min:0.01',
@@ -125,9 +114,7 @@ class FinanceController extends Controller
         return redirect()->route('payment.list')->with('success', 'Payment updated and loan updated successfully.');
     }
 
-
-    public function deletePayment($id)
-    {
+    public function deletePayment($id){
         $payment = Payment::findOrFail($id);
         $loan = Loan::findOrFail($payment->loan_id);
 
@@ -153,22 +140,19 @@ class FinanceController extends Controller
 
     // ---------- PROFITS ----------
 
-    public function profits()
-    {
+    public function profits(){
         $title = "Profits List";
         $profits = Profit::with('store')->paginate(20);
         return view('admin.finance.profit.list', compact('profits', 'title'));
     }
 
-    public function createProfit()
-    {
+    public function createProfit(){
         $title = "Add Profits";
         $stores = Store::all();
         return view('admin.finance.profit.add', compact('stores', 'title'));
     }
 
-    public function storeProfit(Request $request)
-    {
+    public function storeProfit(Request $request){
         $request->validate([
             'store_id' => 'required|integer',
             'total_income' => 'required|numeric',
@@ -187,15 +171,13 @@ class FinanceController extends Controller
         return redirect()->route('profit.list')->with('success', 'Profit added successfully.');
     }
 
-    public function editProfit($id)
-    {
+    public function editProfit($id){
         $profit = Profit::with('store')->findOrFail($id);
         $stores = Store::all();
         return view('admin.finance.profit.add', compact('profit', 'stores'));
     }
 
-    public function updateProfit(Request $request, $id)
-    {
+    public function updateProfit(Request $request, $id){
         $request->validate([
             'store_id' => 'required|integer',
             'total_income' => 'required|numeric',
@@ -213,8 +195,7 @@ class FinanceController extends Controller
         return redirect()->route('profit.list')->with('success', 'Profit updated successfully.');
     }
 
-    public function deleteProfit($id)
-    {
+    public function deleteProfit($id){
         $profit = Profit::findOrFail($id);
         $profit->delete();
 

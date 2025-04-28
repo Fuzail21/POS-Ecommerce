@@ -351,6 +351,43 @@
                         </ul>
                     </li>
 
+                    <li class="{{ Route::is('stock_adjustments.list') || Route::is('stock_adjustments.create') ? 'active' : '' }}">
+                        <a href="#stock_adjustments"
+                           class="{{ Route::is('stock_adjustments.list') || Route::is('stock_adjustments.create') ? '' : 'collapsed' }}"
+                           data-toggle="collapse"
+                           aria-expanded="{{ Route::is('stock_adjustments.list') || Route::is('stock_adjustments.create') ? 'true' : 'false' }}">
+
+                            <!-- Warehouse/Stock Icon -->
+                            <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M3 6l9-4 9 4v14H3V6z"></path>
+                                <path d="M9 22V12h6v10"></path>
+                            </svg>
+                            <span class="ml-4">Stock Adjustments</span>
+
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                 viewBox="0 0 24 24">
+                                <polyline points="10 15 15 20 20 15"></polyline>
+                                <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                            </svg>
+                        </a>
+
+                        <ul id="stock_adjustments" class="iq-submenu collapse {{ Route::is('stock_adjustments.list') || Route::is('stock_adjustments.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                            <li class="{{ Route::is('stock_adjustments.list') ? 'active' : '' }}">
+                                <a href="{{ route('stock_adjustments.list') }}">
+                                    <i class="las la-minus"></i><span>List Adjustments</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::is('stock_adjustments.create') ? 'active' : '' }}">
+                                <a href="{{ route('stock_adjustments.create') }}">
+                                    <i class="las la-minus"></i><span>Add Adjustment</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+
 
                   
                 </ul>
