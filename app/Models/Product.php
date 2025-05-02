@@ -36,4 +36,10 @@ class Product extends Model
     {
         return $this->belongsTo(Store::class);
     }
+    
+    public function unitName()
+    {
+        return $this->belongsTo(Unit::class, 'unit');
+    }
+
 }

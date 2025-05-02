@@ -8,39 +8,29 @@ use App\Models\Company;
 use App\Models\Store;
 use App\Models\Customer;
 use App\Models\Category;
+use App\Models\Unit;
 
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
+    public function index(){
         $products = Product::with(['category:id,name', 'company:id,name', 'store:id,name'])
-            ->select('id', 'name', 'category_id', 'company_id', 'store_id', 'stock_quantity', 'purchase_price', 'selling_price', 'expiry_date')
+            ->select('id', 'name', 'category_id', 'company_id', 'store_id', 'stock_quantity', 'purchase_price', 'selling_price', 'expiry_date', 'unit')
             ->paginate(20);
         $title = 'Products List';
         return view('admin.product.list', compact('products', 'title'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
+    public function create(){
+        $units = Unit::with('units')->get(); 
         $stores = Store::all();
         $companies = Company::all();
         $categories = Category::all();
         $title = 'Add New Product';
-        return view('admin.product.add', compact('title', 'companies', 'categories', 'stores'));
+        return view('admin.product.add', compact('title', 'companies', 'categories', 'stores', 'units'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
+    public function store(Request $request){
         try 
         {
             // Validate form input
@@ -53,6 +43,7 @@ class ProductController extends Controller
                 'selling_price' => 'required|numeric|min:0',
                 'stock_quantity' => 'required|numeric|min:0',
                 'expiry_date' => 'required|date',
+                'unit' => 'required|exists:units,id',
             ]);
         
             // Create product instance
@@ -64,6 +55,7 @@ class ProductController extends Controller
             $product->purchase_price = $validated['purchase_price'];
             $product->selling_price = $validated['selling_price'];
             $product->stock_quantity = $validated['stock_quantity'];
+            $product->unit = $validated['unit'];
             $product->expiry_date = $validated['expiry_date'];
         
             // Save product
@@ -75,37 +67,23 @@ class ProductController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
+    public function edit(string $id){
         // Find product
         $product = Product::findOrFail($id);
 
+
         // Fetch dropdown data
+        $units = Unit::all(); 
         $categories = Category::all();
         $companies = Company::all();
         $stores = Store::all();
         $title = 'Edit Product';
 
         // Return view with data
-        return view('admin.product.edit', compact('title', 'product', 'categories', 'companies', 'stores'));
+        return view('admin.product.edit', compact('title', 'product', 'categories', 'companies', 'stores', 'units'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
+    public function update(Request $request, string $id){
         try 
         {
             // Validate form input
@@ -118,6 +96,7 @@ class ProductController extends Controller
                 'selling_price' => 'required|numeric|min:0',
                 'stock_quantity' => 'required|numeric|min:0',
                 'expiry_date' => 'required|date',
+                'unit' => 'required|exists:units,id',
             ]);
         
             // Create product instance
@@ -129,6 +108,7 @@ class ProductController extends Controller
             $product->purchase_price = $validated['purchase_price'];
             $product->selling_price = $validated['selling_price'];
             $product->stock_quantity = $validated['stock_quantity'];
+            $product->unit = $validated['unit'];
             $product->expiry_date = $validated['expiry_date'];
         
             // Save product
@@ -140,11 +120,7 @@ class ProductController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
+    public function destroy(string $id){
         $product = Product::find($id);
         if ($product) {
             // Delete the store

@@ -52,6 +52,7 @@
                                 <th>Purchase Price</th>
                                 <th>Selling Price</th>
                                 <th>Stock Qty</th>
+                                <th>Unit</th>
                                 <th>Expiry Date</th>
 
                                 <th colspan="2">Action</th>
@@ -68,6 +69,7 @@
                                         <td>{{ $product->purchase_price }}</td>
                                         <td>{{ $product->selling_price }}</td>
                                         <td>{{ $product->stock_quantity }}</td>
+                                        <td>{{ $product->unitName->name ?? 'N/A' }} ({{ $product->unitName->symbol ?? '' }})</td>
                                         <td>{{ $product->expiry_date }}</td>
                                         <td>
                                             <div class="d-flex align-items-center list-action">

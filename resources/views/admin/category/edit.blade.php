@@ -29,7 +29,7 @@
                                                 <input type="text" name="name" class="form-control" placeholder="Enter Name" data-errors="Please Enter Name." value="{{ $category->name }}" required>
                                                 <div class="help-block with-errors"></div>
                                             </div>
-                                        </div>     
+                                        </div>
                                     </div>                            
                                     <button type="submit" class="btn btn-primary mr-2">Update Category</button>
                                     <a href="{{ route('category.list') }}" class="btn btn-secondary">Cancel</a>

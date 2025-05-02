@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Sale;
 use App\Models\SalesItem;
 use App\Models\Product;
+use App\Models\SalesDiscountTax;
 use App\Models\Customer;    
 use Illuminate\Http\Request;
 use App\Http\Controllers\SaleController;
@@ -24,9 +25,10 @@ class SaleController extends Controller
     public function create()
     {
         $customers = Customer::all();
+        $discountTaxes = SalesDiscountTax::all();
         $products = Product::all();
         $title = "Add Sale";
-        return view('admin.sale.add', compact('customers', 'products', 'title'));
+        return view('admin.sale.add', compact('customers', 'products', 'title', 'discountTaxes'));
     }
 
     // Store new sale and sale items
@@ -75,8 +77,9 @@ class SaleController extends Controller
         $sale = Sale::with('items')->findOrFail($id);
         $title = "Edit Sale";
         $customers = Customer::all();
+        $discountTaxes = SalesDiscountTax::all();
         $products = Product::all();
-        return view('admin.sale.add', compact('sale', 'customers', 'products', 'title'));
+        return view('admin.sale.add', compact('sale', 'customers', 'products', 'title', 'discountTaxes'));
     }
 
     // Update sale and sale items

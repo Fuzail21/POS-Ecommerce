@@ -96,6 +96,21 @@
                                             </div>
                                         </div>
 
+                                        <div class="col-md-12">           
+                                            <div class="form-group">
+                                                <label for="unit">Select Unit</label>
+                                                <select name="unit" id="unit" class="form-control">
+                                                    <option value="">Select a unit</option>
+                                                    @foreach($units as $unit)
+                                                        <option value="{{ $unit->id }}" 
+                                                            {{ (isset($category) && $category->unit == $unit->id) ? 'selected' : '' }}>
+                                                            {{ $unit->name }} ({{ $unit->symbol }})
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <label>Expiry Date *</label>

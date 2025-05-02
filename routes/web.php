@@ -14,6 +14,8 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\PurchaseController ;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\SalesPaymentController;
+use App\Http\Controllers\SalesDiscountTaxController;
 
 
 
@@ -160,6 +162,23 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('stock-adjustments/edit/{id}', [StockAdjustmentController::class, 'edit'])->name('stock_adjustments.edit');
     Route::put('stock-adjustments/update/{id}', [StockAdjustmentController::class, 'update'])->name('stock_adjustments.update');
     Route::get('stock-adjustments/delete/{id}', [StockAdjustmentController::class, 'destroy'])->name('stock_adjustments.destroy');
+
+
+
+    Route::prefix('sales')->group(function () {
+        // Payments
+        Route::get('payments/list/{saleId}', [SalesPaymentController::class, 'index'])->name('payments.list');
+        Route::get('payments/create/{saleId}', [SalesPaymentController::class, 'create'])->name('payments.create');
+        Route::post('payments/store/{saleId}', [SalesPaymentController::class, 'store'])->name('payments.store');
+        Route::get('payments/edit/{id}', [SalesPaymentController::class, 'edit'])->name('payments.edit');
+        Route::put('payments/update/{id}', [SalesPaymentController::class, 'update'])->name('payments.update');
+        Route::get('payments/delete/{id}', [SalesPaymentController::class, 'destroy'])->name('payments.destroy');
+    
+        // Discounts & Taxes
+        Route::get('{saleId}/discounts-taxes', [SalesDiscountTaxController::class, 'edit'])->name('discount_taxes.edit');
+        Route::post('{saleId}/discounts-taxes', [SalesDiscountTaxController::class, 'update'])->name('discount_taxes.update');
+    });
+    
 
 
 
