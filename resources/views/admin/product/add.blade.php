@@ -19,7 +19,7 @@
                                 </div>
                             </div>
                             <div class="card-body">
-                                <form action="{{ route('product.store') }}" method="post" data-toggle="validator">
+                                <form action="{{ route('product.store') }}" method="post" data-toggle="validator" enctype="multipart/form-data">
                                     @csrf
                                     <div class="row">  
                                         <div class="col-md-12">                      
@@ -66,6 +66,15 @@
                                                </select>
                                             </div>
                                         </div>
+
+                                        <div class="col-md-12">                      
+                                            <div class="form-group">
+                                                <label>Product Image</label>
+                                                <input type="file" name="product_img" class="form-control" accept="image/*">
+                                                <div class="help-block with-errors"></div>
+                                            </div>
+                                        </div>
+
 
                                         <div class="col-md-12">
                                             <div class="form-group">

@@ -19,7 +19,7 @@
                                 </div>
                             </div>
                             <div class="card-body">
-                                <form action="{{ route('product.update', $product->id) }}" method="post" data-toggle="validator">
+                                <form action="{{ route('product.update', $product->id) }}" method="post" data-toggle="validator" enctype="multipart/form-data">
                                     @csrf
                                     <div class="row">  
                                         <div class="col-md-12">                      
@@ -72,6 +72,23 @@
                                             </div>
                                         </div>
 
+                                        <div class="col-md-12">                      
+                                            <div class="form-group">
+                                                <label>Product Image</label>
+                                                <input type="file" name="product_img" class="form-control" accept="image/*">
+
+                                                {{-- Show existing image if editing --}}
+                                                @if (!empty($product->product_img))
+                                                    <div class="mt-2">
+                                                        <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" width="120">
+                                                    </div>
+                                                @endif
+
+                                                <div class="help-block with-errors"></div>
+                                            </div>
+                                        </div>
+
+
                                         <div class="col-md-12">
                                             <div class="form-group">
                                                 <label>Purchase Price *</label>
@@ -99,17 +116,18 @@
                                         <div class="col-md-12">           
                                             <div class="form-group">
                                                 <label for="unit">Select Unit</label>
-                                                <select name="unit" id="unit" class="form-control">
+                                                <select name="unit" id="unit" class="form-control" required>
                                                     <option value="">Select a unit</option>
                                                     @foreach($units as $unit)
                                                         <option value="{{ $unit->id }}" 
-                                                            {{ (isset($category) && $category->unit == $unit->id) ? 'selected' : '' }}>
+                                                            {{ ($product->unit == $unit->id) ? 'selected' : '' }}>
                                                             {{ $unit->name }} ({{ $unit->symbol }})
                                                         </option>
                                                     @endforeach
                                                 </select>
                                             </div>
                                         </div>
+
 
                                         <div class="col-md-12">
                                             <div class="form-group">

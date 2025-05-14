@@ -35,16 +35,16 @@
                                     </div>
 
                                     {{-- Discount --}}
-                                    <div class="col-md-6 mb-3">
+                                    {{-- <div class="col-md-6 mb-3">
                                         <label for="discount">Discount</label>
                                         <input type="number" step="0.01" name="discount" class="form-control" value="{{ $sale->discount ?? 0 }}">
-                                    </div>
+                                    </div> --}}
 
                                     {{-- Tax --}}
-                                    <div class="col-md-6 mb-3">
+                                    {{-- <div class="col-md-6 mb-3">
                                         <label for="tax">Tax</label>
                                         <input type="number" step="0.01" name="tax" class="form-control" value="{{ $sale->tax ?? 0 }}">
-                                    </div>
+                                    </div> --}}
 
                                     {{-- Discount & Tax Combo --}}
                                     <div class="col-md-6 mb-3">

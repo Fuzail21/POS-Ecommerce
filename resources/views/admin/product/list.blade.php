@@ -45,6 +45,7 @@
                           <thead>
                              <tr class="ligth">
                                 <th>Id</th>
+                                <th>Product Img</th>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Company</th>
@@ -62,6 +63,13 @@
                                 @forelse($products as $product)
                                     <tr>
                                         <td>{{ $product->id }}</td>
+                                        <td>
+                                            @if (!empty($product->product_img))
+                                                <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" width="60" height="60" style="object-fit: cover;">
+                                            @else
+                                                <span>No Image</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $product->name }}</td>
                                         <td>{{ $product->category->name ?? 'N/A' }}</td>
                                         <td>{{ $product->company->name ?? 'N/A' }}</td>
