@@ -1,57 +1,69 @@
 @extends('layouts.app')
 
+@section('content')
 
-    @section('content')
+@include('layouts.sidebar')
 
-
-        @include('layouts.sidebar')
-
-
-
-        <div class="content-page">
-            <div class="container-fluid add-form-list">
-                <div class="row">
-                    <div class="col-sm-12">
-                        <div class="card">
-                            <div class="card-header d-flex justify-content-between">
-                                <div class="header-title">
-                                    <h4 class="card-title">Add Store</h4>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <form action="{{ route('store.store') }}" method="post" data-toggle="validator">
-                                    @csrf
-                                    <div class="row">  
-                                        <div class="col-md-12">                      
-                                            <div class="form-group">
-                                                <label>Name *</label>
-                                                <input type="text" name="name" class="form-control" placeholder="Enter Name" data-errors="Please Enter Name." required>
-                                                <div class="help-block with-errors"></div>
-                                            </div>
-                                        </div>    
-                                        <div class="col-md-12">
-                                            <div class="form-group">
-                                                <label>Location *</label>
-                                                <input type="text" name="location" class="form-control" placeholder="Enter Location" data-errors="Please Enter Location." required>
-                                                <div class="help-block with-errors"></div>
-                                            </div>
-                                        </div> 
-                                    </div>                            
-                                    <button type="submit" class="btn btn-primary mr-2">Add Store</button>
-                                    <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
-                                </form>
-                            </div>
+<div class="content-page">
+    <div class="container-fluid add-form-list">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">Add Store</h4>
                         </div>
                     </div>
+                    <div class="card-body">
+                        <form action="{{ route('store.store') }}" method="post" data-toggle="validator">
+                            @csrf
+                            <div class="row">  
+                                <div class="col-md-12">                      
+                                    <div class="form-group">
+                                        <label>Name *</label>
+                                        <input type="text" name="name" class="form-control" placeholder="Enter Name" data-errors="Please Enter Name." required>
+                                        <div class="help-block with-errors"></div>
+                                    </div>
+                                </div>    
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Location *</label>
+                                        <input type="text" name="location" class="form-control" placeholder="Enter Location" data-errors="Please Enter Location." required>
+                                        <div class="help-block with-errors"></div>
+                                    </div>
+                                </div> 
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Contact Number *</label>
+                                        <input type="text" name="contact" class="form-control" placeholder="Enter Contact Number" data-errors="Please Enter Contact Number." required>
+                                        <div class="help-block with-errors"></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Manager *</label>
+                                        <select name="manager_id" class="form-control" required>
+                                            <option value="">Select Manager</option>
+                                            @foreach($managers as $manager)
+                                                <option value="{{ $manager->id }}">{{ $manager->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div class="help-block with-errors"></div>
+                                    </div>
+                                </div>
+                            </div>                            
+
+                            <button type="submit" class="btn btn-primary mr-2">Add Store</button>
+                            <a href="{{ route('store.list') }}" class="btn btn-secondary">Cancel</a>
+                        </form>
+                    </div>
                 </div>
-                <!-- Page end  -->
             </div>
-      </div>
-        
+        </div>
+    </div>
+</div>
 
-
-
-    @endsection
-
-
-    
+@endsection

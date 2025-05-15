@@ -17,4 +17,10 @@ class Store extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function manager()
+    {
+        return $this->belongsTo(User::class, 'manager_id');
+    }
+
 }

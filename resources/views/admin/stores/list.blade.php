@@ -47,16 +47,19 @@
                                 <th>Id</th>
                                 <th>Name</th>
                                 <th>Location</th>
+                                <th>Contact No</th>
+                                <th>Manager</th>
                                 <th colspan="2">Action</th>
                              </tr>
                           </thead>
                            <tbody>
                                @forelse($stores as $store)
                                    <tr>
-                                       <td>{{ $store->id }}</td>
-                                       <td>{{ $store->name }}</td>
-                                       <td>{{ $store->location }}</td>
-                                       <td>
+                                        <td>{{ $store->id }}</td>
+                                        <td>{{ $store->name }}</td>
+                                        <td>{{ $store->location }}</td>
+                                        <td>{{ $store->contact_number }}</td>
+                                        <td>{{ $store->manager->name ?? 'N/A' }}</td> {{-- Shows Manager's name --}}                                       <td>
                                            <div class="d-flex align-items-center list-action">
                                                <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('store.edit', $store->id) }}">
                                                    <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>

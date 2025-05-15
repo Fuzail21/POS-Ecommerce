@@ -16,6 +16,8 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\SalesPaymentController;
 use App\Http\Controllers\SalesDiscountTaxController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
 
 
 
@@ -178,8 +180,26 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('{saleId}/discounts-taxes', [SalesDiscountTaxController::class, 'edit'])->name('discount_taxes.edit');
         Route::post('{saleId}/discounts-taxes', [SalesDiscountTaxController::class, 'update'])->name('discount_taxes.update');
     });
-    
 
+
+    
+    // Users
+    Route::get('/user/list', [UserController::class, 'index'])->name('user.list');
+    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
+    Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
+    Route::get('/user/edit/{id}', [UserController::class, 'edit'])->name('user.edit');
+    Route::post('/user/edit/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::get('/user/delete/{id}', [UserController::class, 'destroy'])->name('user.delete');
+
+
+
+    // Role
+    Route::get('/role/list', [RoleController::class, 'index'])->name('role.list');
+    Route::get('/role/create', [RoleController::class, 'create'])->name('role.create');
+    Route::post('/role/store', [RoleController::class, 'store'])->name('role.store');
+    Route::get('/role/edit/{id}', [RoleController::class, 'edit'])->name('role.edit');
+    Route::post('/role/edit/{id}', [RoleController::class, 'update'])->name('role.update');
+    Route::get('/role/delete/{id}', [RoleController::class, 'destroy'])->name('role.delete');
 
 
     // Prodfile
