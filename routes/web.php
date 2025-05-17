@@ -18,6 +18,9 @@ use App\Http\Controllers\SalesPaymentController;
 use App\Http\Controllers\SalesDiscountTaxController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\WarehouseController;
+use App\Http\Controllers\BranchController;
+
 
 
 
@@ -200,6 +203,31 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/role/edit/{id}', [RoleController::class, 'edit'])->name('role.edit');
     Route::post('/role/edit/{id}', [RoleController::class, 'update'])->name('role.update');
     Route::get('/role/delete/{id}', [RoleController::class, 'destroy'])->name('role.delete');
+
+
+
+    // Role
+    Route::prefix('warehouse')->group(function () {
+        Route::get('/', [WarehouseController::class, 'index'])->name('warehouse.index');
+        Route::get('/create', [WarehouseController::class, 'create'])->name('warehouse.create');
+        Route::post('/store', [WarehouseController::class, 'store'])->name('warehouse.store');
+        Route::get('/edit/{id}', [WarehouseController::class, 'edit'])->name('warehouse.edit');
+        Route::put('/update/{id}', [WarehouseController::class, 'update'])->name('warehouse.update');
+        Route::get('/delete/{id}', [WarehouseController::class, 'destroy'])->name('warehouse.destroy');
+    });
+
+
+
+    //Branch
+    Route::prefix('branch')->name('branch.')->group(function () {
+        Route::get('/', [BranchController::class, 'index'])->name('index');
+        Route::get('/create', [BranchController::class, 'create'])->name('create');
+        Route::post('/store', [BranchController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [BranchController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [BranchController::class, 'update'])->name('update');
+        Route::get('/delete/{id}', [BranchController::class, 'destroy'])->name('delete');
+    });
+
 
 
     // Prodfile

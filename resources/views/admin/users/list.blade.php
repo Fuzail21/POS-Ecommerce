@@ -60,7 +60,8 @@
                                 <th>Id</th>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Roles</th>
+                                <th>Role</th>
+                                <th>Branch</th>
                                 <th>Status</th>
                                 <th>Action</th>
                              </tr>
@@ -72,6 +73,7 @@
                                   <td>{{ $user->name }}</td>
                                   <td>{{ $user->email }}</td>
                                   <td>{{ $user->role->name ?? '-' }}</td>
+                                  <td>{{ $user->branch->name ?? 'N/A' }}</td>
                                   <td>
                                      {{-- Example status badge --}}
                                      @if($user->status == 'Active')

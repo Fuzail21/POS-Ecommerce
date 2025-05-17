@@ -28,12 +28,14 @@
                            data-toggle="collapse"
                            aria-expanded="{{ Route::is('role.list') || Route::is('role.create') ? 'true' : 'false' }}">
 
+                            {{-- SVG Icon for Roles --}}
                             <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor"
                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                              <circle cx="12" cy="7" r="4"></circle>
-                              <path d="M5.5 21a8.38 8.38 0 0 1 13 0"></path>
+                                <path d="M20 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M4 21v-2a4 4 0 0 1 3-3.87"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                            <span class="ml-4">Role</span>
+                            <span class="ml-4">Roles</span>
 
                             <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -46,7 +48,7 @@
                         <ul id="role" class="iq-submenu collapse {{ Route::is('role.list') || Route::is('role.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
                             <li class="{{ Route::is('role.list') ? 'active' : '' }}">
                                 <a href="{{ route('role.list') }}">
-                                    <i class="las la-minus"></i><span>Roles List</span>
+                                    <i class="las la-minus"></i><span>Role List</span>
                                 </a>
                             </li>
                             <li class="{{ Route::is('role.create') ? 'active' : '' }}">
@@ -87,6 +89,65 @@
                             <li class="{{ Route::is('user.create') ? 'active' : '' }}">
                                 <a href="{{ route('user.create') }}">
                                     <i class="las la-minus"></i><span>Add User</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="{{ Route::is('branch.*') ? 'active' : '' }}">
+                        <a href="#branch" class="{{ Route::is('branch.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('branch.*') ? 'true' : 'false' }}">
+                            <svg class="svg-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M3 12h18M3 6h18M3 18h18"></path>
+                            </svg>
+                            <span class="ml-4">Branches</span>
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                 viewBox="0 0 24 24">
+                                <polyline points="10 15 15 20 20 15"></polyline>
+                                <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                            </svg>
+                        </a>
+                        <ul id="branch" class="iq-submenu collapse {{ Route::is('branch.*') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                            <li class="{{ Route::is('branch.index') ? 'active' : '' }}">
+                                <a href="{{ route('branch.index') }}"><i class="las la-minus"></i><span>Branch List</span></a>
+                            </li>
+                            <li class="{{ Route::is('branch.create') ? 'active' : '' }}">
+                                <a href="{{ route('branch.create') }}"><i class="las la-minus"></i><span>Add Branch</span></a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="{{ Route::is('warehouse.index') || Route::is('warehouse.create') ? 'active' : '' }}">
+                        <a href="#warehouse"
+                           class="{{ Route::is('warehouse.index') || Route::is('warehouse.create') ? '' : 'collapsed' }}"
+                           data-toggle="collapse"
+                           aria-expanded="{{ Route::is('warehouse.index') || Route::is('warehouse.create') ? 'true' : 'false' }}">
+                    
+                            <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                 stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            <span class="ml-4">Warehouses</span>
+                    
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                 viewBox="0 0 24 24">
+                                <polyline points="10 15 15 20 20 15"></polyline>
+                                <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                            </svg>
+                        </a>
+                    
+                        <ul id="warehouse" class="iq-submenu collapse {{ Route::is('warehouse.index') || Route::is('warehouse.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                            <li class="{{ Route::is('warehouse.index') ? 'active' : '' }}">
+                                <a href="{{ route('warehouse.index') }}">
+                                    <i class="las la-minus"></i><span>Warehouse List</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::is('warehouse.create') ? 'active' : '' }}">
+                                <a href="{{ route('warehouse.create') }}">
+                                    <i class="las la-minus"></i><span>Add Warehouse</span>
                                 </a>
                             </li>
                         </ul>

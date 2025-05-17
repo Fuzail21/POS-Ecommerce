@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Branch;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -25,9 +26,10 @@ class UserController extends Controller
      */
     public function create()
     {
+        $branches = Branch::all();
         $roles = Role::all();
         $title = 'Add New User';
-        return view('admin.users.form', compact('title', 'roles'));
+        return view('admin.users.form', compact('title', 'roles', 'branches'));
     }
 
     /**
@@ -40,12 +42,15 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'status' => 'required|in:Active,Inactive',
             'password' => 'nullable|string|min:6', // optional, min 6 characters
+            'branch_id' => 'nullable|exists:branches,id',
+
         ]);
     
         $user = new User();
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role_id = $request->role_id;
+        $user->branch_id = $request->branch_id;
         $user->status = $request->status;
         $user->password = Hash::make($request->password);
         $user->save();
@@ -65,10 +70,11 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        $roles = Role::all(); // to populate dropdown
+        $branches = Branch::all();
+        $roles = Role::all();
         $title = 'Edit User';
-        $user = User::find($id); // includes role_id
-        return view('admin.users.form', compact('user', 'title', 'roles'));
+        $user = User::find($id);
+        return view('admin.users.form', compact('user', 'title', 'roles', 'branches'));
     }
 
 
@@ -83,12 +89,13 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'status' => 'required|in:Active,Inactive',
             'password' => 'nullable|string|min:6', // optional, min 6 characters
-
+            'branch_id' => 'nullable|exists:branches,id',
         ]);
     
         $user->name = $request->name;
         $user->email = $request->email;
         $user->role_id = $request->role_id;
+        $user->branch_id = $request->branch_id;
         $user->status = $request->status;
 
         // Only update password if provided
