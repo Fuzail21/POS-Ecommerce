@@ -44,8 +44,8 @@
                                         <th>#</th>
                                         <th>Name</th>
                                         <th>Location</th>
-                                        <th>Contact</th>
                                         <th>Warehouse</th>
+                                        <th>Contact</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -55,8 +55,8 @@
                                             <td>{{ $branch->id }}</td>
                                             <td>{{ $branch->name }}</td>
                                             <td>{{ $branch->location }}</td>
-                                            <td>{{ $branch->contact }}</td>
                                             <td>{{ $branch->warehouse->name ?? '-' }}</td>
+                                            <td>{{ $branch->contact }}</td>
                                             <td>
                                                 <div class="d-flex align-items-center list-action">
                                                     <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('branch.edit', $branch->id) }}">

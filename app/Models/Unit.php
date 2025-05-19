@@ -3,14 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Unit extends Model
 {
-    protected $table = 'units'; 
+    use SoftDeletes;
 
-    public function role()
-    {
-        return $this->belongsTo(Role::class);
-    }
+    protected $table = 'units';
 
+    protected $fillable = ['name', 'base_unit', 'conversion_factor'];
 }

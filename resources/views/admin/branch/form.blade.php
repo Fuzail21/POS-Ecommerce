@@ -7,7 +7,7 @@
             <div class="col-lg-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4>{{ isset($branch) ? 'Edit Branch' : 'Add Branch' }}</h4>
-                    <a href="{{ route('branch.index') }}" class="btn btn-secondary">Back to List</a>
+                    <a href="{{ route('branch.list') }}" class="btn btn-secondary">Back to List</a>
                 </div>
                 <div class="card">
                     <div class="card-body">

@@ -38,7 +38,7 @@ class BranchController extends Controller
         $branch->warehouse_id = $request->warehouse_id;
         $branch->save();
 
-        return redirect()->route('branch.index')->with('success', 'Branch created successfully.');
+        return redirect()->route('branch.list')->with('success', 'Branch created successfully.');
     }
 
     public function edit($id)
@@ -65,13 +65,13 @@ class BranchController extends Controller
         $branch->warehouse_id = $request->warehouse_id;
         $branch->save();
 
-        return redirect()->route('branch.index')->with('success', 'Branch updated successfully.');
+        return redirect()->route('branch.list')->with('success', 'Branch updated successfully.');
     }
 
     public function destroy($id)
     {
         Branch::findOrFail($id)->delete();
-        return redirect()->route('branch.index')->with('success', 'Branch deleted successfully.');
+        return redirect()->route('branch.list')->with('success', 'Branch deleted successfully.');
     }
 }
 

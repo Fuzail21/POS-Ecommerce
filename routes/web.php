@@ -20,6 +20,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\UnitController;
 
 
 
@@ -206,9 +207,9 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
-    // Role
+    // Warehouse
     Route::prefix('warehouse')->group(function () {
-        Route::get('/', [WarehouseController::class, 'index'])->name('warehouse.index');
+        Route::get('/', [WarehouseController::class, 'index'])->name('warehouse.list');
         Route::get('/create', [WarehouseController::class, 'create'])->name('warehouse.create');
         Route::post('/store', [WarehouseController::class, 'store'])->name('warehouse.store');
         Route::get('/edit/{id}', [WarehouseController::class, 'edit'])->name('warehouse.edit');
@@ -220,12 +221,24 @@ Route::middleware('auth', 'verified')->group(function () {
 
     //Branch
     Route::prefix('branch')->name('branch.')->group(function () {
-        Route::get('/', [BranchController::class, 'index'])->name('index');
+        Route::get('/', [BranchController::class, 'index'])->name('list');
         Route::get('/create', [BranchController::class, 'create'])->name('create');
         Route::post('/store', [BranchController::class, 'store'])->name('store');
         Route::get('/edit/{id}', [BranchController::class, 'edit'])->name('edit');
         Route::post('/update/{id}', [BranchController::class, 'update'])->name('update');
         Route::get('/delete/{id}', [BranchController::class, 'destroy'])->name('delete');
+    });
+
+
+
+    //Units
+    Route::prefix('units')->name('units.')->group(function () {
+        Route::get('/', [UnitController::class, 'index'])->name('list');
+        Route::get('/create', [UnitController::class, 'create'])->name('create');
+        Route::post('/store', [UnitController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [UnitController::class, 'edit'])->name('edit');
+        Route::post('/{id}', [UnitController::class, 'update'])->name('update');
+        Route::get('/{id}', [UnitController::class, 'destroy'])->name('destroy');
     });
 
 
