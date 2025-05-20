@@ -54,17 +54,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::post('/company/edit/{id}', [CompanyController::class, 'update'])->name('company.update');
     Route::get('/company/delete/{id}', [CompanyController::class, 'destroy'])->name('company.delete');
 
-
-
-    // Category
-    Route::get('/category/list', [CategoryController::class, 'index'])->name('category.list');
-    Route::get('/category/create', [CategoryController::class, 'create'])->name('category.create');
-    Route::post('/category/store', [CategoryController::class, 'store'])->name('category.store');
-    Route::get('/category/edit/{id}', [CategoryController::class, 'edit'])->name('category.edit');
-    Route::post('/category/edit/{id}', [CategoryController::class, 'update'])->name('category.update');
-    Route::get('/category/delete/{id}', [CategoryController::class, 'destroy'])->name('category.delete');
-
-    
+   
 
     // Vendor
     Route::get('/vendor/list', [VendorController::class, 'index'])->name('vendor.list');
@@ -83,16 +73,6 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/customer/edit/{id}', [CustomerController::class, 'edit'])->name('customer.edit');
     Route::post('/customer/edit/{id}', [CustomerController::class, 'update'])->name('customer.update');
     Route::get('/customer/delete/{id}', [CustomerController::class, 'destroy'])->name('customer.delete');
-
-
-
-    // Product
-    Route::get('/product/list', [ProductController::class, 'index'])->name('product.list');
-    Route::get('/product/create', [ProductController::class, 'create'])->name('product.create');
-    Route::post('/product/store', [ProductController::class, 'store'])->name('product.store');
-    Route::get('/product/edit/{id}', [ProductController::class, 'edit'])->name('product.edit');
-    Route::post('/product/edit/{id}', [ProductController::class, 'update'])->name('product.update');
-    Route::get('/product/delete/{id}', [ProductController::class, 'destroy'])->name('product.delete');
 
 
 
@@ -242,6 +222,29 @@ Route::middleware('auth', 'verified')->group(function () {
     });
 
 
+
+    //Categories
+    Route::prefix('categories')->name('categories.')->group(function () {
+        Route::get('/', [CategoryController::class, 'index'])->name('list');
+        Route::get('/create', [CategoryController::class, 'create'])->name('create');
+        Route::post('/store', [CategoryController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [CategoryController::class, 'edit'])->name('edit');
+        Route::post('/{id}', [CategoryController::class, 'update'])->name('update');
+        Route::get('/{id}', [CategoryController::class, 'destroy'])->name('destroy');
+    });
+
+
+
+    //Products
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [ProductController::class, 'index'])->name('list');
+        Route::get('/create', [ProductController::class, 'create'])->name('create');
+        Route::post('/store', [ProductController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ProductController::class, 'edit'])->name('edit');
+        Route::post('/{id}', [ProductController::class, 'update'])->name('update');
+        Route::get('/{id}', [ProductController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/variants', [ProductController::class, 'viewVariants'])->name('variants');
+    });
 
     // Prodfile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

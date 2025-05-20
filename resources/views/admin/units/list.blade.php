@@ -39,7 +39,7 @@
                         @endif
                         <div class="table-responsive">
                             <table id="datatable" class="table data-tables table-striped">
-                                <thead>
+                                <thead style="background-color: #F4F5FA;">
                                    <tr>
                                         <th>#</th>
                                         <th>Name</th>

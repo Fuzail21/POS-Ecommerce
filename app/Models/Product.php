@@ -3,43 +3,43 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'products';
 
     protected $fillable = [
         'name',
         'category_id',
-        'company_id',
-        'stock_quantity',
-        'purchase_price',
-        'selling_price',
-        'expiry_date',
-        'store_id'
+        'base_unit_id',
+        'default_display_unit_id',
+        'has_variants',
+        'sku',
+        'barcode',
+        'brand',
+        'track_expiry',
+        'tax_rate',
     ];
 
-    public function category()
-    {
+    public function category() {
         return $this->belongsTo(Category::class);
     }
 
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
+    public function baseUnit() {
+        return $this->belongsTo(Unit::class, 'base_unit_id');
     }
 
-    public function store()
-    {
-        return $this->belongsTo(Store::class);
+    public function displayUnit() {
+        return $this->belongsTo(Unit::class, 'default_display_unit_id');
     }
-    
-    public function unitName()
+
+    public function variants()
     {
-        return $this->belongsTo(Unit::class, 'unit');
+        return $this->hasMany(ProductVariant::class);
     }
 
 }
+

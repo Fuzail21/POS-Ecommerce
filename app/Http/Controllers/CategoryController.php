@@ -2,97 +2,81 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Category;
-use App\Models\User;
+use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        $categories = Category::paginate(20);
+    public function index(){
         $title = 'Categories List';
+        $categories = Category::with('parent')->latest()->paginate(20);
         return view('admin.category.list', compact('categories', 'title'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        $title = 'Add New Category';
-        return view('admin.category.add', compact('title'));
+    public function create(){
+        $title = 'Add Category';
+        $parents = Category::whereNull('parent_id')->get();
+        return view('admin.category.form', compact('parents', 'title'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        // Validate the request
+    public function store(Request $request){
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string',
+            'parent_id' => 'nullable|exists:categories,id',
+        ]);
+
+        Category::create($request->all());
+        return redirect()->route('categories.list')->with('success', 'Category added.');
+    }
+
+    public function edit($id){
+        $title = 'Edit Category';
+        $category = Category::findOrFail($id);
+        $parents = Category::whereNull('parent_id')->where('id', '!=', $id)->get();
+        return view('admin.category.form', compact('category', 'parents', 'title'));
+    }
+
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'parent_id' => 'nullable|exists:categories,id',
         ]);
     
-        try {
-            $category = new Category();
-            $category->name = $request->name;
-            $category->save();
+        $data = $request->all();
     
-            return redirect()->route('category.list')->with('success', 'Category added successfully!');
-        } catch (\Exception $e) {
-            return redirect()->route('category.list')->with('error', 'Something went wrong! Please try again.');
+        // Convert empty parent_id to null
+        if (empty($data['parent_id'])) {
+            $data['parent_id'] = null;
         }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        $title = 'Edit Category';
-        $category = Category::find($id);
-        return view('admin.category.edit', compact('category', 'title'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        try {
-            $category = Category::find($id);
-            $category->name = $request->name;
-            $category->save();
     
-            return redirect()->route('category.list')->with('success', 'Category updated successfully!');
-        } catch (\Exception $e) {
-            return redirect()->route('category.list')->with('error', 'Something went wrong! Please try again.');
-        }
+        // Find the category by ID
+        $category = Category::findOrFail($id);
+    
+        // Update the category
+        $category->update($data);
+    
+        return redirect()->route('categories.list')->with('success', 'Category updated.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+
+
+    public function destroy($id)
     {
-        $category = Category::find($id);
-        if ($category) {
-            $category->delete();
-            return redirect()->route('category.list')->with('success', 'Category deleted successfully!');
-        } else {
-            return redirect()->route('category.list')->with('error', 'Category not found!');
+        $category = Category::findOrFail($id);
+
+        // Check if this category has child categories
+        $hasChildren = Category::where('parent_id', $id)->exists();
+
+        if ($hasChildren) {
+            return redirect()->route('categories.list')->with('error', 'Cannot delete category with child categories.');
         }
+
+        $category->delete();
+
+        return redirect()->route('categories.list')->with('success', 'Category deleted.');
     }
+
 }
+

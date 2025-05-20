@@ -1,5 +1,17 @@
 @extends('layouts.app')
 
+@section('css')
+
+<style>
+    #datatable_length,
+    #datatable_info,
+    #datatable_paginate {
+        display: none !important;
+    }
+</style>
+
+@endsection
+
 @section('content')
 
     @include('layouts.sidebar')
@@ -15,7 +27,7 @@
                         {{-- <p></p> --}}
 
                     </div>
-                    <a href="{{ route('product.create') }}" class="btn btn-primary add-list"><i class="las la-plus mr-3"></i>Add Product</a>
+                    <a href="{{ route('products.create') }}" class="btn btn-primary add-list"><i class="las la-plus mr-3"></i>Add Product</a>
                 </div>
             </div>
 
@@ -44,59 +56,56 @@
                        <table id="datatable" class="table data-tables table-striped">
                           <thead>
                              <tr class="ligth">
-                                <th>Id</th>
-                                <th>Product Img</th>
+                                <th>#</th>
+                                <th>Image</th>
                                 <th>Name</th>
+                                <th>SKU</th>
                                 <th>Category</th>
-                                <th>Company</th>
-                                <th>Store</th>
-                                <th>Purchase Price</th>
-                                <th>Selling Price</th>
-                                <th>Stock Qty</th>
-                                <th>Unit</th>
-                                <th>Expiry Date</th>
-
-                                <th colspan="2">Action</th>
+                                <th>Brand</th>
+                                <th>Actions</th>
                              </tr>
                           </thead>
-                           <tbody>
-                                @forelse($products as $product)
+                            <tbody>
+                                @forelse($products as $index => $product)
                                     <tr>
-                                        <td>{{ $product->id }}</td>
+                                        <td>{{ $loop->iteration }}</td>
                                         <td>
                                             @if (!empty($product->product_img))
-                                                <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" width="60" height="60" style="object-fit: cover;">
+                                                <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" width="50" style="object-fit: cover;">
                                             @else
-                                                <span>No Image</span>
+                                                N/A
                                             @endif
                                         </td>
                                         <td>{{ $product->name }}</td>
-                                        <td>{{ $product->category->name ?? 'N/A' }}</td>
-                                        <td>{{ $product->company->name ?? 'N/A' }}</td>
-                                        <td>{{ $product->store->name ?? 'N/A' }}</td>
-                                        <td>{{ $product->purchase_price }}</td>
-                                        <td>{{ $product->selling_price }}</td>
-                                        <td>{{ $product->stock_quantity }}</td>
-                                        <td>{{ $product->unitName->name ?? 'N/A' }} ({{ $product->unitName->symbol ?? '' }})</td>
-                                        <td>{{ $product->expiry_date }}</td>
+                                        <td>{{ $product->sku }}</td>
+                                        <td>{{ $product->category->name ?? '-' }}</td>
+                                        <td>{{ $product->brand ?? '-' }}</td>
                                         <td>
                                             <div class="d-flex align-items-center list-action">
-                                                <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('product.edit', $product->id) }}">
+                                                <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('products.edit', $product->id) }}">
                                                     <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                                 </a>
-                                                <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('product.delete', $product->id) }}">
+                                                <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('products.destroy', $product->id) }}">
                                                     <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
                                                 </a>
+
+                                                @if($product->has_variants == 1)
+                                                    <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Variants" href="{{ route('products.variants', $product->id) }}">
+                                                        <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
+                                                    </a>
+                                                @else
+                                                    
+                                                @endif
+                                                
                                             </div>
                                         </td>
                                     </tr>
-                                    @empty
+                                @empty
                                     <tr>
-                                        <td colspan="10" class="text-center">No records found.</td>
+                                        <td colspan="7" class="text-center">No products found.</td>
                                     </tr>
                                 @endforelse
-
-                           </tbody>
+                            </tbody>
 
                        </table>
                     </div>
