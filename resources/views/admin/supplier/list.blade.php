@@ -23,10 +23,10 @@
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                     <div>
-                        <h4 class="mb-3">Users List</h4>
+                        <h4 class="mb-3">Suppliers List</h4>
                     </div>
-                    <a href="{{ route('user.create') }}" class="btn btn-primary add-list">
-                      <i class="las la-plus mr-3"></i>Add User
+                    <a href="{{ route('suppliers.create') }}" class="btn btn-primary add-list">
+                      <i class="las la-plus mr-3"></i>Add Supplier
                     </a>
                 </div>
             </div>
@@ -48,7 +48,7 @@
 
                   <div class="card-header d-flex justify-content-between">
                      <div class="header-title">
-                        <h4 class="card-title">Users</h4>
+                        <h4 class="card-title">Suppliers</h4>
                      </div>
                   </div>
 
@@ -60,34 +60,25 @@
                                 <th>#</th>
                                 <th>Name</th>
                                 <th>Email</th>
-                                <th>Role</th>
-                                <th>Branch</th>
-                                <th>Status</th>
+                                <th>Phone</th>
+                                <th>Balance</th>
                                 <th>Action</th>
                              </tr>
                           </thead>
                           <tbody>
-                             @forelse($users as $user)
+                             @forelse($suppliers as $supplier)
                                 <tr>
-                                  <td>{{ $user->id }}</td>
-                                  <td>{{ $user->name }}</td>
-                                  <td>{{ $user->email }}</td>
-                                  <td>{{ $user->role->name ?? '-' }}</td>
-                                  <td>{{ $user->branch->name ?? 'N/A' }}</td>
-                                  <td>
-                                     {{-- Example status badge --}}
-                                     @if($user->status == 'Active')
-                                       <span class="badge badge-success">Active</span>
-                                     @else
-                                       <span class="badge badge-secondary">Inactive</span>
-                                     @endif
-                                  </td>
+                                  <td>{{ $supplier->id }}</td>
+                                  <td>{{ $supplier->name }}</td>
+                                  <td>{{ $supplier->email }}</td>
+                                  <td>{{ $supplier->phone }}</td>
+                                  <td>{{ $supplier->balance }}</td>
                                   <td>
                                      <div class="d-flex align-items-center list-action">
-                                         <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('user.edit', $user->id) }}">
+                                         <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('suppliers.edit', $supplier->id) }}">
                                              <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                          </a>
-                                         <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('user.delete', $user->id) }}">
+                                         <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('suppliers.destroy', $supplier->id) }}">
                                              <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
                                          </a>
                                      </div>
@@ -104,7 +95,7 @@
 
                     {{-- Pagination Links --}}
                     <div class="d-flex justify-content-end mt-3">
-                        {{ $users->links('pagination::bootstrap-5') }}
+                        {{ $suppliers->links('pagination::bootstrap-5') }}
                     </div>
 
                   </div>

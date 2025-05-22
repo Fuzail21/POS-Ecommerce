@@ -3,20 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PurchaseItem extends Model
 {
-    use HasFactory;
+    use SoftDeletes;
 
     protected $table = 'purchase_items';
-
     protected $fillable = [
-        'purchase_id',
-        'product_id',
-        'quantity',
-        'cost',
+        'purchase_id', 'product_id', 'variant_id',
+        'batch_no', 'expiry_date', 'quantity_in_base_unit',
+        'unit_cost', 'total_cost'
     ];
 
     public function purchase()
@@ -28,4 +25,10 @@ class PurchaseItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    public function variant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
 }
+

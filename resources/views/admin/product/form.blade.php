@@ -17,6 +17,10 @@
                         <div class="card-body">
                             <form method="POST" action="{{ isset($product) ? route('products.update', $product->id) : route('products.store') }}" enctype="multipart/form-data">
                                 @csrf
+                                @if(isset($product))
+                                    @method('PUT')
+                                @endif
+
                                 {{-- Product Name --}}
                                 <div class="form-group">
                                     <label>Product Name</label>
@@ -51,7 +55,7 @@
 
                                 {{-- SKU --}}
                                 {{-- id="main-sku" --}}
-                                <div class="form-group" >
+                                <div class="form-group">
                                     <label>SKU</label>
                                     <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku ?? '') }}">
                                 </div>
@@ -72,8 +76,8 @@
                                 <div class="form-group">
                                     <label for="has_variance">Has Variant</label>
                                     <select id="has_variance" name="has_variants" class="form-control" required>
-                                        <option value="0" {{ old('has_variants', $product->has_variants ?? '') == 0 ? 'selected' : '' }}>No</option>
                                         <option value="1" {{ old('has_variants', $product->has_variants ?? '') == 1 ? 'selected' : '' }}>Yes</option>
+                                        <option value="0" {{ old('has_variants', $product->has_variants ?? '') == 0 ? 'selected' : '' }}>No</option>
                                     </select>
                                 </div>
 
@@ -148,7 +152,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const hasVariance = document.getElementById('has_variance');
             const variantSection = document.getElementById('variant-section');
-            const mainSKU = document.getElementById('main-sku');
+            {{-- const mainSKU = document.getElementById('main-sku'); --}}
             const mainBarcode = document.getElementById('main-barcode');
 
             function toggleVariantSection() {

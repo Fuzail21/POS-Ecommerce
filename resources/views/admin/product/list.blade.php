@@ -1,17 +1,5 @@
 @extends('layouts.app')
 
-@section('css')
-
-<style>
-    #datatable_length,
-    #datatable_info,
-    #datatable_paginate {
-        display: none !important;
-    }
-</style>
-
-@endsection
-
 @section('content')
 
     @include('layouts.sidebar')
@@ -23,9 +11,8 @@
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
                     <div>
-                        <h4 class="mb-3">Products List</h4>
+                        <h4 class="mb-3">Product List</h4>
                         {{-- <p></p> --}}
-
                     </div>
                     <a href="{{ route('products.create') }}" class="btn btn-primary add-list"><i class="las la-plus mr-3"></i>Add Product</a>
                 </div>
@@ -53,22 +40,23 @@
                   </div>
                   <div class="card-body">
                     <div class="table-responsive">
-                       <table id="datatable" class="table data-tables table-striped">
-                          <thead>
-                             <tr class="ligth">
-                                <th>#</th>
-                                <th>Image</th>
-                                <th>Name</th>
-                                <th>SKU</th>
-                                <th>Category</th>
-                                <th>Brand</th>
-                                <th>Actions</th>
-                             </tr>
-                          </thead>
+                       <table class="table table-striped">
+                            <thead style="background-color: #F4F5FA;">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Product Img</th>
+                                    <th>Product Name</th>
+                                    <th>SKU</th>
+                                    <th>Category</th>
+                                    <th>Brand</th>
+                                    <th>Actions</th>
+
+                                </tr>
+                            </thead>
                             <tbody>
                                 @forelse($products as $index => $product)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $product->id }}</td>
                                         <td>
                                             @if (!empty($product->product_img))
                                                 <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" width="50" style="object-fit: cover;">
@@ -88,17 +76,12 @@
                                                 <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('products.destroy', $product->id) }}">
                                                     <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
                                                 </a>
-
-                                                @if($product->has_variants == 1)
-                                                    <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Variants" href="{{ route('products.variants', $product->id) }}">
-                                                        <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
-                                                    </a>
-                                                @else
-                                                    
-                                                @endif
-                                                
+                                                <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Variants" href="{{ route('products.variants', $product->id) }}">
+                                                    <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
+                                                </a>
                                             </div>
                                         </td>
+
                                     </tr>
                                 @empty
                                     <tr>
@@ -106,8 +89,7 @@
                                     </tr>
                                 @endforelse
                             </tbody>
-
-                       </table>
+                        </table>
                     </div>
 
                     {{-- Pagination Links (outside table) --}}

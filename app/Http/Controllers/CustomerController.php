@@ -23,7 +23,7 @@ class CustomerController extends Controller
     public function create()
     {
         $title = 'Add New Customer';
-        return view('admin.customer.add', compact('title'));
+        return view('admin.customer.form', compact('title'));
     }
 
     /**
@@ -31,32 +31,23 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate request data
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'contact' => 'required|string|max:20',
-            'address' => 'required|string',
+       $request->validate([
+            'name' => 'required|string',
+            'phone' => 'required|string',
+            'email' => 'nullable|email',
+            'address' => 'nullable|string',
+            'balance' => 'nullable|numeric',
         ]);
 
-        try {
-            $customer = new Customer();
-            $customer->name = $validated['name'];
-            $customer->contact = $validated['contact'];
-            $customer->address = $validated['address'];
-            $customer->save();
+        $customer = new Customer();
+        $customer->name = $request->name;
+        $customer->phone = $request->phone;
+        $customer->email = $request->email;
+        $customer->address = $request->address;
+        $customer->balance = $request->balance ?? 0;
+        $customer->save();
 
-            return redirect()->route('customer.list')->with('success', 'Customer added successfully!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Something went wrong. Please try again.');
-        }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
+        return redirect()->route('customers.list')->with('success', 'Customer added successfully.');
     }
 
     /**
@@ -66,38 +57,39 @@ class CustomerController extends Controller
     {
         $title = 'Edit Customer';
         $customer = Customer::find($id);
-        return view('admin.customer.edit', compact('customer', 'title'));
+        return view('admin.customer.form', compact('customer', 'title'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        try {
-            $customer = Customer::find($id);
-            $customer->name = $request->name;
-            $customer->contact = $request->contact;
-            $customer->address = $request->address;
-            $customer->save();
+        $request->validate([
+            'name' => 'required|string',
+            'phone' => 'required|string',
+            'email' => 'nullable|email',
+            'address' => 'nullable|string',
+            'balance' => 'nullable|numeric',
+        ]);
 
-            return redirect()->route('customer.list')->with('success', 'Customer updated successfully!');
-        } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Something went wrong. Please try again.');
-        }
+        $customer = Customer::findOrFail($id);
+        $customer->name = $request->name;
+        $customer->phone = $request->phone;
+        $customer->email = $request->email;
+        $customer->address = $request->address;
+        $customer->balance = $request->balance ?? 0;
+        $customer->save();
+
+        return redirect()->route('customers.list')->with('success', 'Customer updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $customer = Customer::find($id);
-        if ($customer) {
-            $customer->delete();
-            return redirect()->route('customer.list')->with('success', 'Customer deleted successfully!');
-        } else {
-            return redirect()->route('customer.list')->with('error', 'Customer not found!');
-        }
+        Customer::findOrFail($id)->delete();
+        return redirect()->route('customers.list')->with('success', 'Customer deleted successfully.');
     }
 }

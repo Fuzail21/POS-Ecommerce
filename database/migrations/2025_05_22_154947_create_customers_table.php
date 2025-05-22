@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('expenses', function (Blueprint $table) {
+        Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('store_id');
-            $table->string('expense_type');
-            $table->decimal('amount', 10, 2);
+            $table->string('name');
+            $table->string('phone');
+            $table->string('email')->nullable();
+            $table->text('address')->nullable();
+            $table->decimal('balance', 15, 2)->default(0);
             $table->timestamps();
-
-            $table->foreign('store_id')->references('id')->on('stores')->onDelete('cascade');
+            $table->softDeletes();            
         });
     }
 
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('expenses');
+        Schema::dropIfExists('customers');
     }
 };

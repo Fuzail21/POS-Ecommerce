@@ -1,5 +1,17 @@
 @extends('layouts.app')
 
+@section('css')
+
+<style>
+    #datatable_info,
+    #datatable_paginate,
+    #datatable_length {
+        display: none !important;
+    }
+</style>
+
+@endsection
+
 @section('content')
 
     @include('layouts.sidebar')
@@ -9,13 +21,13 @@
          <div class="row">
 
             <div class="col-lg-12">
-                <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="mb-3">Customers List</h4>
-                        {{-- <p></p> --}}
-
                     </div>
-                    <a href="{{ route('customer.create') }}" class="btn btn-primary add-list"><i class="las la-plus mr-3"></i>Add Customer</a>
+                    <a href="{{ route('customers.create') }}" class="btn btn-primary add-list">
+                      <i class="las la-plus mr-3"></i>Add Customer
+                    </a>
                 </div>
             </div>
 
@@ -39,47 +51,45 @@
                         <h4 class="card-title">Customers</h4>
                      </div>
                   </div>
+
                   <div class="card-body">
                     <div class="table-responsive">
-                       <table id="datatable" class="table data-tables table-striped">
-                          <thead>
-                             <tr class="ligth">
-                                <th>Id</th>
-                                <th>Name</th>
-                                <th>Contact</th>
-                                <th>Address</th>
-                                <th colspan="2">Action</th>
-                             </tr>
-                          </thead>
-                           <tbody>
-                               @forelse($customers as $customer)
-                                   <tr>
-                                       <td>{{ $customer->id }}</td>
-                                       <td>{{ $customer->name }}</td>
-                                       <td>{{ $customer->contact }}</td>
-                                       <td>{{ $customer->address }}</td>
-                                       <td>
-                                           <div class="d-flex align-items-center list-action">
-                                               <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('customer.edit', $customer->id) }}">
-                                                   <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
-                                               </a>
-                                               <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('customer.delete', $customer->id) }}">
-                                                   <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                               </a>
-                                           </div>
-                                       </td>
-                                   </tr>
-                               @empty
-                                   <tr>
-                                       <td colspan="4" class="text-center">No records found.</td>
-                                   </tr>
-                               @endforelse
-                           </tbody>
-
-                       </table>
+                        <table id="datatable" class="table data-tables table-striped">
+                            <thead>
+                                <tr class="ligth">
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Balance</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($customers as $customer)
+                                <tr>
+                                    <td>{{ $customer->id }}</td>
+                                    <td>{{ $customer->name }}</td>
+                                    <td>{{ $customer->phone }}</td>
+                                    <td>{{ $customer->email }}</td>
+                                    <td>{{ $customer->balance }}</td>
+                                    <td>
+                                     <div class="d-flex align-items-center list-action">
+                                         <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('customers.edit', $customer->id) }}">
+                                             <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
+                                         </a>
+                                         <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('customers.destroy', $customer->id) }}">
+                                             <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                         </a>
+                                     </div>
+                                  </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
 
-                    {{-- Pagination Links (outside table) --}}
+                    {{-- Pagination Links --}}
                     <div class="d-flex justify-content-end mt-3">
                         {{ $customers->links('pagination::bootstrap-5') }}
                     </div>

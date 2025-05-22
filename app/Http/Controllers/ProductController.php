@@ -19,7 +19,9 @@ class ProductController extends Controller
 
     public function create(){
         $title = 'Add Product';
-        $categories = Category::where('parent_id', '!=', NULL)->get();
+        $categories = Category::whereNotNull('parent_id')
+            ->orWhereDoesntHave('children')
+            ->get();
         $units = Unit::all();
         return view('admin.product.form', compact('title', 'categories', 'units'));
     }
