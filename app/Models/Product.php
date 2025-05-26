@@ -22,6 +22,7 @@ class Product extends Model
         'brand',
         'track_expiry',
         'tax_rate',
+        'sale_price',
     ];
 
     public function category() {

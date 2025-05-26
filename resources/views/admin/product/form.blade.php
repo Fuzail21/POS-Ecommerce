@@ -16,10 +16,7 @@
                         </div>
                         <div class="card-body">
                             <form method="POST" action="{{ isset($product) ? route('products.update', $product->id) : route('products.store') }}" enctype="multipart/form-data">
-                                @csrf
-                                @if(isset($product))
-                                    @method('PUT')
-                                @endif
+                                @csrf   
 
                                 {{-- Product Name --}}
                                 <div class="form-group">
@@ -54,7 +51,6 @@
                                 </div>
 
                                 {{-- SKU --}}
-                                {{-- id="main-sku" --}}
                                 <div class="form-group">
                                     <label>SKU</label>
                                     <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku ?? '') }}">
@@ -70,6 +66,12 @@
                                 <div class="form-group">
                                     <label>Brand</label>
                                     <input type="text" name="brand" class="form-control" value="{{ old('brand', $product->brand ?? '') }}">
+                                </div>
+
+                                {{-- Sale Price --}}
+                                <div class="form-group">
+                                    <label>Sale Price</label>
+                                    <input type="number" name="sale_price" step="0.01" class="form-control" value="{{ old('sale_price', $product->sale_price ?? '') }}">
                                 </div>
 
                                 {{-- Has Variants --}}
@@ -90,6 +92,8 @@
                                                 <th>Variant Name</th>
                                                 <th>SKU</th>
                                                 <th>Barcode</th>
+                                                <th>Sale Price</th>
+                                                <th>Image</th>
                                                 <th>
                                                     <button type="button" class="btn btn-sm btn-primary" onclick="addVariantRow()">Add</button>
                                                 </th>
@@ -102,6 +106,13 @@
                                                         <td><input type="text" name="variants[{{ $loop->index }}][variant_name]" value="{{ $variant->variant_name }}" class="form-control" required></td>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][sku]" value="{{ $variant->sku }}" class="form-control" required></td>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][barcode]" value="{{ $variant->barcode }}" class="form-control"></td>
+                                                        <td><input type="number" step="0.01" name="variants[{{ $loop->index }}][sale_price]" value="{{ $variant->sale_price }}" class="form-control"></td>
+                                                        <td>
+                                                            <input type="file" name="variants[{{ $loop->index }}][product_img]" class="form-control-file">
+                                                            @if(!empty($variant->product_img))
+                                                                <img src="{{ asset('storage/' . $variant->product_img) }}" alt="Variant Image" class="mt-2" width="80">
+                                                            @endif
+                                                        </td>
                                                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeVariantRow(this)">Remove</button></td>
                                                     </tr>
                                                 @endforeach
@@ -141,7 +152,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Page end -->
         </div>
     </div>
 
@@ -152,23 +162,20 @@
         document.addEventListener("DOMContentLoaded", function () {
             const hasVariance = document.getElementById('has_variance');
             const variantSection = document.getElementById('variant-section');
-            {{-- const mainSKU = document.getElementById('main-sku'); --}}
             const mainBarcode = document.getElementById('main-barcode');
 
             function toggleVariantSection() {
                 if (hasVariance.value === '1') {
                     variantSection.style.display = 'block';
-                    {{-- mainSKU.style.display = 'none'; --}}
                     mainBarcode.style.display = 'none';
                 } else {
                     variantSection.style.display = 'none';
-                    {{-- mainSKU.style.display = 'block'; --}}
                     mainBarcode.style.display = 'block';
                 }
             }
 
             hasVariance.addEventListener('change', toggleVariantSection);
-            toggleVariantSection(); // initial check
+            toggleVariantSection(); // initial load
         });
 
         let variantIndex = {{ isset($product->variants) ? $product->variants->count() : 0 }};
@@ -181,11 +188,18 @@
                 <td><input type="text" name="variants[${variantIndex}][variant_name]" class="form-control" required></td>
                 <td><input type="text" name="variants[${variantIndex}][sku]" class="form-control" required></td>
                 <td><input type="text" name="variants[${variantIndex}][barcode]" class="form-control"></td>
+                <td><input type="number" step="0.01" name="variants[${variantIndex}][sale_price]" class="form-control"></td>
+                <td>
+                    <input type="file" name="variants[${variantIndex}][product_img]" class="form-control-file">
+                    <div class="img-preview mt-2"></div>
+                </td>
                 <td><button type="button" class="btn btn-sm btn-danger" onclick="removeVariantRow(this)">Remove</button></td>
             `;
+
             tableBody.appendChild(row);
             variantIndex++;
         }
+
 
         function removeVariantRow(button) {
             button.closest('tr').remove();

@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Unit;
+use App\Models\ProductVariant;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 
@@ -26,7 +27,7 @@ class ProductController extends Controller
         return view('admin.product.form', compact('title', 'categories', 'units'));
     }
 
-    public function store(Request $request){
+    public function store(Request $request){    
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -37,15 +38,15 @@ class ProductController extends Controller
             'brand' => 'nullable|string|max:255',
             'track_expiry' => 'required|boolean',
             'tax_rate' => 'required|numeric|between:0,100.00',
+            'sale_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $product = new Product();
         $product->fill($validatedData);
-        $product->default_display_unit_id = $validatedData['base_unit_id']; // ✅ set here
-        $product->save();
+        $product->default_display_unit_id = $validatedData['base_unit_id'];
 
-        // Handle image upload
+        // Handle main product image
         if ($request->hasFile('product_img')) {
             $imagePath = $request->file('product_img')->store('products', 'public');
             $product->product_img = $imagePath;
@@ -53,23 +54,36 @@ class ProductController extends Controller
 
         $product->save();
 
-        // Save variants
+        // Save product variants
         if ($request->has('variants')) {
-            foreach ($request->variants as $variantData) {
+            foreach ($request->variants as $index => $variantData) {
+                $variantImagePath = null;
+                        
+                if ($request->hasFile("variants.$index.product_img")) {
+                    $variantImagePath = $request->file("variants.$index.product_img")
+                                                ->store('products/variants', 'public');
+                }
+            
                 $product->variants()->create([
                     'variant_name' => $variantData['variant_name'],
                     'sku' => $variantData['sku'],
                     'barcode' => $variantData['barcode'] ?? null,
+                    'sale_price' => $variantData['sale_price'] ?? 0,
+                    'product_img' => $variantImagePath,
                 ]);
             }
+
         }
 
         return redirect()->route('products.list')->with('success', 'Product created successfully.');
     }
 
+
     public function edit($id) {
         $title = 'Edit Product';
-        $categories = Category::where('parent_id', '!=', NULL)->get();
+        $categories = Category::whereNotNull('parent_id')
+            ->orWhereDoesntHave('children')
+            ->get();
         $units = Unit::all();
         $product = Product::findOrFail($id);
         return view('admin.product.form', compact('product', 'title', 'categories', 'units'));
@@ -92,14 +106,16 @@ class ProductController extends Controller
             'brand' => 'nullable|string|max:255',
             'track_expiry' => 'required|boolean',
             'tax_rate' => 'required|numeric|between:0,100.00',
+            'sale_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $product = Product::findOrFail($id);
         $product->fill($validatedData);
         $product->default_display_unit_id = $validatedData['base_unit_id'];
+        $product->sale_price = $validatedData['sale_price'];
 
-        // Handle image update
+        // Handle main product image update
         if ($request->hasFile('product_img')) {
             if (!empty($product->product_img) && Storage::disk('public')->exists($product->product_img)) {
                 Storage::disk('public')->delete($product->product_img);
@@ -118,21 +134,35 @@ class ProductController extends Controller
 
             // Add new variants
             if ($request->has('variants')) {
-                foreach ($request->variants as $variantData) {
+                foreach ($request->variants as $index => $variantData) {
+                    $variantImagePath = null;
+                                
+                    if ($request->hasFile("variants.$index.product_img")) {
+                        $variantImagePath = $request->file("variants.$index.product_img")->store('products/variants', 'public');
+                    }
+                
                     $product->variants()->create([
                         'variant_name' => $variantData['variant_name'],
                         'sku' => $variantData['sku'],
                         'barcode' => $variantData['barcode'] ?? null,
+                        'sale_price' => $variantData['sale_price'] ?? 0,
+                        'product_img' => $variantImagePath, // This will save image path to DB
                     ]);
                 }
+
+
             }
+            exit();
         } else {
             // Hard delete all variants if no longer a variant product
             $product->variants()->withTrashed()->forceDelete();
         }
+        
 
         return redirect()->route('products.list')->with('success', 'Product updated successfully.');
     }
+
+
 
     public function destroy($id){
         $product = Product::findOrFail($id);
