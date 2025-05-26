@@ -305,6 +305,27 @@
                         </ul>
                     </li>
 
+                    <li class="{{ Route::is('purchases.list') || Route::is('purchases.create') ? 'active' : '' }}">
+                        <a href="#purchase" class="{{ Route::is('purchases.list') || Route::is('purchases.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('purchases.list') || Route::is('purchases.create') ? 'true' : 'false' }}">
+                            <svg class="svg-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 3h18v4H3zM3 7h18l-1 13H4L3 7zm5 4h2v5H8v-5zm6 0h2v5h-2v-5z"/>
+                            </svg>
+                            <span class="ml-4">Purchase</span>
+                            <!-- Arrow -->
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="10 15 15 20 20 15"></polyline>
+                                <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                            </svg>
+                        </a>
+                        <ul id="purchase" class="iq-submenu collapse {{ Route::is('purchases.list') || Route::is('purchases.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                            <li class="{{ Route::is('purchases.list') ? 'active' : '' }}">
+                                <a href="{{ route('purchases.list') }}"><i class="las la-minus"></i><span>Purchase List</span></a>
+                            </li>
+                            <li class="{{ Route::is('purchases.create') ? 'active' : '' }}">
+                                <a href="{{ route('purchases.create') }}"><i class="las la-minus"></i><span>Add Purchase</span></a>
+                            </li>
+                        </ul>
+                    </li>
 
                     {{-- <li class="{{ Route::is('company.list') || Route::is('company.create') ? 'active' : '' }}">
                         <a href="#company" class="{{ Route::is('company.list') || Route::is('company.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('company.list') || Route::is('company.create') ? 'true' : 'false' }}">

@@ -3,19 +3,32 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
+    use SoftDeletes;
 
     protected $table = 'sales';
 
     protected $fillable = [
-        'customer_id', 'user_id', 'total_amount', 'discount', 'tax', 'payment_status'
+        'customer_id',
+        'branch_id',
+        'invoice_number',
+        'sale_date',
+        'total_amount',
+        'discount_amount',
+        'tax_amount',
+        'final_amount',
+        'paid_amount',
+        'due_amount',
+        'payment_method',
+        'created_by',
     ];
 
     public function items()
     {
-        return $this->hasMany(SalesItem::class);
+        return $this->hasMany(SaleItem::class);
     }
 
     public function customer()
@@ -23,31 +36,13 @@ class Sale extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function user()
+    public function branch()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Branch::class);
     }
 
-    public function payments()
+    public function creator()
     {
-        return $this->hasMany(SalesPayment::class);
+        return $this->belongsTo(User::class, 'created_by');
     }
-
-    public function discountTax()
-    {
-        return $this->hasOne(SalesDiscountTax::class);
-    }
-    
-    public function getFinalTotalAttribute()
-    {
-        $discount = $this->discountTax->discount ?? 0;
-        $tax = $this->discountTax->tax ?? 0;
-        $discountAmount = ($this->total_amount * $discount) / 100;
-        $taxableAmount = $this->total_amount - $discountAmount;
-        $taxAmount = ($taxableAmount * $tax) / 100;
-    
-        return round($taxableAmount + $taxAmount, 2);
-    }
-    
-
 }

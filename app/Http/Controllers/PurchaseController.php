@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Product;
-use App\Models\Vendor;
+use App\Models\Supplier;
 
 class PurchaseController extends Controller
 {
@@ -20,9 +20,9 @@ class PurchaseController extends Controller
     public function create()
     {
         $title = "Add Purchase";
-        $vendors = Vendor::all();
+        $suppliers = Supplier::all();
         $products = Product::all();
-        return view('admin.purchase.add', compact('title', 'vendors', 'products'));
+        return view('admin.purchase.create', compact('title', 'suppliers', 'products'));
     }
 
     public function store(Request $request)

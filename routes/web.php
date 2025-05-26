@@ -90,18 +90,6 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
-    // // Purchases
-    // Route::get('/purchase/list', [PurchaseController::class, 'index'])->name('purchase.list');
-    // Route::get('/purchase/create', [PurchaseController::class, 'create'])->name('purchase.create');
-    // Route::post('/purchase/store', [PurchaseController::class, 'store'])->name('purchase.store');
-    // Route::get('/purchase/edit/{id}', [PurchaseController::class, 'edit'])->name('purchase.edit');
-    // Route::put('/purchase/update/{id}', [PurchaseController::class, 'update'])->name('purchase.update');
-    // Route::delete('/purchase/delete/{id}', [PurchaseController::class, 'destroy'])->name('purchase.delete');
-    // // Purchase Items View
-    // Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('purchase.items');
-
-
-
     // // Payments
     // Route::get('/payment/list', [FinanceController::class, 'payments'])->name('payment.list');
     // Route::get('/payment/create', [FinanceController::class, 'createPayment'])->name('payment.create');
@@ -251,7 +239,22 @@ Route::middleware('auth', 'verified')->group(function () {
     });
 
 
-    
+
+
+        Route::prefix('purchases')->name('purchases.')->group(function () {
+            Route::get('/', [PurchaseController::class, 'index'])->name('list');
+            Route::get('/create', [PurchaseController::class, 'create'])->name('create');
+            Route::post('/store', [PurchaseController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [PurchaseController::class, 'edit'])->name('edit');
+            Route::post('/{id}', [PurchaseController::class, 'update'])->name('update');
+            Route::get('/{id}', [PurchaseController::class, 'destroy'])->name('destroy');
+            // Purchase Items View
+            Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('purchase.items');
+    });
+
+
+
+
     // Prodfile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
