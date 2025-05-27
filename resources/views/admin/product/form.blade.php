@@ -139,7 +139,7 @@
                                 {{-- Product Image --}}
                                 <div class="form-group">
                                     <label>Product Image</label>
-                                    <input type="file" name="product_img" class="form-control-file">
+                                    <input type="file" name="product_img" class="form-control-file" accept=".jpg, .jpeg, .png, .webp">
                                     @if(!empty($product->product_img))
                                         <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" class="mt-2" width="100">
                                     @endif

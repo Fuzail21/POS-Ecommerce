@@ -57,7 +57,7 @@
                             <button type="submit" class="btn btn-primary">
                                 {{ isset($warehouse) ? 'Update Warehouse' : 'Add Warehouse' }}
                             </button>
-                            <a href="{{ route('warehouse.index') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('warehouse.list') }}" class="btn btn-secondary">Cancel</a>
                         </form>
                     </div>
                 </div>

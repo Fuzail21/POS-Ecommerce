@@ -35,7 +35,7 @@ class WarehouseController extends Controller
         // $warehouse->capacity_unit = $request->capacity_unit;
         $warehouse->save();
 
-        return redirect()->route('warehouse.index')->with('success', 'Warehouse created successfully.');
+        return redirect()->route('warehouse.list')->with('success', 'Warehouse created successfully.');
     }
 
 
@@ -61,7 +61,7 @@ class WarehouseController extends Controller
         // $warehouse->capacity_unit = $request->capacity_unit;
         $warehouse->save();
 
-        return redirect()->route('warehouse.index')->with('success', 'Warehouse updated successfully.');
+        return redirect()->route('warehouse.list')->with('success', 'Warehouse updated successfully.');
     }
 
 
@@ -70,7 +70,7 @@ class WarehouseController extends Controller
         $warehouse = Warehouse::findOrFail($id);
         $warehouse->delete(); // soft delete
 
-        return redirect()->route('warehouse.index')->with('success', 'Warehouse deleted successfully.');
+        return redirect()->route('warehouse.list')->with('success', 'Warehouse deleted successfully.');
     }
 }
 

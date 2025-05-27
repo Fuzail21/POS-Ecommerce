@@ -9,6 +9,9 @@ use App\Models\Unit;
 use App\Models\ProductVariant;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Validator;
 
 class ProductController extends Controller
 {
@@ -78,7 +81,6 @@ class ProductController extends Controller
         return redirect()->route('products.list')->with('success', 'Product created successfully.');
     }
 
-
     public function edit($id) {
         $title = 'Edit Product';
         $categories = Category::whereNotNull('parent_id')
@@ -90,6 +92,8 @@ class ProductController extends Controller
     }
 
     public function update(Request $request, $id){
+        $product = Product::findOrFail($id);
+
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -110,58 +114,93 @@ class ProductController extends Controller
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        $product = Product::findOrFail($id);
-        $product->fill($validatedData);
-        $product->default_display_unit_id = $validatedData['base_unit_id'];
-        $product->sale_price = $validatedData['sale_price'];
+         $product->fill($validatedData);
 
-        // Handle main product image update
+        // Handle main product image upload with error handling
         if ($request->hasFile('product_img')) {
-            if (!empty($product->product_img) && Storage::disk('public')->exists($product->product_img)) {
-                Storage::disk('public')->delete($product->product_img);
+            try {
+                $imagePath = $request->file('product_img')->store('products', 'public');
+                if (!$imagePath) {
+                    // Storage failed, add error message
+                    return back()->withInput()->withErrors(['product_img' => 'Failed to upload product image. Please try again.']);
+                }
+                $product->product_img = $imagePath;
+            } catch (\Exception $e) {
+                // Exception during upload, add error message
+                return back()->withInput()->withErrors(['product_img' => 'Error uploading image: ' . $e->getMessage()]);
             }
-
-            $imagePath = $request->file('product_img')->store('products', 'public');
-            $product->product_img = $imagePath;
         }
 
         $product->save();
 
-        // Handle variants based on has_variants flag
-        if ($validatedData['has_variants'] == 1) {
-            // Hard delete old variants (including soft deleted)
-            $product->variants()->withTrashed()->forceDelete();
+        // Handle variants
+        if ($request->has_variants && $request->has('variants')) {
+            $incomingVariants = collect($request->input('variants'));
+            $existingVariants = $product->variants()->get()->keyBy('sku'); // Assuming SKU is unique
 
-            // Add new variants
-            if ($request->has('variants')) {
-                foreach ($request->variants as $index => $variantData) {
-                    $variantImagePath = null;
-                                
-                    if ($request->hasFile("variants.$index.product_img")) {
-                        $variantImagePath = $request->file("variants.$index.product_img")->store('products/variants', 'public');
+            $existingSkus = $existingVariants->keys();
+            $incomingSkus = $incomingVariants->pluck('sku');
+
+            foreach ($incomingVariants as $index => $variantData) {
+                $sku = $variantData['sku'];
+
+                // Skip if SKU is missing
+                if (!$sku) continue;
+
+                $variant = $existingVariants->get($sku);
+
+                if ($variant) {
+                    // Update only if something changed
+                    $needsUpdate = (
+                        $variant->variant_name !== $variantData['variant_name'] ||
+                        $variant->barcode !== ($variantData['barcode'] ?? null) ||
+                        $variant->sale_price != ($variantData['sale_price'] ?? 0)
+                    );
+
+                    if ($needsUpdate) {
+                        $variant->update([
+                            'variant_name' => $variantData['variant_name'],
+                            'barcode' => $variantData['barcode'] ?? null,
+                            'sale_price' => $variantData['sale_price'] ?? 0,
+                        ]);
                     }
-                
-                    $product->variants()->create([
-                        'variant_name' => $variantData['variant_name'],
-                        'sku' => $variantData['sku'],
-                        'barcode' => $variantData['barcode'] ?? null,
-                        'sale_price' => $variantData['sale_price'] ?? 0,
-                        'product_img' => $variantImagePath, // This will save image path to DB
-                    ]);
+
+                    // Handle image update
+                    if ($request->hasFile("variants.{$index}.product_img")) {
+                        $image = $request->file("variants.{$index}.product_img");
+                        $path = $image->store('products/variants', 'public');
+                        $variant->update(['product_img' => $path]);
+                    }
+
+                } else {
+                    // New variant – check for unique SKU
+                    if (!ProductVariant::where('sku', $sku)->exists()) {
+                        $newVariant = new ProductVariant([
+                            'variant_name' => $variantData['variant_name'],
+                            'sku' => $sku,
+                            'barcode' => $variantData['barcode'] ?? null,
+                            'sale_price' => $variantData['sale_price'] ?? 0,
+                        ]);
+
+                        // Handle image
+                        if ($request->hasFile("variants.{$index}.product_img")) {
+                            $image = $request->file("variants.{$index}.product_img");
+                            $path = $image->store('products/variants', 'public');
+                            $newVariant->product_img = $path;
+                        }
+
+                        $product->variants()->save($newVariant);
+                    }
                 }
-
-
             }
-            exit();
-        } else {
-            // Hard delete all variants if no longer a variant product
-            $product->variants()->withTrashed()->forceDelete();
+
+            // Optional: Delete variants no longer in the request
+            $skusToKeep = $incomingSkus->toArray();
+            $product->variants()->whereNotIn('sku', $skusToKeep)->delete();
         }
-        
 
         return redirect()->route('products.list')->with('success', 'Product updated successfully.');
     }
-
 
 
     public function destroy($id){

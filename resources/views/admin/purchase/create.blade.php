@@ -10,18 +10,17 @@
     <div class="container-fluid add-form-list">
         <div class="row">
             <div class="col-sm-12">
-
                 <!-- Tabs -->
                 <ul class="nav nav-tabs mb-3" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" data-toggle="tab" href="#add-product" role="tab">Add Product</a>
+                        <a class="nav-link active" data-toggle="tab" href="#add-product" role="tab">Products Purchase</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-toggle="tab" href="#payment" role="tab">Payment</a>
+                        <a class="nav-link" data-toggle="tab" href="#payment" role="tab" id="paymentTab">Payment</a>
                     </li>
                 </ul>
 
-                <form action="{{ route('purchases.store') }}" method="POST">
+                <form action="{{ route('purchases.store') }}" method="POST" id="productForm">
                     @csrf
                     <div class="tab-content">
 
@@ -62,7 +61,7 @@
                         <div class="tab-pane fade show active" id="add-product" role="tabpanel">
                             <div class="card mb-3">
                                 <div class="card-header">
-                                    <h4>Add Products</h4>
+                                    <h4>Products Purchase</h4>
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-bordered">
@@ -76,28 +75,7 @@
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="product-rows">
-                                            <tr>
-                                                <td>
-                                                    <div class="w-100">
-                                                        <select name="products[0][id]" class="form-control product-select select2">
-                                                            @foreach($products as $product)
-                                                                <option value="{{ $product->id }}"
-                                                                    data-unit="{{ $product->unit }}"
-                                                                    data-price="{{ $product->price }}">
-                                                                    {{ $product->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </td>
-                                                <td><input type="number" name="products[0][quantity]" class="form-control quantity-input" min="1" required></td>
-                                                <td><input type="text" name="products[0][unit]" class="form-control unit-input"></td>
-                                                <td><input type="number" step="0.01" name="products[0][price]" class="form-control price-input"></td>
-                                                <td><input type="number" step="0.01" name="products[0][subtotal]" class="form-control subtotal-input" readonly></td>
-                                                <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
-                                            </tr>
-                                        </tbody>
+                                        <tbody id="product-rows"></tbody>
                                     </table>
                                     <button type="button" class="btn btn-secondary" onclick="addProductRow()">+ Add Product</button>
                                 </div>
@@ -113,20 +91,20 @@
                                 <div class="card-body row">
                                     <div class="form-group col-md-4">
                                         <label>Subtotal</label>
-                                        <input type="text" name="total_amount" id="subtotal" class="form-control" readonly>
+                                        <input type="text" name="subtotal" id="subtotal" class="form-control" readonly>
                                     </div>
-                                    <div class="form-group col-md-4">
+                                    {{-- <div class="form-group col-md-4">
                                         <label>Discount</label>
                                         <input type="number" name="discount" id="discount" class="form-control" step="0.01" value="0">
                                     </div>
                                     <div class="form-group col-md-4">
                                         <label>Tax</label>
                                         <input type="number" name="tax" id="tax" class="form-control" step="0.01" value="0">
-                                    </div>
-                                    <div class="form-group col-md-4">
-                                        <label>Total Payable</label>
+                                    </div> --}}
+                                    {{-- <div class="form-group col-md-4">
+                                        <label>Total Due</label>
                                         <input type="text" name="total_due" id="total_due" class="form-control" readonly>
-                                    </div>
+                                    </div> --}}
                                     <div class="form-group col-md-4">
                                         <label>Payment Mode</label>
                                         <select name="payment_mode" class="form-control">
@@ -140,8 +118,8 @@
                                         <input type="number" name="payment_now" id="payment_now" class="form-control" step="0.01" value="0">
                                     </div>
                                     <div class="form-group col-md-4">
-                                        <label>Remaining Payment</label>
-                                        <input type="text" name="due_payment" id="due" class="form-control" readonly>
+                                        <label>Due</label>
+                                        <input type="text" name="due" id="due" class="form-control" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -149,7 +127,7 @@
 
                         <!-- Submit Buttons -->
                         <div class="form-group text-right">
-                            <button type="submit" class="btn btn-primary">Save & New</button>
+                            <button type="submit" class="btn btn-primary" id="saveAndNewBtn">Save</button>
                             <a href="{{ route('purchases.list') }}" class="btn btn-secondary">Cancel</a>
                         </div>
 
@@ -160,92 +138,133 @@
         </div>
     </div>
 </div>
-
+{{-- data-price="${p.price}" --}}
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+<!-- Products as JSON -->
+<script>
+    const productsList = @json($productsMapped);
+</script>
 
 <!-- JavaScript -->
-<script>
-let productIndex = 1;
+    <script>
+        let productIndex = 0;
 
-function addProductRow() {
-    const row = `
-        <tr>
-            <td>
-                <div class="form-group mb-0 w-100">
-                    <select name="products[${productIndex}][id]" class="form-control product-select select2" style="width: 100%;">
-                        @foreach($products as $product)
-                            <option value="{{ $product->id }}" data-unit="{{ $product->unit }}" data-price="{{ $product->price }}">
-                                {{ $product->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </td>
-            <td><input type="number" name="products[${productIndex}][quantity]" class="form-control quantity-input" min="1" required></td>
-            <td><input type="text" name="products[${productIndex}][unit]" class="form-control unit-input"></td>
-            <td><input type="number" step="0.01" name="products[${productIndex}][price]" class="form-control price-input"></td>
-            <td><input type="number" step="0.01" name="products[${productIndex}][subtotal]" class="form-control subtotal-input" readonly></td>
-            <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
-        </tr>`;
-    document.getElementById('product-rows').insertAdjacentHTML('beforeend', row);
-    $('.select2').select2({ width: '100%' });
-    productIndex++;
-    attachEvents();
-}
+        function addProductRow() {
+            // build the new row HTML
+            const row = `
+                <tr>
+                        <td>
+                            <select name="products[${productIndex}][id]" class="form-control product-select select2" style="width: 100%;">
+                                <option value="">-- Select Product --</option>
+                                ${
+                                    productsList.map(p => 
+                                        `<option value="${p.id}" data-unit="${p.unit}" data-unit-id="${p.unit_id}">${p.name}</option>`
+                                    ).join('')
+                                }
+                            </select>
+                        </td>
+                        <td><input type="number" name="products[${productIndex}][quantity]" class="form-control quantity-input" min="1" required></td>
+                        <td><input type="text" class="form-control unit-name-input" readonly>
+                            <input type="hidden" name="products[${productIndex}][unit]" class="unit-id-input"></td>
+                        <td><input type="number" step="0.01" name="products[${productIndex}][unit_cost]" class="form-control price-input"></td>
+                        <td><input type="number" step="0.01" name="products[${productIndex}][subtotal]" class="form-control subtotal-input" readonly></td>
+                        <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
 
-function attachEvents() {
-    $('.product-select').off().on('change', function () {
-        const selected = $(this).find('option:selected');
-        const unit = selected.data('unit');
-        const price = selected.data('price');
-        const row = $(this).closest('tr');
-        row.find('.unit-input').val(unit);
-        row.find('.price-input').val(price);
-        updateRowSubtotal(row);
-    });
+            $('#product-rows').append(row);
 
-    $('.quantity-input, .price-input').off().on('input', function () {
-        const row = $(this).closest('tr');
-        updateRowSubtotal(row);
-    });
+            // Delay to ensure DOM is updated, then initialize Select2
+            setTimeout(() => {
+                $('#product-rows .select2').select2({
+                    width: '100%'
+                });
+            }, 100);
 
-    $('.remove-row').off().on('click', function () {
-        $(this).closest('tr').remove();
-        calculateTotals();
-    });
+            attachEvents();
+            productIndex++;
+        }
 
-    $('#discount, #tax, #payment_now').off().on('input', calculateTotals);
-}
 
-function updateRowSubtotal(row) {
-    const qty = parseFloat(row.find('.quantity-input').val()) || 0;
-    const price = parseFloat(row.find('.price-input').val()) || 0;
-    const subtotal = qty * price;
-    row.find('.subtotal-input').val(subtotal.toFixed(2));
-    calculateTotals();
-}
+        function attachEvents() {
+            $('.product-select').off('change').on('change', function () {
+                const selected = $(this).find('option:selected');
+                const unitName = selected.data('unit');
+                const unitId = selected.data('unit-id');
+                const price = selected.data('price');
+                const row = $(this).closest('tr');
 
-function calculateTotals() {
-    let subtotal = 0;
-    $('.subtotal-input').each(function () {
-        subtotal += parseFloat($(this).val()) || 0;
-    });
-    $('#subtotal').val(subtotal.toFixed(2));
+                row.find('.unit-name-input').val(unitName);   // Show unit name
+                row.find('.unit-id-input').val(unitId);       // Submit unit ID
+                row.find('.price-input').val(price);          // Set price
+                updateRowSubtotal(row);
+            });
 
-    const discount = parseFloat($('#discount').val()) || 0;
-    const tax = parseFloat($('#tax').val()) || 0;
-    const totalDue = subtotal - discount + tax;
-    $('#total_due').val(totalDue.toFixed(2));
 
-    const paymentNow = parseFloat($('#payment_now').val()) || 0;
-    const due = totalDue - paymentNow;
-    $('#due').val(due.toFixed(2));
-}
+            $('.quantity-input, .price-input').off('input').on('input', function () {
+                const row = $(this).closest('tr');
+                updateRowSubtotal(row);
+            });
 
-$(document).ready(function () {
-    $('.select2').select2({ width: '100%' });
-    attachEvents();
-});
-</script>
+            $('.remove-row').off('click').on('click', function () {
+                $(this).closest('tr').remove();
+                calculateTotals();
+            });
+
+            $('#discount, #tax, #payment_now').off('input').on('input', calculateTotals);
+        }
+
+        function updateRowSubtotal(row) {
+            const qty = parseFloat(row.find('.quantity-input').val()) || 0;
+            const price = parseFloat(row.find('.price-input').val()) || 0;
+            const subtotal = qty * price;
+            row.find('.subtotal-input').val(subtotal.toFixed(2));
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let subtotal = 0;
+            $('.subtotal-input').each(function () {
+                subtotal += parseFloat($(this).val()) || 0;
+            });
+            $('#subtotal').val(subtotal.toFixed(2));
+
+            const discount = parseFloat($('#discount').val()) || 0;
+            const tax = parseFloat($('#tax').val()) || 0;
+            const totalDue = subtotal - discount + tax;
+            $('#total_due').val(totalDue.toFixed(2));
+
+            const paymentNow = parseFloat($('#payment_now').val()) || 0;
+            const due = totalDue - paymentNow;
+            $('#due').val(due.toFixed(2));
+        }
+
+        $(document).ready(function () {
+            $('.select2').select2({ width: '100%' });
+            addProductRow(); // Add one default row on load
+        });
+
+
+        let paymentTabShown = false;
+
+        document.getElementById('saveAndNewBtn').addEventListener('click', function (e) {
+            const paymentTabElement = document.querySelector('#paymentTab');
+            const paymentTabPane = document.querySelector('#payment');
+
+            // Check if the payment tab is already visible
+            if (!paymentTabShown || !paymentTabPane.classList.contains('active')) {
+                e.preventDefault(); // Prevent submit the first time
+                const paymentTab = new bootstrap.Tab(paymentTabElement);
+                paymentTab.show();
+                paymentTabShown = true;
+            } else {
+                // Proceed to submit the form on second click
+                document.getElementById('productForm').submit();
+            }
+        });
+
+    </script>
 @endsection

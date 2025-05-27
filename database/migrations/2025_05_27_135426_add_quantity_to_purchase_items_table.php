@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('customers', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('contact')->nullable();
-            $table->text('address')->nullable();
-            $table->timestamps();
+        Schema::table('purchase_items', function (Blueprint $table) {
+            $table->integer('quantity')->default(0)->after('expiry_date');
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('customers');
+        Schema::table('purchase_items', function (Blueprint $table) {
+            $table->dropColumn('quantity');
+        });
     }
 };

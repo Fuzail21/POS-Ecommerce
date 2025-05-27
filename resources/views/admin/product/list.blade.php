@@ -76,9 +76,12 @@
                                                 <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('products.destroy', $product->id) }}">
                                                     <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
                                                 </a>
-                                                <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Variants" href="{{ route('products.variants', $product->id) }}">
-                                                    <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
-                                                </a>
+
+                                                @if ($product->has_variants === 1)
+                                                    <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Variants" href="{{ route('products.variants', $product->id) }}">
+                                                        <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
+                                                    </a>
+                                                @endif
                                             </div>
                                         </td>
 
