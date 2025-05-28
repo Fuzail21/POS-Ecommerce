@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('purchase_items', function (Blueprint $table) {
             $table->integer('quantity')->default(0)->after('expiry_date');
+            $table->string('unit')->nullable()->after('quantity');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('purchase_items', function (Blueprint $table) {
-            $table->dropColumn('quantity');
+            $table->dropColumn(['quantity', 'unit']);
         });
     }
 };

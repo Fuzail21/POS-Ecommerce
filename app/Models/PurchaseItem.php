@@ -13,7 +13,7 @@ class PurchaseItem extends Model
     protected $fillable = [
         'purchase_id', 'product_id', 'variant_id',
         'batch_no', 'expiry_date', 'quantity_in_base_unit',
-        'unit_cost', 'total_cost'
+        'unit_cost', 'total_cost', 'quantity'
     ];
 
     public function purchase()

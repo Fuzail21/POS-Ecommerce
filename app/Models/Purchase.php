@@ -26,6 +26,11 @@ class Purchase extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -35,6 +40,12 @@ class Purchase extends Model
     {
         return $this->hasMany(PurchaseItem::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(PurchasePayment::class); // if you have payment tracking
+    }
+
 
 }
 
