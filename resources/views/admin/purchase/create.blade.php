@@ -153,7 +153,7 @@
     <script>
         let productIndex = 0;
 
-        function addProductRow() {
+        {{-- function addProductRow() {
             // build the new row HTML
             const row = `
                 <tr>
@@ -215,7 +215,88 @@
             });
 
             $('#discount, #tax, #payment_now').off('input').on('input', calculateTotals);
+        } --}}
+
+
+        function addProductRow() {
+            const row = `
+                <tr>
+                    <td>
+                        <select name="products[${productIndex}][id]" class="form-control main-product-select" required>
+                            <option value="">-- Select Product --</option>
+                            ${productsList.map((p, i) => 
+                                `<option value="${p.id}" data-index="${i}" data-unit="${p.unit}" data-unit-id="${p.unit_id}">${p.name}</option>`
+                            ).join('')}
+                        </select>
+                        <select name="products[${productIndex}][variant_id]" class="form-control variant-select mt-2" required>
+                            <option value="">-- Select Variant --</option>
+                        </select>
+                    </td>
+                    <td><input type="number" name="products[${productIndex}][quantity]" class="form-control quantity-input" min="1" required></td>
+                    <td><input type="text" class="form-control unit-name-input" readonly>
+                        <input type="hidden" name="products[${productIndex}][unit]" class="unit-id-input">
+                    </td>
+                    <td><input type="number" step="0.01" name="products[${productIndex}][unit_cost]" class="form-control price-input"></td>
+                    <td><input type="number" step="0.01" name="products[${productIndex}][subtotal]" class="form-control subtotal-input" readonly></td>
+                    <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+
+            $('#product-rows').append(row);
+
+            setTimeout(() => {
+                $('.select2').select2({ width: '100%' });
+            }, 100);
+
+            attachEvents();
+            productIndex++;
         }
+
+        function attachEvents() {
+            // Handle product select
+            $('.main-product-select').off('change').on('change', function () {
+                const row = $(this).closest('tr');
+                const selectedOption = $(this).find(':selected');
+
+                // Use real ID as value; use array index to get variants
+                const productIndex = selectedOption.data('index');
+
+                // Get base unit info
+                const unitName = selectedOption.data('unit');
+                const unitId = selectedOption.data('unit-id');
+
+                row.find('.unit-name-input').val(unitName || '');
+                row.find('.unit-id-input').val(unitId || '');
+
+                const variants = productsList[productIndex]?.variants || [];
+
+                const variantSelect = row.find('.variant-select');
+                variantSelect.html('<option value="">-- Select Variant --</option>');
+
+                variants.forEach(variant => {
+                    variantSelect.append(`
+                        <option value="${variant.id}">${variant.name}</option>
+                    `);
+                });
+
+                // Handle quantity and price input changes
+                $('.quantity-input, .price-input').off('input').on('input', function () {
+                    const row = $(this).closest('tr');
+                    updateRowSubtotal(row);
+                });
+
+                // Handle remove row
+                $('.remove-row').off('click').on('click', function () {
+                    $(this).closest('tr').remove();
+                    calculateTotals(); // recalculate after row removal
+                });
+
+            })
+        }
+
+
+
+
+
 
         function updateRowSubtotal(row) {
             const qty = parseFloat(row.find('.quantity-input').val()) || 0;
@@ -230,17 +311,28 @@
             $('.subtotal-input').each(function () {
                 subtotal += parseFloat($(this).val()) || 0;
             });
+        
             $('#subtotal').val(subtotal.toFixed(2));
-
+        
+            // Optional: Add discount and tax if needed
             const discount = parseFloat($('#discount').val()) || 0;
             const tax = parseFloat($('#tax').val()) || 0;
+        
             const totalDue = subtotal - discount + tax;
-            $('#total_due').val(totalDue.toFixed(2));
-
+        
             const paymentNow = parseFloat($('#payment_now').val()) || 0;
             const due = totalDue - paymentNow;
+        
+            // Update due field
             $('#due').val(due.toFixed(2));
         }
+
+
+        $(document).ready(function () {
+            $('#payment_now').on('input', function () {
+                calculateTotals();
+            });
+        });
 
         $(document).ready(function () {
             $('.select2').select2({ width: '100%' });

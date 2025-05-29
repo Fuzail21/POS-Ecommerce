@@ -84,14 +84,15 @@
                                                     </form>
 
 
+
                                                     <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Invoice" href="{{ route('purchases.invoice', $purchase->id) }}">
                                                         <i class="ri-file-list-3-line" style="font-size: 1.1rem;"></i>
                                                     </a>
 
 
-                                                    <a class="badge bg-info p-1" href="" data-toggle="tooltip" title="View">
+                                                    {{-- <a class="badge bg-info p-1" href="" data-toggle="tooltip" title="View">
                                                         <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
-                                                    </a>
+                                                    </a> --}}
                                                 </div>
                                             </td>
                                         </tr>

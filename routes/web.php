@@ -247,9 +247,9 @@ Route::middleware('auth', 'verified')->group(function () {
             Route::post('/store', [PurchaseController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [PurchaseController::class, 'edit'])->name('edit');
             Route::post('/{id}', [PurchaseController::class, 'update'])->name('update');
-            Route::get('/{id}', [PurchaseController::class, 'destroy'])->name('destroy');
+            Route::delete('/{id}', [PurchaseController::class, 'destroy'])->name('destroy');
             // Purchase Items View
-            Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('items');
+            // Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('items');
             Route::get('/purchase/invoice/{id}', [PurchaseController::class, 'invoice'])->name('invoice');
 
     });

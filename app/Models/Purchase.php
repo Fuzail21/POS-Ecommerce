@@ -38,12 +38,12 @@ class Purchase extends Model
 
     public function items()
     {
-        return $this->hasMany(PurchaseItem::class);
+        return $this->hasMany(PurchaseItem::class, 'purchase_id');
     }
 
     public function payments()
     {
-        return $this->hasMany(PurchasePayment::class); // if you have payment tracking
+        return $this->hasMany(Payment::class); // if you have payment tracking
     }
 
 

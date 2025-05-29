@@ -32,16 +32,24 @@ class PurchaseController extends Controller
                 'name' => $product->name,
                 'price' => $product->sale_price,
                 'unit' => $product->baseUnit->name,
-                'unit_id' => $product->baseUnit->id, // <-- Add this line
+                'unit_id' => $product->baseUnit->id,
+                'variants' => $product->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'name' => $variant->variant_name,
+                        'barcode' => $variant->barcode,
+                        'sku' => $variant->sku,
+                        'price' => $variant->sale_price,
+                    ];
+                }),
             ];
         });
-                    // dd($productsMapped);
 
         return view('admin.purchase.create', compact('title', 'suppliers', 'products', 'productsMapped'));
     }
 
     public function store(Request $request){
-        dd($request->all());
+        // dd($request->all());
         DB::beginTransaction();
 
         try {
@@ -81,6 +89,7 @@ class PurchaseController extends Controller
                     'batch_no' => null,
                     'expiry_date' => null,
                     'quantity' => $product['quantity'],
+                    'unit_id' => $unitId,
                     'quantity_in_base_unit' => $baseQty,
                     'unit_cost' => $unitCost,
                     'total_cost' => $subTotal,
@@ -131,16 +140,6 @@ class PurchaseController extends Controller
                 Supplier::where('id', $request->supplier_id)->increment('balance', $dueAmount);
             }
 
-            // // Step 7: Create supplier ledger entry (optional)
-            // SupplierLedger::create([
-            //     'supplier_id' => $request->supplier_id,
-            //     'ref_type' => 'purchase',
-            //     'ref_id' => $purchase->id,
-            //     'debit' => $request->grand_total,
-            //     'credit' => $request->paid_amount,
-            //     'balance' => Supplier::find($request->supplier_id)->balance,
-            // ]);
-
             DB::commit();
 
             return redirect()->route('purchases.list')->with('success', 'Purchase created successfully.');
@@ -190,28 +189,27 @@ class PurchaseController extends Controller
         return redirect()->route('purchase.list')->with('success', 'Purchase updated successfully.');
     }
 
-    public function destroy($id)
-    {
+    public function destroy($id){
         DB::beginTransaction();
 
         try {
-            $purchase = Purchase::with('purchaseItems')->findOrFail($id);
+            $purchase = Purchase::with('items')->findOrFail($id);
 
-            // Loop through items and reverse stock
-            foreach ($purchase->purchaseItems as $item) {
-                // 1. Decrease inventory stock
+            // Loop through purchase items to reverse stock changes
+            foreach ($purchase->items as $item) {
                 $stock = InventoryStock::where('product_id', $item->product_id)
                     ->where('variant_id', $item->variant_id)
-                    ->where('warehouse_id', $purchase->warehouse_id)
+                    ->where('warehouse_id', $purchase->warehouse_id) // warehouse_id from purchase, might be null if not set
                     ->first();
 
                 if ($stock) {
-                    $stock->quantity_in_base_unit -= $item->quantity_in_base_unit; // ensure this is base unit
-                    $stock->quantity_in_base_unit = max(0, $stock->quantity_in_base_unit); // prevent negative
+                    // Reduce stock quantity by purchased quantity (base unit)
+                    $stock->quantity_in_base_unit -= $item->quantity_in_base_unit;
+                    $stock->quantity_in_base_unit = max(0, $stock->quantity_in_base_unit);
                     $stock->save();
                 }
 
-                // 2. Delete stock ledger entries
+                // Delete related stock ledger entries
                 StockLedger::where('ref_type', 'purchase')
                     ->where('ref_id', $purchase->id)
                     ->where('product_id', $item->product_id)
@@ -219,27 +217,31 @@ class PurchaseController extends Controller
                     ->delete();
             }
 
-            // 3. Delete purchase items
-            $purchase->purchaseItems()->delete();
+            // Delete purchase items
+            $purchase->items()->delete();
 
-            // 4. Delete payments if any
-            if (method_exists($purchase, 'payments')) {
-                $purchase->payments()->delete();
-            }
-
-            // 5. Delete supplier ledger entry (optional)
-            SupplierLedger::where('ref_type', 'purchase')
+            // Delete payments related to this purchase
+            Payment::where('ref_type', 'purchase')
                 ->where('ref_id', $purchase->id)
                 ->delete();
 
-            // 6. Adjust supplier balance
+            // Delete the inventory stock entry if you want to fully remove the stock record
+            // Optional: Remove if you just want to adjust quantity, not delete record
+            InventoryStock::where('product_id', $item->product_id)
+                ->where('variant_id', $item->variant_id)
+                ->where('warehouse_id', $purchase->warehouse_id)
+                ->delete();
+
+            // Adjust supplier balance if due_amount exists
             if ($purchase->due_amount > 0) {
                 $supplier = $purchase->supplier;
-                $supplier->balance -= $purchase->due_amount;
-                $supplier->save();
+                if ($supplier) {
+                    $supplier->balance -= $purchase->due_amount;
+                    $supplier->save();
+                }
             }
 
-            // 7. Delete the purchase
+            // Finally, delete the purchase itself
             $purchase->delete();
 
             DB::commit();
@@ -263,13 +265,13 @@ class PurchaseController extends Controller
         return view('admin.purchase_items.list', compact('purchase', 'title'));
     }
 
-    public function invoice($id)
-    {
-        $purchase = Purchase::with(['supplier', 'items'])
-                            ->findOrFail($id);
+    public function invoice($id){
+        $title = 'Invoice';
+        $purchase = Purchase::with(['supplier', 'warehouse', 'items.unit', 'items.product', 'items.variant'])
+                    ->findOrFail($id);
 
-        return view('admin.purchase.invoice', compact('purchase'));
+
+        return view('admin.purchase.invoice', compact('purchase', 'title')); // passes $purchase to the view
     }
-
 
 }

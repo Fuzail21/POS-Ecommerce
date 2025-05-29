@@ -22,7 +22,7 @@
                 <div class="col-md-6 text-right">
                     <h5>Purchase Details</h5>
                     <p>
-                        <strong>Invoice No:</strong> {{ $purchase->invoice_no }}<br>
+                        <strong>Invoice No:</strong> {{ $purchase->invoice_number }}<br>
                         <strong>Date:</strong> {{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}<br>
                         <strong>Warehouse:</strong> {{ $purchase->warehouse->name ?? '-' }}
                     </p>
@@ -48,9 +48,9 @@
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $item->product->name }}</td>
-                                <td>{{ $item->variant->name ?? '-' }}</td>
+                                <td>{{ $item->variant->variant_name ?? '-' }}</td>
                                 <td>{{ $item->quantity }}</td>
-                                <td>{{ $item->unit->name ?? '-' }}</td>
+                                <td>{{ $item->unit->name }}</td> 
                                 <td>{{ number_format($item->unit_cost, 2) }}</td>
                                 <td>{{ number_format($item->total_cost, 2) }}</td>
                             </tr>
