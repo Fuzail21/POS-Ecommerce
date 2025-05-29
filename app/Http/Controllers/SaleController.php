@@ -6,7 +6,9 @@ use App\Models\Sale;
 use App\Models\SalesItem;
 use App\Models\Product;
 use App\Models\SalesDiscountTax;
-use App\Models\Customer;    
+use App\Models\Customer;
+use App\Models\Category;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\DB;
@@ -21,15 +23,50 @@ class SaleController extends Controller
         return view('admin.sale.list', compact('sales', 'title'));
     }
 
-    // Show create sale form
-    public function create()
+   
+    public function create(Request $request)
     {
-        $customers = Customer::all();
-        $discountTaxes = SalesDiscountTax::all();
-        $products = Product::all();
         $title = "Add Sale";
-        return view('admin.sale.add', compact('customers', 'products', 'title', 'discountTaxes'));
+        $categories = Category::all();
+        $units = Unit::all();
+    
+        $search = $request->input('search');
+    
+        if ($search) {
+            // Search mode: fetch all matching products (no pagination)
+            $products = Product::whereNull('deleted_at')
+                ->where(function($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('sku', 'like', "%{$search}%")
+                          ->orWhere('barcode', 'like', "%{$search}%");
+                })
+                ->get();
+        } else {
+            // No search: show latest 10 products with pagination
+            $products = Product::whereNull('deleted_at')
+                ->latest()->get();
+        }
+    
+        return view('admin.sale.create', compact('categories', 'units', 'products', 'title'));
     }
+
+
+    public function process(Request $request)
+    {
+        // Access data like:
+        // $request->cart_data
+        // $request->total_payable
+        // $request->payment_method
+        // $request->amount_paid
+
+        dd($request->all());
+
+        // Logic to store order, deduct stock, etc.
+
+        return redirect()->back()->with('success', 'Payment completed!');
+    }
+
+
 
     // Store new sale and sale items
     public function store(Request $request)

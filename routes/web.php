@@ -37,36 +37,6 @@ Route::get('/dashboard', function () {
 
 Route::middleware('auth', 'verified')->group(function () {
 
-    // // Stores
-    // Route::get('/stores/list', [StoreController::class, 'index'])->name('store.list');
-    // Route::get('/stores/create', [StoreController::class, 'create'])->name('store.create');
-    // Route::post('/stores/store', [StoreController::class, 'store'])->name('store.store');
-    // Route::get('/stores/edit/{id}', [StoreController::class, 'edit'])->name('store.edit');
-    // Route::post('/stores/edit/{id}', [StoreController::class, 'update'])->name('store.update');
-    // Route::get('/stores/delete/{id}', [StoreController::class, 'destroy'])->name('store.delete');
-
-
-
-    // // Company
-    // Route::get('/company/list', [CompanyController::class, 'index'])->name('company.list');
-    // Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
-    // Route::post('/company/store', [CompanyController::class, 'store'])->name('company.store');
-    // Route::get('/company/edit/{id}', [CompanyController::class, 'edit'])->name('company.edit');
-    // Route::post('/company/edit/{id}', [CompanyController::class, 'update'])->name('company.update');
-    // Route::get('/company/delete/{id}', [CompanyController::class, 'destroy'])->name('company.delete');
-
-
-
-    // // Loan
-    // Route::get('/loan/list', [LoanController::class, 'index'])->name('loan.list');
-    // Route::get('/loan/create', [LoanController::class, 'create'])->name('loan.create');
-    // Route::post('/loan/store', [LoanController::class, 'store'])->name('loan.store');
-    // Route::get('/loan/edit/{id}', [LoanController::class, 'edit'])->name('loan.edit');
-    // Route::post('/loan/edit/{id}', [LoanController::class, 'update'])->name('loan.update');
-    // Route::get('/loan/delete/{id}', [LoanController::class, 'destroy'])->name('loan.delete');
-    // Route::get('/get-users-by-type', [LoanController::class, 'getUsersByType'])->name('get.users.by.type'); // for loans
-
-
 
     // // Expense
     // Route::get('/expense/list', [ExpenseController::class, 'index'])->name('expense.list');
@@ -241,16 +211,32 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
-        Route::prefix('purchases')->name('purchases.')->group(function () {
-            Route::get('/', [PurchaseController::class, 'index'])->name('list');
-            Route::get('/create', [PurchaseController::class, 'create'])->name('create');
-            Route::post('/store', [PurchaseController::class, 'store'])->name('store');
-            Route::get('/{id}/edit', [PurchaseController::class, 'edit'])->name('edit');
-            Route::post('/{id}', [PurchaseController::class, 'update'])->name('update');
-            Route::delete('/{id}', [PurchaseController::class, 'destroy'])->name('destroy');
-            // Purchase Items View
-            // Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('items');
-            Route::get('/purchase/invoice/{id}', [PurchaseController::class, 'invoice'])->name('invoice');
+    Route::prefix('purchases')->name('purchases.')->group(function () {
+        Route::get('/', [PurchaseController::class, 'index'])->name('list');
+        Route::get('/create', [PurchaseController::class, 'create'])->name('create');
+        Route::post('/store', [PurchaseController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [PurchaseController::class, 'edit'])->name('edit');
+        Route::post('/{id}', [PurchaseController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PurchaseController::class, 'destroy'])->name('destroy');
+        // Purchase Items View
+        // Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('items');
+        Route::get('/invoice/{id}', [PurchaseController::class, 'invoice'])->name('invoice');
+
+    });
+
+
+    Route::prefix('sales')->name('sales.')->group(function () {
+        Route::get('/', [SaleController::class, 'index'])->name('list');
+        Route::get('/create', [SaleController::class, 'create'])->name('create');
+        Route::post('/checkout', [SaleController::class, 'process'])->name('checkout.process');
+
+        Route::post('/store', [SaleController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [SaleController::class, 'edit'])->name('edit');
+        Route::post('/{id}', [SaleController::class, 'update'])->name('update');
+        Route::delete('/{id}', [SaleController::class, 'destroy'])->name('destroy');
+        // Purchase Items View
+        // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
+        Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
 
     });
 
