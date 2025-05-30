@@ -60,16 +60,6 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
-    // // Payments
-    // Route::get('/payment/list', [FinanceController::class, 'payments'])->name('payment.list');
-    // Route::get('/payment/create', [FinanceController::class, 'createPayment'])->name('payment.create');
-    // Route::post('/payment/store', [FinanceController::class, 'storePayment'])->name('payment.store');
-    // Route::get('/payment/edit/{id}', [FinanceController::class, 'editPayment'])->name('payment.edit');
-    // Route::post('/payment/update/{id}', [FinanceController::class, 'updatePayment'])->name('payment.update');
-    // Route::get('/payment/delete/{id}', [FinanceController::class, 'deletePayment'])->name('payment.delete');
-
-
-
     // // Profits
     // Route::get('/profit/list', [FinanceController::class, 'profits'])->name('profit.list');
     // Route::get('/profit/create', [FinanceController::class, 'createProfit'])->name('profit.create');
@@ -87,22 +77,6 @@ Route::middleware('auth', 'verified')->group(function () {
     // Route::get('stock-adjustments/edit/{id}', [StockAdjustmentController::class, 'edit'])->name('stock_adjustments.edit');
     // Route::put('stock-adjustments/update/{id}', [StockAdjustmentController::class, 'update'])->name('stock_adjustments.update');
     // Route::get('stock-adjustments/delete/{id}', [StockAdjustmentController::class, 'destroy'])->name('stock_adjustments.destroy');
-
-
-
-    // Route::prefix('sales')->group(function () {
-    //     // Payments
-    //     Route::get('payments/list/{saleId}', [SalesPaymentController::class, 'index'])->name('payments.list');
-    //     Route::get('payments/create/{saleId}', [SalesPaymentController::class, 'create'])->name('payments.create');
-    //     Route::post('payments/store/{saleId}', [SalesPaymentController::class, 'store'])->name('payments.store');
-    //     Route::get('payments/edit/{id}', [SalesPaymentController::class, 'edit'])->name('payments.edit');
-    //     Route::put('payments/update/{id}', [SalesPaymentController::class, 'update'])->name('payments.update');
-    //     Route::get('payments/delete/{id}', [SalesPaymentController::class, 'destroy'])->name('payments.destroy');
-    
-    //     // Discounts & Taxes
-    //     Route::get('{saleId}/discounts-taxes', [SalesDiscountTaxController::class, 'edit'])->name('discount_taxes.edit');
-    //     Route::post('{saleId}/discounts-taxes', [SalesDiscountTaxController::class, 'update'])->name('discount_taxes.update');
-    // });
 
 
     
@@ -238,6 +212,14 @@ Route::middleware('auth', 'verified')->group(function () {
         // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
 
+    });
+
+
+    Route::prefix('payments')->name('payments.')->group(function () {
+        Route::get('/', [FinanceController::class, 'index'])->name('list');
+        Route::get('/create', [FinanceController::class, 'create'])->name('create');
+        Route::post('/store', [FinanceController::class, 'store'])->name('store');
+        Route::delete('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
     });
 
 

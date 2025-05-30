@@ -53,15 +53,14 @@ class SaleController extends Controller
 
     public function process(Request $request)
     {
+
+        dd($request->all());
+
         // Access data like:
         // $request->cart_data
         // $request->total_payable
         // $request->payment_method
         // $request->amount_paid
-
-        dd($request->all());
-
-        // Logic to store order, deduct stock, etc.
 
         return redirect()->back()->with('success', 'Payment completed!');
     }

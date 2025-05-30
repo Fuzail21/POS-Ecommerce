@@ -6,25 +6,40 @@ use Illuminate\Http\Request;
 use App\Models\Payment;
 use App\Models\Profit;
 use App\Models\Customer;
-use App\Models\Loan;
+use App\Models\Sale;
 use App\Models\Store;
+use App\Models\Supplier;
+use App\Models\Purchase;
 
 class FinanceController extends Controller
 {
     // ---------- PAYMENTS ----------
 
-    public function payments(){
+    public function index(){
         $title =  "Payments List";
-        $payments = Payment::with(['customer','vendor'])
+        $payments = Payment::with(['entity','creator', 'reference'])
                            ->paginate(20);
+                        //    dd($payments);
     
-        return view('admin.finance.payment.list', compact('payments', 'title'));
+        return view('admin.payments.list', compact('payments', 'title'));
     }
-    
-    public function createPayment(){
+
+    public function create($type, $id)
+    {
         $title =  "Add Payment";
-        $loans = Loan::with(['customer', 'vendor'])->get();
-        return view('admin.finance.payment.add', compact('loans', 'title'));
+        if ($type === 'sale') {
+            $reference = Sale::findOrFail($id);
+            $entityType = 'customer';
+            $entity = $reference->customer;
+        } elseif ($type === 'purchase') {
+            $reference = Purchase::findOrFail($id);
+            $entityType = 'supplier';
+            $entity = $reference->supplier;
+        } else {
+            abort(404);
+        }
+
+        return view('admin.payments.create', compact('reference', 'entity', 'entityType', 'title'));
     }
 
     public function storePayment(Request $request){

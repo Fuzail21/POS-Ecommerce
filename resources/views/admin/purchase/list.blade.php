@@ -59,7 +59,7 @@
                                 <tbody>
                                     @forelse ($purchases as $index => $purchase)
                                         <tr>
-                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ $purchase->id }}</td>
                                             <td>{{ $purchase->invoice_number }}</td>
                                             <td>{{ $purchase->supplier->name ?? '-' }}</td>
                                             <td>{{ $purchase->branch->name ?? '-' }}</td>

@@ -361,6 +361,33 @@
                         </ul>
                     </li>
 
+
+                    <li class="{{ Route::is('payments.list') || Route::is('payments.create') ? 'active' : '' }}">
+                        <a href="#payments" class="{{ Route::is('payments.list') || Route::is('payments.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('payments.list') || Route::is('payments.create') ? 'true' : 'false' }}">
+                            <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 3h-1a2 2 0 0 0-2 2v2h6V5a2 2 0 0 0-2-2z"></path>
+                            </svg>
+                            <span class="ml-4">Payments</span>
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                                <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                            </svg>
+                        </a>
+
+                        <ul id="payments" class="iq-submenu collapse {{ Route::is('payments.list') || Route::is('payments.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                            <li class="{{ Route::is('payments.list') ? 'active' : '' }}">
+                                <a href="{{ route('payments.list') }}">
+                                    <i class="las la-minus"></i><span>List Payments</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::is('payments.create') ? 'active' : '' }}">
+                                <a href="{{ route('payments.create') }}">
+                                    <i class="las la-minus"></i><span>Add Payment</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     {{-- <li class="{{ Route::is('company.list') || Route::is('company.create') ? 'active' : '' }}">
                         <a href="#company" class="{{ Route::is('company.list') || Route::is('company.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('company.list') || Route::is('company.create') ? 'true' : 'false' }}">
                             <!-- Company Icon -->
@@ -518,32 +545,6 @@
                             <li class="{{ Route::is('purchase.create') ? 'active' : '' }}">
                                 <a href="{{ route('purchase.create') }}">
                                     <i class="las la-minus"></i><span>Add Purchase</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-
-                    <li class="{{ Route::is('payment.list') || Route::is('payment.create') ? 'active' : '' }}">
-                        <a href="#payment" class="{{ Route::is('payment.list') || Route::is('payment.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('payment.list') || Route::is('payment.create') ? 'true' : 'false' }}">
-                            <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                                <path d="M16 3h-1a2 2 0 0 0-2 2v2h6V5a2 2 0 0 0-2-2z"></path>
-                            </svg>
-                            <span class="ml-4">Payments</span>
-                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                                <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                            </svg>
-                        </a>
-
-                        <ul id="payment" class="iq-submenu collapse {{ Route::is('payment.list') || Route::is('payment.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
-                            <li class="{{ Route::is('payment.list') ? 'active' : '' }}">
-                                <a href="{{ route('payment.list') }}">
-                                    <i class="las la-minus"></i><span>List Payments</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::is('payment.create') ? 'active' : '' }}">
-                                <a href="{{ route('payment.create') }}">
-                                    <i class="las la-minus"></i><span>Add Payment</span>
                                 </a>
                             </li>
                         </ul>

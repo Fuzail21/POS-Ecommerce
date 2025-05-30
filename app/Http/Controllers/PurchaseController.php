@@ -150,44 +150,44 @@ class PurchaseController extends Controller
         }
     }
 
-    public function edit($id){
-        $title = "Edit Purchase";
-        $suppliers = Supplier::all();
-        $products = Product::with('baseUnit')->get(); 
-        $productsMapped = $products->map(function ($product) {
-            return [
-                'id' => $product->id,
-                'name' => $product->name,
-                'price' => $product->sale_price,
-                'unit' => $product->baseUnit->name,
-                'unit_id' => $product->baseUnit->id, // <-- Add this line
-            ];
-        });
-        $purchase = Purchase::with('items')->findOrFail($id);
-        return view('admin.purchase.create', compact('purchase', 'title', 'suppliers', 'products', 'productsMapped'));
-    }
+    // public function edit($id){
+    //     $title = "Edit Purchase";
+    //     $suppliers = Supplier::all();
+    //     $products = Product::with('baseUnit')->get(); 
+    //     $productsMapped = $products->map(function ($product) {
+    //         return [
+    //             'id' => $product->id,
+    //             'name' => $product->name,
+    //             'price' => $product->sale_price,
+    //             'unit' => $product->baseUnit->name,
+    //             'unit_id' => $product->baseUnit->id, // <-- Add this line
+    //         ];
+    //     });
+    //     $purchase = Purchase::with('items')->findOrFail($id);
+    //     return view('admin.purchase.create', compact('purchase', 'title', 'suppliers', 'products', 'productsMapped'));
+    // }
 
-    public function update(Request $request, $id){
-        $purchase = Purchase::findOrFail($id);
-        $purchase->vendor_id = $request->vendor_id;
-        $purchase->total_amount = $request->total_amount;
-        $purchase->save();
+    // public function update(Request $request, $id){
+    //     $purchase = Purchase::findOrFail($id);
+    //     $purchase->vendor_id = $request->vendor_id;
+    //     $purchase->total_amount = $request->total_amount;
+    //     $purchase->save();
 
-        // Remove old items
-        $purchase->items()->delete();
+    //     // Remove old items
+    //     $purchase->items()->delete();
 
-        // Add updated items
-        foreach ($request->items as $item) {
-            $purchaseItem = new PurchaseItem();
-            $purchaseItem->purchase_id = $purchase->id;
-            $purchaseItem->product_id = $item['product_id'];
-            $purchaseItem->quantity = $item['quantity'];
-            $purchaseItem->cost = $item['cost'];
-            $purchaseItem->save();
-        }
+    //     // Add updated items
+    //     foreach ($request->items as $item) {
+    //         $purchaseItem = new PurchaseItem();
+    //         $purchaseItem->purchase_id = $purchase->id;
+    //         $purchaseItem->product_id = $item['product_id'];
+    //         $purchaseItem->quantity = $item['quantity'];
+    //         $purchaseItem->cost = $item['cost'];
+    //         $purchaseItem->save();
+    //     }
 
-        return redirect()->route('purchase.list')->with('success', 'Purchase updated successfully.');
-    }
+    //     return redirect()->route('purchase.list')->with('success', 'Purchase updated successfully.');
+    // }
 
     public function destroy($id){
         DB::beginTransaction();
@@ -255,15 +255,15 @@ class PurchaseController extends Controller
     }
 
 
-    public function showItems($id) {
-        $title = "Purchase Items";
+    // public function showItems($id) {
+    //     $title = "Purchase Items";
     
-        // Eager loads the purchase with its items and each item's product
-        $purchase = Purchase::with('items.product')->findOrFail($id);
+    //     // Eager loads the purchase with its items and each item's product
+    //     $purchase = Purchase::with('items.product')->findOrFail($id);
     
-        // Passes the data to the Blade view
-        return view('admin.purchase_items.list', compact('purchase', 'title'));
-    }
+    //     // Passes the data to the Blade view
+    //     return view('admin.purchase_items.list', compact('purchase', 'title'));
+    // }
 
     public function invoice($id){
         $title = 'Invoice';

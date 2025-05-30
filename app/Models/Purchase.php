@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Payment; 
 
 class Purchase extends Model
 {
@@ -41,10 +42,21 @@ class Purchase extends Model
         return $this->hasMany(PurchaseItem::class, 'purchase_id');
     }
 
-    public function payments()
+    public function payment()
     {
         return $this->hasMany(Payment::class); // if you have payment tracking
     }
+
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'reference', 'ref_type', 'ref_id');
+    }
+
+    public function getDueAttribute()
+    {
+        return $this->total - $this->payments()->sum('amount');
+    }
+
 
 
 }

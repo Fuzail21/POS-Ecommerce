@@ -11,5 +11,11 @@ class Customer extends Model
     protected $fillable = [
         'name', 'phone', 'email', 'address', 'balance'
     ];
+
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'entity', 'entity_type', 'entity_id');
+    }
+
 }
 
