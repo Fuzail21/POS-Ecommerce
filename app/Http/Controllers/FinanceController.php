@@ -10,6 +10,8 @@ use App\Models\Sale;
 use App\Models\Store;
 use App\Models\Supplier;
 use App\Models\Purchase;
+use Illuminate\Support\Facades\DB;
+
 
 class FinanceController extends Controller
 {
@@ -24,196 +26,109 @@ class FinanceController extends Controller
         return view('admin.payments.list', compact('payments', 'title'));
     }
 
-    public function create($type, $id)
-    {
-        $title =  "Add Payment";
-        if ($type === 'sale') {
-            $reference = Sale::findOrFail($id);
-            $entityType = 'customer';
-            $entity = $reference->customer;
-        } elseif ($type === 'purchase') {
-            $reference = Purchase::findOrFail($id);
-            $entityType = 'supplier';
-            $entity = $reference->supplier;
-        } else {
-            abort(404);
-        }
-
-        return view('admin.payments.create', compact('reference', 'entity', 'entityType', 'title'));
+    public function create(){
+        $title = "Add Payment";
+        $customers = Sale::where('due_amount', '>', 0)->with('customer')->get()->groupBy('customer_id');
+        $suppliers = Purchase::where('due_amount', '>', 0)->with('supplier')->get()->groupBy('supplier_id');
+    
+        return view('admin.payments.create', compact('title', 'customers', 'suppliers'));
     }
 
-    public function storePayment(Request $request){
+    public function store(Request $request){
         $request->validate([
-            'loan_id' => 'required|integer',
-            'amount_paid' => 'required|numeric|min:0.01',
-            'payment_date' => 'required|date',
+            'entity_type'     => 'required|in:customer,supplier',
+            'entity_id'       => 'required|integer',
+            'ref_id'          => 'required|integer',
+            'amount'          => 'required|numeric|min:0.01',
+            'payment_method'  => 'required|in:cash,card,bank',
+            'note'            => 'nullable|string',
         ]);
-    
-        $loan = Loan::findOrFail($request->loan_id);
-        // dd($loan);
 
-        // Check if amount_paid is greater than remaining loan amount
-        if ($request->amount_paid > $loan->amount) {
-            return back()->withErrors(['amount_paid' => 'The payment amount exceeds the remaining loan amount.'])->withInput();
+        $user = auth()->user();
+
+        // Step 1: Get the reference record (Sale or Purchase)
+        if ($request->entity_type === 'customer') {
+            $reference = Sale::findOrFail($request->ref_id);
+        } else {
+            $reference = Purchase::findOrFail($request->ref_id);
         }
-    
-        // Create the payment
+
+        // Prevent overpayment
+        if ($request->amount > $reference->due_amount) {
+            return back()->withErrors(['amount' => 'Payment exceeds due amount.'])->withInput();
+        }
+
+        // Step 2: Create payment record
         $payment = new Payment();
-        $payment->loan_id = $loan->id;
-        $payment->amount_paid = $request->amount_paid;
-        $payment->payment_date = $request->payment_date;
-        $payment->save();
-    
-        // Subtract payment from loan
-        $loan->amount -= $request->amount_paid;
-    
-        // If loan is fully paid, mark it as paid
-        if ($loan->amount <= 0) {
-            $loan->amount = 0;
-            $loan->status = 'paid'; // assuming 'status' is a column
-        }
-    
-        $loan->save();
-    
-        return redirect()->route('payment.list')->with('success', 'Payment added and loan updated successfully.');
-    }
-    
-    public function editPayment($id){
-        $title =  "Edit Payment";
-        $payment = Payment::findOrFail($id);
-        $payment->load(['customer', 'vendor']);
-
-        // If you're loading all loans
-        $loans = Loan::with(['customer', 'vendor'])->get();
-
-        return view('admin.finance.payment.add', compact('payment', 'loans', 'title'));
-    }
-
-    public function updatePayment(Request $request, $id){
-        $request->validate([
-            'loan_id' => 'required|integer',
-            'amount_paid' => 'required|numeric|min:0.01',
-            'payment_date' => 'required|date',
-        ]);
-
-        $payment = Payment::findOrFail($id);
-        $loan = Loan::findOrFail($request->loan_id);
-
-        // First, reverse the previous payment amount
-        $loan->amount += $payment->amount_paid;
-
-        // Check if new amount_paid exceeds the loan amount
-        if ($request->amount_paid > $loan->amount) {
-            return back()->withErrors(['amount_paid' => 'The payment amount exceeds the remaining loan amount.'])->withInput();
-        }
-
-        // Update the payment
-        $payment->loan_id = $loan->id;
-        $payment->amount_paid = $request->amount_paid;
-        $payment->payment_date = $request->payment_date;
+        $payment->entity_type     = $request->entity_type;
+        $payment->entity_id       = $request->entity_id;
+        $payment->ref_type        = $request->ref_type;
+        $payment->ref_id          = $reference->id;
+        $payment->amount          = $request->amount;
+        $payment->payment_method  = $request->payment_method;
+        $payment->note            = $request->note;
+        $payment->created_by      = $user->id;
         $payment->save();
 
-        // Subtract the new payment amount from the loan
-        $loan->amount -= $request->amount_paid;
+        // Step 3: Update Sale or Purchase record
+        $reference->paid_amount += $request->amount;
+        $reference->due_amount  -= $request->amount;
+        $reference->save();
 
-        // If loan is fully paid, mark it as paid
-        if ($loan->amount <= 0) {
-            $loan->amount = 0;
-            $loan->status = 'paid';
+        // Step 4: Update Customer or Supplier balance
+        if ($request->entity_type === 'customer') {
+            $customer = Customer::findOrFail($reference->customer_id);
+            $customer->balance -= $request->amount;
+            $customer->save();
         } else {
-            $loan->status = 'pending'; // still some amount left
+            $supplier = Supplier::findOrFail($reference->supplier_id);
+            $supplier->balance -= $request->amount;
+            $supplier->save();
         }
 
-        $loan->save();
-
-        return redirect()->route('payment.list')->with('success', 'Payment updated and loan updated successfully.');
+        return redirect()->route('payments.list')->with('success', 'Payment recorded and balances updated successfully.');
     }
 
-    public function deletePayment($id){
-        $payment = Payment::findOrFail($id);
-        $loan = Loan::findOrFail($payment->loan_id);
+    public function destroy($id)
+    {
+        DB::beginTransaction();
 
-        // Add the payment amount back to the loan
-        $loan->amount += $payment->amount_paid;
+        try {
+            $payment = Payment::findOrFail($id);
+            $amount = $payment->amount;
 
-        // Update loan status
-        if ($loan->amount <= 0) {
-            $loan->amount = 0;
-            $loan->status = 'paid';
-        } else {
-            $loan->status = 'pending';
+            // Update Sale or Purchase record
+            if ($payment->ref_type === 'sale') {
+                $sale = Sale::findOrFail($payment->ref_id);
+                $sale->paid_amount -= $amount;
+                $sale->due_amount += $amount;
+                $sale->save();
+            } elseif ($payment->ref_type === 'purchase') {
+                $purchase = Purchase::findOrFail($payment->ref_id);
+                $purchase->paid_amount -= $amount;
+                $purchase->due_amount += $amount;
+                $purchase->save();
+            }
+            
+            // Update Customer or Supplier balance
+            if ($payment->entity_type === 'customer') {
+                $customer = Customer::findOrFail($payment->entity_id);
+                $customer->balance += $amount;
+                $customer->save();
+            } elseif ($payment->entity_type === 'supplier') {
+                $supplier = Supplier::findOrFail($payment->entity_id);
+                $supplier->balance += $amount;
+                $supplier->save();
+            }
+
+            // Finally, delete the payment
+            $payment->delete();
+
+            DB::commit();
+            return redirect()->route('payments.list')->with('success', 'Payment deleted and balances updated.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to delete payment: ' . $e->getMessage());
         }
-
-        $loan->save();
-
-        // Now delete the payment
-        $payment->delete();
-
-        return redirect()->route('payment.list')->with('success', 'Payment deleted and loan updated successfully.');
-    }
-
-
-    // ---------- PROFITS ----------
-
-    public function profits(){
-        $title = "Profits List";
-        $profits = Profit::with('store')->paginate(20);
-        return view('admin.finance.profit.list', compact('profits', 'title'));
-    }
-
-    public function createProfit(){
-        $title = "Add Profits";
-        $stores = Store::all();
-        return view('admin.finance.profit.add', compact('stores', 'title'));
-    }
-
-    public function storeProfit(Request $request){
-        $request->validate([
-            'store_id' => 'required|integer',
-            'total_income' => 'required|numeric',
-            'total_expense' => 'required|numeric',
-        ]);
-
-        $profit = new Profit();
-        $profit->store_id = $request->store_id;
-        $profit->total_income = $request->total_income;
-        $profit->total_expense = $request->total_expense;
-        $profit->net_profit = $request->net_profit;
-
-        // net_profit will be auto-calculated if it's a generated column in database
-        $profit->save();
-
-        return redirect()->route('profit.list')->with('success', 'Profit added successfully.');
-    }
-
-    public function editProfit($id){
-        $profit = Profit::with('store')->findOrFail($id);
-        $stores = Store::all();
-        return view('admin.finance.profit.add', compact('profit', 'stores'));
-    }
-
-    public function updateProfit(Request $request, $id){
-        $request->validate([
-            'store_id' => 'required|integer',
-            'total_income' => 'required|numeric',
-            'total_expense' => 'required|numeric',
-        ]);
-
-        $profit = Profit::findOrFail($id);
-        $profit->store_id = $request->store_id;
-        $profit->total_income = $request->total_income;
-        $profit->total_expense = $request->total_expense;
-        $profit->net_profit = $request->net_profit;
-        // net_profit will auto-update in DB if generated
-        $profit->save();
-
-        return redirect()->route('profit.list')->with('success', 'Profit updated successfully.');
-    }
-
-    public function deleteProfit($id){
-        $profit = Profit::findOrFail($id);
-        $profit->delete();
-
-        return redirect()->route('profit.list')->with('success', 'Profit deleted successfully.');
     }
 }

@@ -23,6 +23,9 @@
                     <div>
                         <h4 class="mb-3">Payemnts List</h4>
                     </div>
+                    <a href="{{ route('payments.create') }}" class="btn btn-primary add-list">
+                        <i class="las la-plus mr-3"></i>Add Payment
+                    </a>
 
                 </div>
             </div>
@@ -65,7 +68,6 @@
                                             <th>Entity Type</th>
                                             <th>Reference</th>
                                             <th>Paid Amount</th>
-                                            {{-- <th>Status</th> --}}
                                             <th>Method</th>
                                             <th>Created By</th>
                                             <th>Action</th>
@@ -84,15 +86,6 @@
                                             <td>{{ ucfirst($payment->entity_type) ?? '-' }}</td>
                                             <td>{{ class_basename($payment->ref_type) }} #{{ $payment->reference->id ?? '-' }}</td>
                                             <td>{{ number_format($payment->amount, 2) }}</td>
-                                            {{-- <td>
-                                                @if($dueAmount === null)
-                                                    <span class="badge bg-secondary">N/A</span>
-                                                @elseif($dueAmount > 0)
-                                                    <span class="badge bg-warning">Pending</span>
-                                                @else
-                                                    <span class="badge bg-success">Paid</span>
-                                                @endif
-                                            </td> --}}
                                             <td>{{ ucfirst($payment->payment_method) }}</td>
                                             <td>{{ $payment->creator->name ?? '-' }}</td>
                                             <td>
@@ -113,7 +106,7 @@
                         </div>
 
                         <!-- Pending Payments Tab -->
-                        <div class="tab-pane fade" id="pendingPayments" role="tabpanel">
+                        {{-- <div class="tab-pane fade" id="pendingPayments" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>
@@ -163,7 +156,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="d-flex justify-content-end mt-3">
                             {{ $payments->links('pagination::bootstrap-5') }}

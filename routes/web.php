@@ -219,7 +219,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->name('list');
         Route::get('/create', [FinanceController::class, 'create'])->name('create');
         Route::post('/store', [FinanceController::class, 'store'])->name('store');
-        Route::delete('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
     });
 
 

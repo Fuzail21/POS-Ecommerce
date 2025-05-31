@@ -39,10 +39,10 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="form-group col-md-6">
+                                {{-- <div class="form-group col-md-6">
                                     <label>Invoice No</label>
                                     <input type="text" name="invoice_no" class="form-control" required>
-                                </div>
+                                </div> --}}
                                 <div class="form-group col-md-6">
                                     <label>Purchase Date</label>
                                     <input type="date" name="purchase_date" class="form-control" value="{{ date('Y-m-d') }}" required>
@@ -153,71 +153,6 @@
     <script>
         let productIndex = 0;
 
-        {{-- function addProductRow() {
-            // build the new row HTML
-            const row = `
-                <tr>
-                        <td>
-                            <select name="products[${productIndex}][id]" class="form-control product-select select2" style="width: 100%;">
-                                <option value="">-- Select Product --</option>
-                                ${
-                                    productsList.map(p => 
-                                        `<option value="${p.id}" data-unit="${p.unit}" data-unit-id="${p.unit_id}">${p.name}</option>`
-                                    ).join('')
-                                }
-                            </select>
-                        </td>
-                        <td><input type="number" name="products[${productIndex}][quantity]" class="form-control quantity-input" min="1" required></td>
-                        <td><input type="text" class="form-control unit-name-input" readonly>
-                            <input type="hidden" name="products[${productIndex}][unit]" class="unit-id-input"></td>
-                        <td><input type="number" step="0.01" name="products[${productIndex}][unit_cost]" class="form-control price-input"></td>
-                        <td><input type="number" step="0.01" name="products[${productIndex}][subtotal]" class="form-control subtotal-input" readonly></td>
-                        <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
-                    </tr>`;
-
-            $('#product-rows').append(row);
-
-            // Delay to ensure DOM is updated, then initialize Select2
-            setTimeout(() => {
-                $('#product-rows .select2').select2({
-                    width: '100%'
-                });
-            }, 100);
-
-            attachEvents();
-            productIndex++;
-        }
-
-
-        function attachEvents() {
-            $('.product-select').off('change').on('change', function () {
-                const selected = $(this).find('option:selected');
-                const unitName = selected.data('unit');
-                const unitId = selected.data('unit-id');
-                const price = selected.data('price');
-                const row = $(this).closest('tr');
-
-                row.find('.unit-name-input').val(unitName);   // Show unit name
-                row.find('.unit-id-input').val(unitId);       // Submit unit ID
-                row.find('.price-input').val(price);          // Set price
-                updateRowSubtotal(row);
-            });
-
-
-            $('.quantity-input, .price-input').off('input').on('input', function () {
-                const row = $(this).closest('tr');
-                updateRowSubtotal(row);
-            });
-
-            $('.remove-row').off('click').on('click', function () {
-                $(this).closest('tr').remove();
-                calculateTotals();
-            });
-
-            $('#discount, #tax, #payment_now').off('input').on('input', calculateTotals);
-        } --}}
-
-
         function addProductRow() {
             const row = `
                 <tr>
@@ -293,11 +228,6 @@
             })
         }
 
-
-
-
-
-
         function updateRowSubtotal(row) {
             const qty = parseFloat(row.find('.quantity-input').val()) || 0;
             const price = parseFloat(row.find('.price-input').val()) || 0;
@@ -327,7 +257,6 @@
             $('#due').val(due.toFixed(2));
         }
 
-
         $(document).ready(function () {
             $('#payment_now').on('input', function () {
                 calculateTotals();
@@ -338,7 +267,6 @@
             $('.select2').select2({ width: '100%' });
             addProductRow(); // Add one default row on load
         });
-
 
         let paymentTabShown = false;
 

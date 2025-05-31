@@ -50,6 +50,24 @@ class PurchaseController extends Controller
 
     public function store(Request $request){
         // dd($request->all());
+
+        $year = date('Y');
+
+        // Get the last sale for the current year
+        $lastPurchase = Purchase::whereYear('created_at', $year)
+            ->where('invoice_number', 'like', "{$year}-invoice-%")
+            ->orderBy('id', 'desc')
+            ->first();
+            
+        if ($lastPurchase && preg_match("/{$year}-invoice-(\d+)/", $lastPurchase->invoice_number, $matches)) {
+            $lastNumber = (int)$matches[1];
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        $invoiceNo = $year . '-invoice-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
         DB::beginTransaction();
 
         try {
@@ -57,7 +75,7 @@ class PurchaseController extends Controller
             $purchase = Purchase::create([
                 'supplier_id' => $request->supplier_id,
                 'branch_id' => null, // $request->branch_id
-                'invoice_number' => $request->invoice_no,
+                'invoice_number' => $invoiceNo,
                 'purchase_date' => $request->purchase_date,
                 'total_amount' => $request->subtotal,
                 // 'discount' => $request->discount,
@@ -135,10 +153,14 @@ class PurchaseController extends Controller
             }
 
             // Step 6: Update supplier balance
-            $dueAmount = $request->due;
+           $dueAmount = $request->due;
+
             if ($dueAmount > 0) {
                 Supplier::where('id', $request->supplier_id)->increment('balance', $dueAmount);
+            } elseif ($dueAmount < 0) {
+                Supplier::where('id', $request->supplier_id)->decrement('balance', abs($dueAmount));
             }
+
 
             DB::commit();
 
