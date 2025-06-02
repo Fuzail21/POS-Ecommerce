@@ -3,22 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
-use App\Models\SalesItem;
+use App\Models\SaleItem;
 use App\Models\Product;
-use App\Models\SalesDiscountTax;
+use App\Models\InventoryStock;
+use App\Models\StockLedger;
+use App\Models\ProductVariant;
+use App\Models\Payment;
 use App\Models\Customer;
 use App\Models\Category;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 
 class SaleController extends Controller
 {
     // Show list of all sales
     public function index(){
         $title = "Sales List";
-        $sales = Sale::with(['customer', 'user'])->latest()->paginate(10);
+        $sales = Sale::with(['customer', 'items', 'payments'])->latest()->paginate(10);
         return view('admin.sale.list', compact('sales', 'title'));
     }
 
@@ -45,134 +50,160 @@ class SaleController extends Controller
                 ->latest()->get();
         }
     
+        // dd($products);
         return view('admin.sale.create', compact('categories', 'units', 'products', 'title', 'customers'));
     }
 
-    public function process(Request $request){
+    public function process(Request $request)
+{
+    // dd($request->all());
+    $year = date('Y');
 
-        dd($request->all());
+    // Generate the next invoice number
+    $lastSale = Sale::whereYear('created_at', $year)
+        ->where('invoice_number', 'like', "{$year}-invoice-%")
+        ->orderBy('id', 'desc')
+        ->first();
 
-        $year = date('Y');
+    $nextNumber = 1;
 
-        // Get the last sale for the current year
-        $lastSale = Sale::whereYear('created_at', $year)
-            ->where('invoice_number', 'like', "{$year}-invoice-%")
-            ->orderBy('id', 'desc')
-            ->first();
-            
-        if ($lastSale && preg_match("/{$year}-invoice-(\d+)/", $lastSale->invoice_number, $matches)) {
-            $lastNumber = (int)$matches[1];
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
+    if ($lastSale && preg_match("/{$year}-invoice-(\d+)/", $lastSale->invoice_number, $matches)) {
+        $nextNumber = (int)$matches[1] + 1;
+    }
+
+    $invoiceNo = "{$year}-invoice-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+    DB::beginTransaction();
+
+    try {
+        $cart = json_decode($request->cart_data, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception('Invalid cart data JSON: ' . json_last_error_msg());
         }
+
+        // Create the sale record
+        $sale = Sale::create([
+            'customer_id'     => $request->customer_id,
+            'warehouse_id'    => null,
+            'invoice_number'  => $invoiceNo,
+            'sale_date'       => now(),
+            'total_amount'    => $request->subtotal,
+            'discount_amount' => $request->discount,
+            'tax_amount'      => $request->tax,
+            'final_amount'    => $request->total_payable,
+            'paid_amount'     => $request->amount_paid,
+            'due_amount'      => $request->balance_due,
+            'payment_method'  => $request->payment_method,
+            'created_by'      => auth()->id(),
+        ]);
+
+        foreach ($cart as $itemKey => $item) {
+            $variantId = null;
+            $productId = $item['id'];
+
+            if (($item['type'] ?? null) === 'variant') {
+                $variantId = $item['id'];
+                $variant = ProductVariant::find($variantId);
+            
+                if (!$variant) {
+                    throw new \Exception("Variant with ID {$variantId} does not exist.");
+                }
+            
+                $productId = $variant->product_id;
+            }
         
-        $invoiceNo = $year . '-invoice-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-
-        DB::beginTransaction();
-
-        try {
-            // Calculate totals
-            $totalAmount = 0;
-            foreach ($request->items as $item) {
-                $totalAmount += $item['unit_price'] * $item['quantity'];
+            $product = Product::find($productId);
+            if (!$product) {
+                throw new \Exception("Product with ID {$productId} does not exist.");
             }
 
-            $discount = $request->discount ?? 0;
-            $tax = $request->tax ?? 0;
-            $grandTotal = $totalAmount - $discount + $tax;
-            $paidAmount = $request->paid_amount ?? 0;
-            $dueAmount = $grandTotal - $paidAmount;
+            $unitId     = $item['unit_id'] ?? null;
+            $quantity   = $item['qty'];
+            $unitPrice  = $item['sale_price'];
+            $totalPrice = $unitPrice * $quantity;
 
-            // Generate invoice number (you can customize this)
-            $invoiceNo = 'INV-' . time();
+            $unit = Unit::find($unitId);
+            $baseQty = $quantity * ($unit->conversion_factor ?? 1);
 
-            // 1. Create Sale
-            $sale = Sale::create([
-                'customer_id' => $request->customer_id,
-                'warehouse_id' => null, // $request->warehouse_id
-                'invoice_no' => $invoiceNo,
-                'sale_date' => Carbon::parse($request->sale_date),
-                'total_amount' => $totalAmount,
-                'discount' => $discount,
-                'tax' => $tax,
-                'grand_total' => $grandTotal,
-                'paid_amount' => $paidAmount,
-                'due_amount' => $dueAmount,
-                'note' => $request->note,
+            SaleItem::create([
+                'sale_id'               => $sale->id,
+                'product_id'            => $productId,
+                'variant_id'            => $variantId,
+                'branch_id'             => null,
+                'unit_id'               => $unitId,
+                'quantity'              => $quantity,
+                'unit_price'            => $unitPrice,
+                'total_price'           => $totalPrice,
+                'quantity_in_base_unit' => $baseQty,
+                'discount'              => null,
+                'tax'                   => null,
             ]);
 
-            // 2. Sale Items
-            foreach ($request->items as $item) {
-                $totalPrice = $item['unit_price'] * $item['quantity'];
+            // Update inventory stock
+            $stock = InventoryStock::where([
+                'product_id'   => $productId,
+                'variant_id'   => $variantId,
+                'warehouse_id' => null,
+            ])->first();
 
-                $unit = Unit::find($unitId);
-                $baseQty = $quantity * ($unit->conversion_factor ?? 1);
-
-                // Insert into sale_items
-                $saleItem = SaleItem::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'] ?? null,
-                    'unit_id' => $item['unit_id'] ?? null,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'total_price' => $totalPrice,
-                ]);
-
-                // 3. Update inventory_stocks (decrease)
-                $stock = InventoryStock::where([
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'] ?? null,
-                    'warehouse_id' => $request->warehouse_id,
-                ])->first();
-
-
-                if ($stock) {
-                    $stock->decrement('quantity_in_base_unit', $baseQty);
-                }
-
-                // 4. Insert into stock_ledger
-                StockLedger::create([
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'] ?? null,
-                    'warehouse_id' => $request->warehouse_id,
-                    'ref_type' => 'sale',
-                    'ref_id' => $sale->id,
-                    'quantity_change_in_base_unit' => $baseQty,
-                    'unit_cost' => $item['unit_price'], // Optional: You can use purchase cost instead
-                    'direction' => 'out',
-                    'created_by' => auth()->id(),
-                ]);
+            if ($stock) {
+                $stock->decrement('quantity_in_base_unit', $baseQty);
             }
 
-            // 5. Insert payment if any
-            if ($paidAmount > 0) {
-                Payment::create([
-                    'customer_id' => $request->customer_id,
-                    'ref_type' => 'sale',
-                    'ref_id' => $sale->id,
-                    'amount' => $paidAmount,
-                    'method' => $request->method ?? 'cash',
-                    'paid_by' => auth()->id(),
-                    'payment_date' => now(),
-                    'note' => $request->payment_note,
-                ]);
-            }
-
-            // 6. Update customer balance
-            if ($dueAmount > 0) {
-                Customer::where('id', $request->customer_id)->increment('balance', $dueAmount);
-            }
-
-            DB::commit();
-
-            return redirect()->route('sales.index')->with('success', 'Sale recorded successfully!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Error occurred: ' . $e->getMessage());
+            StockLedger::create([
+                'product_id'                   => $productId,
+                'variant_id'                   => $variantId,
+                'warehouse_id'                 => null,
+                'ref_type'                     => 'sale',
+                'ref_id'                       => $sale->id,
+                'quantity_change_in_base_unit' => $baseQty,
+                'unit_cost'                    => $unitPrice,
+                'direction'                    => 'out',
+                'created_by'                   => auth()->id(),
+            ]);
         }
+
+        // Handle payment
+        if ($request->amount_paid > 0) {
+            Payment::create([
+                'entity_type'      => 'customer',
+                'entity_id'        => $request->customer_id,
+                'transaction_type' => 'out',
+                'ref_type'         => 'sale',
+                'ref_id'           => $sale->id,
+                'amount'           => $request->amount_paid,
+                'method'           => $request->payment_method,
+                'created_by'       => auth()->id(),
+                'note'             => null,
+            ]);
+        }
+
+        // Adjust customer balance
+        $dueAmount = $request->balance_due;
+        if ($dueAmount > 0) {
+            Customer::where('id', $request->customer_id)->increment('balance', $dueAmount);
+        } elseif ($dueAmount < 0) {
+            Customer::where('id', $request->customer_id)->decrement('balance', abs($dueAmount));
+        }
+
+        DB::commit();
+
+        return redirect()->route('sales.list')->with('success', 'Sale recorded successfully!');
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::error('Sale Processing Failed', [
+            'message' => $e->getMessage(),
+            'trace'   => $e->getTraceAsString(),
+            'request' => $request->all(),
+        ]);
+
+        return back()->withInput()->with('error', 'An error occurred while processing the sale: ' . $e->getMessage());
     }
+}
+
+
 
     // Delete a sale and its items
     public function destroy($id){

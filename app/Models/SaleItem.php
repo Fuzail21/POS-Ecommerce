@@ -20,6 +20,8 @@ class SaleItem extends Model
         'discount',
         'tax',
         'total_price',
+        'quantity',
+        'unit_id',
     ];
 
     public function sale()

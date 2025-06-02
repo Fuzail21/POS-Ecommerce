@@ -18,8 +18,8 @@ return new class extends Migration
             $table->foreignId('variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('quantity_in_base_unit', 15, 4);
             $table->decimal('unit_price', 15, 2);
-            $table->decimal('discount', 15, 2)->default(0);
-            $table->decimal('tax', 15, 2)->default(0);
+            $table->decimal('discount', 15, 2)->default(0)->nullable();
+            $table->decimal('tax', 15, 2)->default(0)->nullable();
             $table->decimal('total_price', 15, 2);
             $table->timestamps();
             $table->softDeletes();

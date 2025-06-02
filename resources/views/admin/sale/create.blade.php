@@ -17,6 +17,18 @@
     <div class="container-fluid">
         <div class="row">
 
+@if (session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
+
+@if (session('success'))
+    <div class="alert alert-success">
+        {{ session('success') }}
+    </div>
+@endif
+
         
             <!-- Product Search Panel -->
             <div class="col-md-7">
@@ -59,7 +71,7 @@
                                             <div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>
                                         @endif
 
-                                        <h6 class="mt-2 mb-1">{{ $product['name'] }}</h6>
+                                        <h6 class="mt-2 mb-1">{{ $product['name']}}</h6>
 
                                         @if($product->variants->count())
                                             <!-- Product with Variants -->
@@ -69,7 +81,8 @@
                                                     <option 
                                                         value="variant-{{ $variant->id }}"
                                                         data-name="{{ $product->name }} - {{ $variant->variant_name }}"
-                                                        data-price="{{ $variant->sale_price }}">
+                                                        data-price="{{ $variant->sale_price }}"
+                                                        data-unit-id="{{ $product->default_display_unit_id }}">
                                                         {{ $variant->variant_name }} - ${{ number_format($variant->sale_price, 2) }}
                                                     </option>
                                                 @endforeach
@@ -82,7 +95,8 @@
                                                 class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
                                                 data-id="product-{{ $product->id }}"
                                                 data-name="{{ $product->name }}"
-                                                data-price="{{ $product->sale_price }}">
+                                                data-price="{{ $product->sale_price }}"
+                                                data-unit-id="{{ $product->default_display_unit_id }}">
                                                 Add to Cart
                                             </button>
                                         @endif
@@ -253,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCustomerInput.value = customerSelect.value;
     });
 
-
     function updateCartUI() {
         cartItemsEl.innerHTML = '';
         let subtotal = 0;
@@ -312,55 +325,61 @@ document.addEventListener('DOMContentLoaded', () => {
         chargeBtn.disabled = Object.keys(cart).length === 0;
     }
 
-    // Handle variant dropdown change
+    function addToCart(id, name, price, unit_id) {
+        if (cart[id]) {
+            cart[id].qty++;
+        } else {
+            cart[id] = {
+                name,
+                sale_price: price,
+                unit_id,
+                qty: 1
+            };
+        }
+        updateCartUI();
+    }
+
     document.querySelectorAll('.variant-selector').forEach(selector => {
         selector.addEventListener('change', function () {
             const card = this.closest('.product-item');
             const selected = this.options[this.selectedIndex];
             const id = selected.value;
-            const name = selected.getAttribute('data-name');
-            const price = parseFloat(selected.getAttribute('data-price'));
+            const name = selected.dataset.name;
+            const price = parseFloat(selected.dataset.price);
+            const unit_id = selected.dataset.unitId; // ✅ FIXED HERE
             const addBtn = card.querySelector('.add-variant-to-cart');
+    
             addBtn.disabled = false;
             addBtn.dataset.id = id;
             addBtn.dataset.name = name;
             addBtn.dataset.price = price;
+            addBtn.dataset.unitId = unit_id;
         });
     });
 
-    // Add variant to cart
+
     document.querySelectorAll('.add-variant-to-cart').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
             const name = btn.getAttribute('data-name');
             const price = parseFloat(btn.getAttribute('data-price'));
+            const unit_id = btn.getAttribute('data-unit-id');
 
-            if (cart[id]) {
-                cart[id].qty++;
-            } else {
-                cart[id] = { name, sale_price: price, qty: 1 };
-            }
-            updateCartUI();
+            addToCart(id, name, price, unit_id);
         });
     });
 
-    // Add simple product to cart
     document.querySelectorAll('.add-simple-to-cart').forEach(btn => {
         btn.addEventListener('click', () => {
-            const id = btn.getAttribute('data-id'); // e.g., "product-3"
+            const id = btn.getAttribute('data-id');
             const name = btn.getAttribute('data-name');
             const price = parseFloat(btn.getAttribute('data-price'));
+            const unit_id = btn.getAttribute('data-unit-id');
 
-            if (cart[id]) {
-                cart[id].qty++;
-            } else {
-                cart[id] = { name, sale_price: price, qty: 1 };
-            }
-            updateCartUI();
+            addToCart(id, name, price, unit_id);
         });
     });
 
-    // Cart buttons (increment/decrement/remove)
     cartItemsEl.addEventListener('click', e => {
         const btn = e.target;
         const id = btn.getAttribute('data-id');

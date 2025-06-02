@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('invoice_number')->unique();
             $table->date('sale_date');
             $table->decimal('total_amount', 15, 2);
-            $table->decimal('discount_amount', 15, 2)->default(0);
-            $table->decimal('tax_amount', 15, 2)->default(0);
+            $table->decimal('discount_amount', 15, 2)->default(0)->nullable();
+            $table->decimal('tax_amount', 15, 2)->default(0)->nullable();
             $table->decimal('final_amount', 15, 2);
             $table->decimal('paid_amount', 15, 2)->default(0);
             $table->decimal('due_amount', 15, 2)->default(0);
