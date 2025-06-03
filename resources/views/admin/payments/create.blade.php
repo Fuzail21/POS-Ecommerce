@@ -11,6 +11,12 @@
                     <div class="card-header d-flex justify-content-between">
                         <h4>Add Payment</h4>
                     </div>
+                        @if (session('error'))
+                            <div class="alert alert-danger">{{ session('error') }}</div>
+                        @endif
+                        @if (session('success'))
+                            <div class="alert alert-success">{{ session('success') }}</div>
+                        @endif
                     <div class="card-body">
                         <form action="{{ route('payments.store') }}" method="POST">
                             @csrf

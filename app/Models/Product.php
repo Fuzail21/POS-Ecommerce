@@ -42,5 +42,11 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    public function inventoryStock()
+    {
+        return $this->hasOne(InventoryStock::class, 'product_id');
+    }
+
+
 }
 

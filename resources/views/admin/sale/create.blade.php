@@ -1,13 +1,17 @@
 @extends('layouts.app')
 
 @section('style')
-
-    <style>
-        #product-list .card {
-            min-height: 300px; /* Adjust if you want taller/shorter cards */
-        }
-    </style>
-
+<style>
+    #product-list .card {
+        min-height: 300px;
+    }
+    .pointer-events-none {
+        pointer-events: none;
+    }
+    .opacity-50 {
+        opacity: 0.5;
+    }
+</style>
 @endsection
 
 @section('content')
@@ -17,32 +21,22 @@
     <div class="container-fluid">
         <div class="row">
 
-@if (session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
-@endif
+            @if (session('error'))
+                <div class="alert alert-danger">{{ session('error') }}</div>
+            @endif
+            @if (session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
 
-@if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
-@endif
-
-        
             <!-- Product Search Panel -->
             <div class="col-md-7">
-
-                <div class="card">
+                <div class="card mb-3">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div class="w-75">
                             <label for="customer_id">Select Customer</label>
                             <select name="customer_id" id="customer_id" class="form-control">
-                                {{-- <option value="" selected>Walk-in Customer</option> --}}
                                 @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">
-                                        {{ $customer->name }} 
-                                    </option>
+                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -54,27 +48,33 @@
                     </div>
                 </div>
 
-
                 <div class="card">
                     <div class="card-header">
                         <h4>Search Products</h4>
-                        <input id="product-search" type="text" class="form-control" placeholder="Search by name...">
+                        <form method="GET" action="{{ route('sales.create') }}" style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ request('search') }}" style="flex: 1;" autocomplete="off">
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </form>
+
+
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                         <div class="row" id="product-list">
                             @foreach($products as $product)
+                                @php
+                                    $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
+                                @endphp
                                 <div class="col-md-4 mb-2 product-item d-flex">
-                                    <div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100">
+                                    <div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 {{ $isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '' }}">
                                         @if (!empty($product->product_img))
                                             <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">
                                         @else
                                             <div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>
                                         @endif
 
-                                        <h6 class="mt-2 mb-1">{{ $product['name']}}</h6>
+                                        <h6 class="mt-2 mb-1">{{ $product->name }}</h6>
 
                                         @if($product->variants->count())
-                                            <!-- Product with Variants -->
                                             <select class="form-control mb-2 variant-selector mt-auto" data-product-id="{{ $product->id }}">
                                                 <option disabled selected>Choose Variant</option>
                                                 @foreach($product->variants as $variant)
@@ -82,29 +82,37 @@
                                                         value="variant-{{ $variant->id }}"
                                                         data-name="{{ $product->name }} - {{ $variant->variant_name }}"
                                                         data-price="{{ $variant->sale_price }}"
-                                                        data-unit-id="{{ $product->default_display_unit_id }}">
+                                                        data-stock="{{ $variant->stock_quantity }}"
+                                                        data-unit-id="{{ $product->default_display_unit_id }}"
+                                                        {{ !$variant->in_stock ? 'disabled' : '' }}>
                                                         {{ $variant->variant_name }} - ${{ number_format($variant->sale_price, 2) }}
+                                                        {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
-                                            <!-- Simple Product -->
-                                            <p class="mb-1">${{ number_format($product->sale_price, 2) }}</p>
-                                            <button 
-                                                class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
-                                                data-id="product-{{ $product->id }}"
-                                                data-name="{{ $product->name }}"
-                                                data-price="{{ $product->sale_price }}"
-                                                data-unit-id="{{ $product->default_display_unit_id }}">
-                                                Add to Cart
-                                            </button>
+                                            <p class="mb-1">${{ number_format($product->sale_price, 2) }} 
+                                                <br><small>(Stock: {{ $product->stock_quantity }})</small>
+                                            </p>
+                                            @if($product->in_stock)
+                                                <button 
+                                                    class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
+                                                    data-id="product-{{ $product->id }}"
+                                                    data-name="{{ $product->name }}"
+                                                    data-price="{{ $product->sale_price }}"
+                                                    data-stock="{{ $product->stock_quantity }}"
+                                                    data-unit-id="{{ $product->default_display_unit_id }}">
+                                                    Add to Cart
+                                                </button>
+                                            @else
+                                                <button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
                             @endforeach
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -115,6 +123,7 @@
                     <div class="card-header">
                         <h4>Shopping Cart</h4>
                     </div>
+                    <div id="stock-error" class="alert alert-danger d-none" role="alert"></div>
                     <div class="card-body">
                         <table class="table table-sm">
                             <thead>
@@ -128,7 +137,6 @@
                             <tbody id="cart-items"></tbody>
                         </table>
 
-                        <!-- Summary -->
                         <div class="mt-3">
                             <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
                             <p><strong>Discount:</strong> $<span id="discount">0.00</span></p>
@@ -161,13 +169,11 @@
                 <input type="hidden" name="balance_due" id="balance_due_raw">
                 <input type="hidden" name="customer_id" id="selected_customer_id">
 
-
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Complete Payment</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
-
                     <div class="modal-body">
                         <div class="form-group">
                             <label>Payment Method</label>
@@ -187,7 +193,6 @@
                             <input type="text" id="balance_display" class="form-control" readonly>
                         </div>
                     </div>
-
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-success">Confirm Payment</button>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Back</button>
@@ -198,46 +203,42 @@
     </div>
 </div>
 
-
-
-
-    <!-- Add Customer Modal -->
-    <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <form method="POST" action="{{ route('customers.store') }}">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Customer</h5>
-                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+<!-- Add Customer Modal -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form method="POST" action="{{ route('customers.store') }}">
+        @csrf
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Customer</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name <span class="text-danger">*</span></label>
+                    <input type="text" name="name" class="form-control" required>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Phone <span class="text-danger">*</span></label>
-                        <input type="text" name="phone" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Email (optional)</label>
-                        <input type="email" name="email" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Address (optional)</label>
-                        <textarea name="address" class="form-control" rows="2"></textarea>
-                    </div>
+                <div class="form-group">
+                    <label>Phone <span class="text-danger">*</span></label>
+                    <input type="text" name="phone" class="form-control" required>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Save Customer</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <div class="form-group">
+                    <label>Email (optional)</label>
+                    <input type="email" name="email" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Address (optional)</label>
+                    <textarea name="address" class="form-control" rows="2"></textarea>
                 </div>
             </div>
-        </form>
-      </div>
-    </div>
-
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-success">Save Customer</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </form>
+  </div>
+</div>
 
 
 <!-- JavaScript -->
@@ -359,6 +360,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     document.querySelectorAll('.add-variant-to-cart').forEach(btn => {
+        const card = $(this).closest('.card');
+        const quantity = card.find('.variant-quantity').val();
+        const selectedOption = card.find('.variant-selector option:selected');
+        const stock = selectedOption.data('stock');
+
+        if (parseInt(quantity) > stock) {
+            alert('Requested quantity exceeds available stock.');
+            return;
+        }
+
         btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
             const name = btn.getAttribute('data-name');
@@ -370,6 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('.add-simple-to-cart').forEach(btn => {
+        const quantity = $(this).closest('.card').find('.simple-quantity').val();
+        const maxStock = $(this).data('stock');
+
+        if (parseInt(quantity) > maxStock) {
+            alert('Requested quantity exceeds available stock.');
+            return;
+        }
+
         btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
             const name = btn.getAttribute('data-name');
@@ -420,6 +439,20 @@ document.addEventListener('DOMContentLoaded', () => {
             item.style.display = name.includes(query) ? '' : 'none';
         });
     });
+
+    function showStockError(message) {
+    const errorDiv = document.getElementById('stock-error');
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('d-none');
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        errorDiv.classList.add('d-none');
+    }, 3000);
+}
+
+
+    
 });
 </script>
 @endsection

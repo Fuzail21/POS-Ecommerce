@@ -10,40 +10,27 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
+
+    public function index(){
         $users = User::with('role')->paginate(20);
         $title = 'Users List';
         return view('admin.users.list', compact('users', 'title'));
-
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
+    public function create(){
         $branches = Branch::all();
         $roles = Role::all();
         $title = 'Add New User';
         return view('admin.users.form', compact('title', 'roles', 'branches'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
+    public function store(Request $request){
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'status' => 'required|in:Active,Inactive',
             'password' => 'nullable|string|min:6', // optional, min 6 characters
             'branch_id' => 'nullable|exists:branches,id',
-
         ]);
     
         $user = new User();
@@ -58,18 +45,7 @@ class UserController extends Controller
         return redirect()->route('user.list')->with('success', 'User added successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id){
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
+    public function edit(string $id){
         $branches = Branch::all();
         $roles = Role::all();
         $title = 'Edit User';
@@ -77,12 +53,7 @@ class UserController extends Controller
         return view('admin.users.form', compact('user', 'title', 'roles', 'branches'));
     }
 
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
+    public function update(Request $request, string $id){
         $user = User::find($id);
         $request->validate([
             'name' => 'required|string|max:255',
@@ -108,11 +79,7 @@ class UserController extends Controller
         return redirect()->route('user.list')->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
+    public function destroy(string $id){
         $user = User::find($id);
         if ($user) {
             $user->delete();

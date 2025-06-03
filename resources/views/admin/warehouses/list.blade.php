@@ -49,7 +49,7 @@
                                             <th>Id</th>
                                             <th>Name</th>
                                             <th>Location</th>
-                                            <th>Capacity</th>
+                                            {{-- <th>Capacity</th> --}}
                                             <th>Created At</th>
                                             <th colspan="2">Action</th>
                                         </tr>
@@ -60,7 +60,7 @@
                                                 <td>{{ $warehouse->id }}</td>
                                                 <td>{{ $warehouse->name }}</td>
                                                 <td>{{ $warehouse->location }}</td>
-                                                <td>{{ $warehouse->capacity }}</td>
+                                                {{-- <td>{{ $warehouse->capacity }}</td> --}}
                                                 <td>{{ $warehouse->created_at->format('d M Y') }}</td>
                                                 <td>
                                                     <div class="d-flex align-items-center list-action">

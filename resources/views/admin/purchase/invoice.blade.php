@@ -24,7 +24,7 @@
                     <p>
                         <strong>Invoice No:</strong> {{ $purchase->invoice_number }}<br>
                         <strong>Date:</strong> {{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}<br>
-                        <strong>Warehouse:</strong> {{ $purchase->warehouse->name ?? '-' }}
+                        <strong>Branch:</strong> {{ $purchase->branch->name ?? '-' }}
                     </p>
                 </div>
             </div>

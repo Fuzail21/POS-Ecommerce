@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Unit; 
 
 class SaleItem extends Model
 {
@@ -37,6 +38,11 @@ class SaleItem extends Model
     public function variant()
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 }
 

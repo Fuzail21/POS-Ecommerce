@@ -10,6 +10,14 @@
                     <a href="{{ route('branch.list') }}" class="btn btn-secondary">Back to List</a>
                 </div>
                 <div class="card">
+
+                    @if (session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
+                    @if (session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+
                     <div class="card-body">
                         <form action="{{ isset($branch) ? route('branch.update', $branch->id) : route('branch.store') }}" method="POST">
                             @csrf

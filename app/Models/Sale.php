@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Payment;
+use App\Models\SaleItem;
+use App\Models\Unit; 
+
 
 class Sale extends Model
 {
@@ -55,6 +58,11 @@ class Sale extends Model
     public function getDueAttribute()
     {
         return $this->total - $this->payments()->sum('amount');
+    }
+    
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
 }

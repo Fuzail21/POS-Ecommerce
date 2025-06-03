@@ -350,7 +350,7 @@
                         <ul id="sales" class="iq-submenu collapse {{ Route::is('sales.list') || Route::is('sales.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
                             <li class="{{ Route::is('sales.list') ? 'active' : '' }}">
                                 <a href="{{ route('sales.list') }}">
-                                    <i class="las la-minus"></i><span>List Sales</span>
+                                    <i class="las la-minus"></i><span>Sales List</span>
                                 </a>
                             </li>
                             <li class="{{ Route::is('sales.create') ? 'active' : '' }}">
@@ -377,7 +377,7 @@
                         <ul id="payments" class="iq-submenu collapse {{ Route::is('payments.list') || Route::is('payments.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
                             <li class="{{ Route::is('payments.list') ? 'active' : '' }}">
                                 <a href="{{ route('payments.list') }}">
-                                    <i class="las la-minus"></i><span>List Payments</span>
+                                    <i class="las la-minus"></i><span>Payments List</span>
                                 </a>
                             </li>
                             <li class="{{ Route::is('payments.create') ? 'active' : '' }}">

@@ -20,6 +20,13 @@
                     </li>
                 </ul>
 
+                    @if (session('error'))
+                        <div class="alert alert-danger">{{ session('error') }}</div>
+                    @endif
+                    @if (session('success'))
+                        <div class="alert alert-success">{{ session('success') }}</div>
+                    @endif
+
                 <form action="{{ route('purchases.store') }}" method="POST" id="productForm">
                     @csrf
                     <div class="tab-content">

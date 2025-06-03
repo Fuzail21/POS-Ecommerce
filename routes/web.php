@@ -205,8 +205,8 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/checkout', [SaleController::class, 'process'])->name('checkout.process');
 
         Route::post('/store', [SaleController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [SaleController::class, 'edit'])->name('edit');
-        Route::post('/{id}', [SaleController::class, 'update'])->name('update');
+        // Route::get('/{id}/edit', [SaleController::class, 'edit'])->name('edit');
+        // Route::post('/{id}', [SaleController::class, 'update'])->name('update');
         Route::delete('/{id}', [SaleController::class, 'destroy'])->name('destroy');
         // Purchase Items View
         // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
@@ -219,7 +219,11 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->name('list');
         Route::get('/create', [FinanceController::class, 'create'])->name('create');
         Route::post('/store', [FinanceController::class, 'store'])->name('store');
-        Route::get('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
+
+
+        Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
+
     });
 
 

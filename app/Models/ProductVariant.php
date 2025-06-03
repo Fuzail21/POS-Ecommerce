@@ -25,5 +25,15 @@ class ProductVariant extends Model
     {
         return $this->belongsTo(Product::class);
     }
+    public function inventoryStock()
+    {
+        return $this->hasOne(InventoryStock::class, 'variant_id');
+    }
+    public function baseUnit()
+    {
+        return $this->belongsTo(Unit::class, 'base_unit_id');
+    }
+
+
 }
 

@@ -25,13 +25,13 @@ class WarehouseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'capacity' => 'required|string|max:255',
+            // 'capacity' => 'required|string|max:255',
         ]);
 
         $warehouse = new Warehouse();
         $warehouse->name = $request->name;
         $warehouse->location = $request->location;
-        $warehouse->capacity = $request->capacity;
+        // $warehouse->capacity = $request->capacity;
         // $warehouse->capacity_unit = $request->capacity_unit;
         $warehouse->save();
 
@@ -51,13 +51,13 @@ class WarehouseController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'location' => 'required|string|max:255',
-            'capacity' => 'required|string|max:255',
+            // 'capacity' => 'required|string|max:255',
         ]);
 
         $warehouse = Warehouse::findOrFail($id);
         $warehouse->name = $request->name;
         $warehouse->location = $request->location;
-        $warehouse->capacity = $request->capacity;
+        // $warehouse->capacity = NULL;
         // $warehouse->capacity_unit = $request->capacity_unit;
         $warehouse->save();
 

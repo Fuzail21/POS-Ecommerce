@@ -12,5 +12,5 @@ class Warehouse extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'location', 'capacity'];
+    protected $fillable = ['name', 'location'];
 }

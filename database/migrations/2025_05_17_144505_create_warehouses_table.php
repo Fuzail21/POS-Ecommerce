@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('location');
-            $table->string('capacity');
-            $table->string('capacity_unit')->default('units');
-            $table->integer('used_capacity')->default(0);
+            $table->string('capacity')->nullable();
+            $table->string('capacity_unit')->default('units')->nullable();
+            $table->integer('used_capacity')->default(0)->nullable();
             $table->softDeletes(); // Adds deleted_at
             $table->timestamps();
         });
