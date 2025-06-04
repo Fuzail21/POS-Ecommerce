@@ -18,6 +18,16 @@
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="card-body">
                         <form action="{{ isset($branch) ? route('branch.update', $branch->id) : route('branch.store') }}" method="POST">
                             @csrf

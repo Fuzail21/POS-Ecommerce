@@ -9,6 +9,8 @@ use App\Models\Product;
 use App\Models\PurchaseItem;
 use App\Models\StockLedger;
 use App\Models\InventoryStock;
+use App\Models\Warehouse;
+
 use App\Models\Payment;
 use App\Models\Supplier;
 use App\Models\SupplierLedger;
@@ -18,13 +20,14 @@ class PurchaseController extends Controller
 {
     public function index(){
         $title = "Purchases List";
-        $purchases = Purchase::with(['supplier', 'branch'])->latest()->paginate(20);
+        $purchases = Purchase::with(['supplier', 'branch', 'warehouse'])->latest()->paginate(20);
         return view('admin.purchase.list', compact('purchases', 'title'));
     }
 
     public function create(){
         $title = "Add Purchase";
         $suppliers = Supplier::all();
+        $warehouses = Warehouse::all();
         $products = Product::with('baseUnit')->get(); 
         $productsMapped = $products->map(function ($product) {
             return [
@@ -45,7 +48,7 @@ class PurchaseController extends Controller
             ];
         });
 
-        return view('admin.purchase.create', compact('title', 'suppliers', 'products', 'productsMapped'));
+        return view('admin.purchase.create', compact('title', 'suppliers', 'products', 'productsMapped', 'warehouses'));
     }
 
     public function store(Request $request){
@@ -74,7 +77,7 @@ class PurchaseController extends Controller
             // Step 1: Insert into purchases
             $purchase = Purchase::create([
                 'supplier_id' => $request->supplier_id,
-                'branch_id' => null, // $request->branch_id
+                'warehouse_id' => $request->warehouse_id, // $request->warehouse_id
                 'invoice_number' => $invoiceNo,
                 'purchase_date' => $request->purchase_date,
                 'total_amount' => $request->subtotal,
@@ -118,7 +121,7 @@ class PurchaseController extends Controller
                 StockLedger::create([
                     'product_id' => $productId,
                     'variant_id' => $variantId,
-                    'warehouse_id' => null, // $request->branch_id
+                    'warehouse_id' => $purchase->warehouse_id, // $request->warehouse_id
                     'ref_type' => 'purchase',
                     'ref_id' => $purchase->id,
                     'quantity_change_in_base_unit' => $baseQty,
@@ -131,7 +134,7 @@ class PurchaseController extends Controller
                 $stock = InventoryStock::firstOrNew([
                     'product_id' => $productId,
                     'variant_id' => $variantId,
-                    'warehouse_id' => null, // $request->branch_id
+                    'warehouse_id' => $purchase->warehouse_id, // $request->warehouse_id
                 ]);
                 $stock->quantity_in_base_unit += $baseQty;
                 $stock->save();

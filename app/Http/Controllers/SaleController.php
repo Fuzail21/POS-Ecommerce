@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\Payment;
 use App\Models\Customer;
 use App\Models\Category;
+use App\Models\Branch;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\SaleController;
@@ -29,6 +30,7 @@ class SaleController extends Controller
     public function create(Request $request){
         $title = "Add Sale";
         $categories = Category::all();
+        $branches = Branch::all();
         $customers = Customer::all();
         $units = Unit::all();
 
@@ -100,12 +102,12 @@ class SaleController extends Controller
             'units',
             'products',
             'title',
-            'customers'
+            'customers', 
+            'branches'
         ));
     }
 
     public function process(Request $request){
-        // dd($request->all());
         $year = date('Y');
 
         // Generate the next invoice number
@@ -115,26 +117,32 @@ class SaleController extends Controller
             ->first();
 
         $nextNumber = 1;
-
         if ($lastSale && preg_match("/{$year}-invoice-(\d+)/", $lastSale->invoice_number, $matches)) {
             $nextNumber = (int)$matches[1] + 1;
         }
 
         $invoiceNo = "{$year}-invoice-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
+        $branch = Branch::find($request->branch_id);
+        $warehouse_id = $branch->warehouse_id ?? null;
+
+        if (!$warehouse_id) {
+            return back()->withInput()->with('error', 'Branch does not have an associated warehouse.');
+        }
+
         DB::beginTransaction();
 
         try {
             $cart = json_decode($request->cart_data, true);
 
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Invalid cart data JSON: ' . json_last_error_msg());
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($cart)) {
+                throw new \Exception('Invalid cart data.');
             }
 
-            // Create the sale record
+            // Create the sale
             $sale = Sale::create([
                 'customer_id'     => $request->customer_id,
-                'warehouse_id'    => null,
+                'branch_id'       => $request->branch_id,
                 'invoice_number'  => $invoiceNo,
                 'sale_date'       => now(),
                 'total_amount'    => $request->subtotal,
@@ -147,24 +155,12 @@ class SaleController extends Controller
                 'created_by'      => auth()->id(),
             ]);
 
-            foreach ($cart as $itemKey => $item) {
-                $variantId = null;
-                $productId = $item['id'];
+            foreach ($cart as $item) {
+                $variantId = $item['type'] === 'variant' ? $item['id'] : null;
+                $productId = $variantId ? ProductVariant::find($variantId)?->product_id : $item['id'];
 
-                if (($item['type'] ?? null) === 'variant') {
-                    $variantId = $item['id'];
-                    $variant = ProductVariant::find($variantId);
-                
-                    if (!$variant) {
-                        throw new \Exception("Variant with ID {$variantId} does not exist.");
-                    }
-                
-                    $productId = $variant->product_id;
-                }
-            
-                $product = Product::find($productId);
-                if (!$product) {
-                    throw new \Exception("Product with ID {$productId} does not exist.");
+                if (!$productId || !Product::find($productId)) {
+                    continue; // Skip invalid product
                 }
 
                 $unitId     = $item['unit_id'] ?? null;
@@ -179,7 +175,6 @@ class SaleController extends Controller
                     'sale_id'               => $sale->id,
                     'product_id'            => $productId,
                     'variant_id'            => $variantId,
-                    'branch_id'             => null,
                     'unit_id'               => $unitId,
                     'quantity'              => $quantity,
                     'unit_price'            => $unitPrice,
@@ -189,27 +184,24 @@ class SaleController extends Controller
                     'tax'                   => null,
                 ]);
 
-                // Update inventory stock
+                // Update stock
                 $stock = InventoryStock::where([
                     'product_id'   => $productId,
                     'variant_id'   => $variantId,
-                    'warehouse_id' => null,
+                    'warehouse_id' => $warehouse_id,
                 ])->first();
-                
-                if ($stock) {
-                    if ($stock->quantity_in_base_unit < $baseQty) {
-                        return redirect()->route('sales.list')->with('error', 'Stock exceeded. Only ' . $stock->quantity_in_base_unit . ' units available.');
-                    }
-                    $stock->decrement('quantity_in_base_unit', $baseQty);
-                } else {
-                    return redirect()->route('sales.list')->with('error', 'No stock record found.');
-                
+
+                if (!$stock || $stock->quantity_in_base_unit < $baseQty) {
+                    // skip this product, do not fail the whole transaction
+                    continue;
                 }
+
+                $stock->decrement('quantity_in_base_unit', $baseQty);
 
                 StockLedger::create([
                     'product_id'                   => $productId,
                     'variant_id'                   => $variantId,
-                    'warehouse_id'                 => null,
+                    'warehouse_id'                 => $warehouse_id,
                     'ref_type'                     => 'sale',
                     'ref_id'                       => $sale->id,
                     'quantity_change_in_base_unit' => $baseQty,
@@ -234,7 +226,7 @@ class SaleController extends Controller
                 ]);
             }
 
-            // Adjust customer balance
+            // Adjust balance
             $dueAmount = $request->balance_due;
             if ($dueAmount > 0) {
                 Customer::where('id', $request->customer_id)->increment('balance', $dueAmount);
@@ -247,14 +239,7 @@ class SaleController extends Controller
             return redirect()->route('sales.list')->with('success', 'Sale recorded successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            Log::error('Sale Processing Failed', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-                'request' => $request->all(),
-            ]);
-
-            return back()->withInput()->with('error', 'An error occurred while processing the sale: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Something went wrong. Please try again.');
         }
     }
 

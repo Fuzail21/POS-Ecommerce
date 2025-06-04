@@ -27,6 +27,16 @@
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                 <form action="{{ route('purchases.store') }}" method="POST" id="productForm">
                     @csrf
                     <div class="tab-content">
@@ -43,6 +53,16 @@
                                         <option value="">Select Supplier</option>
                                         @foreach ($suppliers as $supplier)
                                             <option value="{{ $supplier->id }}">{{ $supplier->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label>Warehouse</label>
+                                    <select name="warehouse_id" class="form-control" required>
+                                        <option value="">Select Warehouse</option>
+                                        @foreach ($warehouses as $warehouse)
+                                            <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>

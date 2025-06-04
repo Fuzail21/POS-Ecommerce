@@ -28,25 +28,50 @@
                 <div class="alert alert-success">{{ session('success') }}</div>
             @endif
 
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <!-- Product Search Panel -->
             <div class="col-md-7">
                 <div class="card mb-3">
-                    <div class="card-body d-flex justify-content-between align-items-center">
-                        <div class="w-75">
-                            <label for="customer_id">Select Customer</label>
-                            <select name="customer_id" id="customer_id" class="form-control">
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="ml-3 mt-4">
-                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#addCustomerModal">
-                                + Add Customer
-                            </button>
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-5 mb-3">
+                                <label for="customer_id">Select Customer</label>
+                                <select name="customer_id" id="customer_id" class="form-control" required>
+                                    <option value="">Select Customer</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-5 mb-3">
+                                <label for="branch_id">Select Branch</label>
+                                <select name="branch_id" id="branch_id" class="form-control" required>
+                                    <option value="">Select Branch</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3 text-right">
+                                <button type="button" class="btn btn-outline-primary mt-4 w-100" data-toggle="modal" data-target="#addCustomerModal">
+                                    + Customer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
 
                 <div class="card">
                     <div class="card-header">
@@ -168,6 +193,8 @@
                 <input type="hidden" id="discount_hidden" name="discount">
                 <input type="hidden" name="balance_due" id="balance_due_raw">
                 <input type="hidden" name="customer_id" id="selected_customer_id">
+                <input type="hidden" name="branch_id" id="selected_branch_id">
+
 
                 <div class="modal-content">
                     <div class="modal-header">
@@ -261,11 +288,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalPayableInput = document.getElementById('total_payable');
     const customerSelect = document.getElementById('customer_id');
     const selectedCustomerInput = document.getElementById('selected_customer_id');
+    const branchSelect = document.getElementById('branch_id');
+    const selectedBranchInput = document.getElementById('selected_branch_id');
 
     selectedCustomerInput.value = customerSelect.value; // set on load
+    selectedBranchInput.value = branchSelect.value; // set on load
+
 
     customerSelect.addEventListener('change', () => {
         selectedCustomerInput.value = customerSelect.value;
+    });
+
+    branchSelect.addEventListener('change', () => {
+        selectedBranchInput.value = branchSelect.value;
     });
 
     function updateCartUI() {

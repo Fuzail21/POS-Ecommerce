@@ -48,7 +48,7 @@
                                         <th>#</th>
                                         <th>Invoice No</th>
                                         <th>Supplier</th>
-                                        <th>Branch</th>
+                                        <th>Warehouse</th>
                                         <th>Purchase Date</th>
                                         <th>Grand Total</th>
                                         <th>Paid</th>
@@ -62,7 +62,7 @@
                                             <td>{{ $purchase->id }}</td>
                                             <td>{{ $purchase->invoice_number }}</td>
                                             <td>{{ $purchase->supplier->name ?? '-' }}</td>
-                                            <td>{{ $purchase->branch->name ?? '-' }}</td>
+                                            <td>{{ $purchase->warehouse->name ?? '-' }}</td>
                                             <td>{{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}</td>
                                             <td>{{ number_format($purchase->total_amount, 2) }}</td>
                                             <td>{{ number_format($purchase->paid_amount, 2) }}</td>

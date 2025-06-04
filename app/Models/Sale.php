@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Payment;
 use App\Models\SaleItem;
-use App\Models\Unit; 
-
 
 class Sale extends Model
 {

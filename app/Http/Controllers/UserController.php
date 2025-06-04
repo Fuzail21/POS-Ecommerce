@@ -32,17 +32,20 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6', // optional, min 6 characters
             'branch_id' => 'nullable|exists:branches,id',
         ]);
-    
-        $user = new User();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role_id = $request->role_id;
-        $user->branch_id = $request->branch_id;
-        $user->status = $request->status;
-        $user->password = Hash::make($request->password);
-        $user->save();
-    
-        return redirect()->route('user.list')->with('success', 'User added successfully.');
+        try {
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->role_id = $request->role_id;
+            $user->branch_id = $request->branch_id;
+            $user->status = $request->status;
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return redirect()->route('user.list')->with('success', 'User added successfully.');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'Failed to create User. Please try again.');
+        }
     }
 
     public function edit(string $id){
@@ -65,7 +68,7 @@ class UserController extends Controller
     
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->role_id = $request->role_id;
+        // $user->role_id = $request->role_id;
         $user->branch_id = $request->branch_id;
         $user->status = $request->status;
 

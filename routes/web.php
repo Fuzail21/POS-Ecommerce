@@ -48,18 +48,6 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
-    // // Sales
-    // Route::get('/sale/list', [SaleController::class, 'index'])->name('sale.list');
-    // Route::get('/sale/create', [SaleController::class, 'create'])->name('sale.create');
-    // Route::post('/sale/store', [SaleController::class, 'store'])->name('sale.store');
-    // Route::get('/sale/edit/{id}', [SaleController::class, 'edit'])->name('sale.edit');
-    // Route::post('/sale/edit/{id}', [SaleController::class, 'update'])->name('sale.update');
-    // Route::get('/sale/delete/{id}', [SaleController  ::class, 'destroy'])->name('sale.delete');
-    // // Sale Items View
-    // Route::get('/sale/items/{id}', [SaleController::class, 'showItems'])->name('sale.items');
-
-
-
     // // Profits
     // Route::get('/profit/list', [FinanceController::class, 'profits'])->name('profit.list');
     // Route::get('/profit/create', [FinanceController::class, 'createProfit'])->name('profit.create');
@@ -67,16 +55,6 @@ Route::middleware('auth', 'verified')->group(function () {
     // Route::get('/profit/edit/{id}', [FinanceController::class, 'editProfit'])->name('profit.edit');
     // Route::post('/profit/update/{id}', [FinanceController::class, 'updateProfit'])->name('profit.update');
     // Route::get('/profit/delete/{id}', [FinanceController::class, 'deleteProfit'])->name('profit.delete');
-
-
-
-    // // Stock Adjustements
-    // Route::get('stock-adjustments/list', [StockAdjustmentController::class, 'index'])->name('stock_adjustments.list');
-    // Route::get('stock-adjustments/create', [StockAdjustmentController::class, 'create'])->name('stock_adjustments.create');
-    // Route::post('stock-adjustments/store', [StockAdjustmentController::class, 'store'])->name('stock_adjustments.store');
-    // Route::get('stock-adjustments/edit/{id}', [StockAdjustmentController::class, 'edit'])->name('stock_adjustments.edit');
-    // Route::put('stock-adjustments/update/{id}', [StockAdjustmentController::class, 'update'])->name('stock_adjustments.update');
-    // Route::get('stock-adjustments/delete/{id}', [StockAdjustmentController::class, 'destroy'])->name('stock_adjustments.destroy');
 
 
     
@@ -173,6 +151,7 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
+    //Customers
     Route::prefix('customers')->name('customers.')->group(function () {
         Route::get('/', [CustomerController::class, 'index'])->name('list');
         Route::get('/create', [CustomerController::class, 'create'])->name('create');
@@ -184,7 +163,7 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
 
-
+    //Purchases
     Route::prefix('purchases')->name('purchases.')->group(function () {
         Route::get('/', [PurchaseController::class, 'index'])->name('list');
         Route::get('/create', [PurchaseController::class, 'create'])->name('create');
@@ -199,14 +178,12 @@ Route::middleware('auth', 'verified')->group(function () {
     });
 
 
+
+    //Sales
     Route::prefix('sales')->name('sales.')->group(function () {
         Route::get('/', [SaleController::class, 'index'])->name('list');
         Route::get('/create', [SaleController::class, 'create'])->name('create');
         Route::post('/checkout', [SaleController::class, 'process'])->name('checkout.process');
-
-        Route::post('/store', [SaleController::class, 'store'])->name('store');
-        // Route::get('/{id}/edit', [SaleController::class, 'edit'])->name('edit');
-        // Route::post('/{id}', [SaleController::class, 'update'])->name('update');
         Route::delete('/{id}', [SaleController::class, 'destroy'])->name('destroy');
         // Purchase Items View
         // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
@@ -215,6 +192,8 @@ Route::middleware('auth', 'verified')->group(function () {
     });
 
 
+
+    //Payments
     Route::prefix('payments')->name('payments.')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->name('list');
         Route::get('/create', [FinanceController::class, 'create'])->name('create');
@@ -225,7 +204,6 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
 
     });
-
 
 
 
