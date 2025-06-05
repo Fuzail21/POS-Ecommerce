@@ -33,6 +33,10 @@ class ProductVariant extends Model
     {
         return $this->belongsTo(Unit::class, 'base_unit_id');
     }
+    public function displayUnit()
+    {
+        return $this->belongsTo(Unit::class, 'display_unit_id');
+    }
 
 
 }

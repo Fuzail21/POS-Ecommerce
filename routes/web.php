@@ -206,6 +206,10 @@ Route::middleware('auth', 'verified')->group(function () {
     });
 
 
+    Route::get('/stock/list', [StockAdjustmentController::class, 'stockIndex'])->name('stock.list');
+    Route::get('/stock-ledger', [StockAdjustmentController::class, 'stockLedger'])->name('stock.ledger');
+
+
 
     // Prodfile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -47,6 +47,33 @@ class Product extends Model
         return $this->hasOne(InventoryStock::class, 'product_id');
     }
 
+    public function inventoryStocks()
+    {
+        return $this->hasMany(InventoryStock::class, 'product_id');
+    }
+
+
+    public function getTotalStockAttribute()
+    {
+        return $this->inventoryStock->sum('quantity_in_base_unit');
+    }
+
+    public function getIsLowStockAttribute()
+    {
+        return $this->total_stock <= 5;
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+
+
+
+
+
+
 
 }
 
