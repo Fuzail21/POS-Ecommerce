@@ -10,54 +10,61 @@ use App\Models\Category;
 
 class StockAdjustmentController extends Controller
 {
-    public function stockIndex(Request $request){
-        $title = 'Stock Inventory';
-        $categories = Category::all();
+    public function stockIndex(Request $request)
+{
+    $title = 'Stock Inventory';
+    $categories = Category::all();
 
-        $query = Product::with([
-            'category',
-            'baseUnit',
-            'variants.inventoryStock',
-            'variants.displayUnit',
-            'inventoryStock',
-            'branch'
-        ]);
+    $query = Product::with([
+        'category',
+        'baseUnit',
+        'variants.inventoryStock',
+        'variants.displayUnit',
+        'inventoryStock',
+        'branch'
+    ]);
 
-        if ($request->filled('search_name')) {
-            $query->where('name', 'like', '%'.$request->search_name.'%');
-        }
+    if ($request->filled('search_name')) {
+        $query->where('name', 'like', '%'.$request->search_name.'%');
+    }
 
-        if ($request->filled('search_sku')) {
-            $query->where('sku', 'like', '%'.$request->search_sku.'%');
-        }
+    if ($request->filled('search_sku')) {
+        $query->where('sku', 'like', '%'.$request->search_sku.'%');
+    }
 
-        if ($request->filled('search_category')) {
-            $query->where('category_id', $request->search_category);
-        }
+    if ($request->filled('search_category')) {
+        $query->where('category_id', $request->search_category);
+    }
 
-        if ($request->filled('search_status')) {
-            if ($request->search_status === 'low_stock') {
-            // Assuming "low stock" means total stock <= 5
-            $query->whereHas('inventoryStock', function ($q) {
-                $q->where('quantity_in_base_unit', '<=', 5);
+    if ($request->filled('search_status')) {
+        if ($request->search_status == 'low_stock') {
+            $query->where(function ($query) {
+                $query->whereHas('inventoryStock', function ($q) {
+                    $q->where('quantity_in_base_unit', '<=', 5);
                 })
+                ->orWhereDoesntHave('inventoryStock')
                 ->orWhereHas('variants.inventoryStock', function ($q) {
                     $q->where('quantity_in_base_unit', '<=', 5);
-                });
-            } elseif ($request->search_status === 'ok') {
+                })
+                ->orWhereDoesntHave('variants.inventoryStock');
+            });
+        } elseif ($request->search_status === 'ok') {
+            $query->where(function ($query) {
                 $query->whereHas('inventoryStock', function ($q) {
                     $q->where('quantity_in_base_unit', '>', 5);
                 })
                 ->orWhereHas('variants.inventoryStock', function ($q) {
                     $q->where('quantity_in_base_unit', '>', 5);
                 });
-            }
+            });
         }
-
-        $products = $query->paginate(15);
-
-        return view('admin.stock.inventory', compact('products', 'categories', 'title'));
     }
+
+    $products = $query->paginate(15);
+
+    return view('admin.stock.inventory', compact('products', 'categories', 'title'));
+}
+
 
     public function stockLedger(Request $request){
         $title = 'Stock Ledger';

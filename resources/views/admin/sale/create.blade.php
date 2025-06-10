@@ -89,7 +89,7 @@
                                 @php
                                     $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
                                 @endphp
-                                <div class="col-md-4 mb-2 product-item d-flex">
+                                <div class="col-md-3 mb-2 product-item d-flex">
                                     <div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 {{ $isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '' }}">
                                         @if (!empty($product->product_img))
                                             <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">

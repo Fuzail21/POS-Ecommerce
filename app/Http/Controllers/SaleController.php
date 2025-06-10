@@ -317,4 +317,84 @@ class SaleController extends Controller
 
         return view('admin.sale.invoice', compact('sale', 'title')); // passes $purchase to the view
     }
+
+    public function pos(Request $request){
+        $title = "POS";
+        $categories = Category::all();
+        $branches = Branch::all();
+        $customers = Customer::all();
+        $units = Unit::all();
+
+        $search = $request->input('search');
+
+        if ($search) {
+            $products = Product::whereNull('deleted_at')
+                ->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                          ->orWhere('sku', 'like', "%{$search}%")
+                          ->orWhere('barcode', 'like', "%{$search}%");
+                })
+                ->with([
+                    'baseUnit',
+                    'variants.inventoryStocks',
+                    'variants.product.baseUnit',
+                    'inventoryStocks',
+                ])
+                ->get()
+                ->map(function ($product) {
+                    $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
+                    $baseQuantity = $product->inventoryStocks?->quantity_in_base_unit ?? 0;
+
+                    $product->stock_quantity = $baseQuantity / $conversionFactor;
+                    $product->in_stock = $product->stock_quantity > 0;
+
+                    foreach ($product->variants as $variant) {
+                        $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+                        $variantQuantity = $variant->inventoryStocks?->quantity_in_base_unit ?? 0;
+
+                        $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+                        $variant->in_stock = $variant->stock_quantity > 0;
+                    }
+
+                    return $product;
+                });
+        } else {
+            $products = Product::whereNull('deleted_at')
+                ->latest()
+                ->take(10)
+                ->with([
+                    'baseUnit',
+                    'variants.inventoryStock',
+                    'variants.product.baseUnit',
+                    'inventoryStock',
+                ])
+                ->get()
+                ->map(function ($product) {
+                    $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
+                    $baseQuantity = $product->inventoryStock?->quantity_in_base_unit ?? 0;
+
+                    $product->stock_quantity = $baseQuantity / $conversionFactor;
+                    $product->in_stock = $product->stock_quantity > 0;
+
+                    foreach ($product->variants as $variant) {
+                        $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+                        $variantQuantity = $variant->inventoryStock?->quantity_in_base_unit ?? 0;
+
+                        $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+                        $variant->in_stock = $variant->stock_quantity > 0;
+                    }
+
+                    return $product;
+                });
+        }
+
+        return view('pos', compact(
+            'categories',
+            'units',
+            'products',
+            'title',
+            'customers', 
+            'branches'
+        ));
+    }
 }

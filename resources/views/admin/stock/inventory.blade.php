@@ -125,16 +125,17 @@
                                     @endforeach
                                 @else
                                     @php
-                                        $baseQty = $product->inventoryStock->sum('quantity_in_base_unit');
+                                        $baseQty = $product->inventoryStock ? $product->inventoryStock->sum('quantity_in_base_unit') : 0;
                                         $actualQty = $conversion > 0 ? ($baseQty / $conversion) : 0;
                                         $isLow = $actualQty <= 5;
                                     @endphp
+
                                     <tr class="{{ $isLow ? 'table-warning' : '' }}">
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $product->name }}</td>
-                                        <td>{{ $product->sku }}</td>
+                                        {{-- <td>{{ $product->sku }}</td> --}}
                                         <td>{{ $product->category->name ?? '-' }}</td>
-                                        <td>{{ $product->branch->name ?? '-' }}</td>
+                                        {{-- <td>{{ $product->branch->name ?? '-' }}</td> --}}
                                         <td>{{ number_format($actualQty, 2) }} {{ $product->baseUnit->name ?? '' }}</td>
                                         <td>
                                             @if($isLow)

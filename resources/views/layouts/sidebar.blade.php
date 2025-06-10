@@ -651,6 +651,15 @@
                     </button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ml-auto navbar-list align-items-center">
+                            <!-- POS Button -->
+                            <li class="nav-item">
+                                <a href="{{ route('pos.index') }}" class="btn btn-primary px-4 py-2 mx-2" style="font-size: 14px; height: 40px; line-height: 26px; border-radius: 8px;">
+                                    POS
+                                </a>
+                            </li>
+
+                            
+                            <!-- Profile Dropdown -->
                             <li class="nav-item nav-icon dropdown caption-content">
                                 <a href="#" class="search-toggle dropdown-toggle" data-toggle="dropdown">
                                     <img src="{{ asset('build/assets/images/user/01.jpg') }}" class="img-fluid rounded" alt="user">
@@ -674,6 +683,7 @@
                                 </div>
                             </li>
                         </ul>
+
                     </div>
                 </div>
             </nav>
