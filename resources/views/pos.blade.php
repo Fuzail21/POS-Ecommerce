@@ -218,7 +218,7 @@
                                             <select class="form-control mb-2 variant-selector mt-auto" data-product-id="{{ $product->id }}">
                                                 <option disabled selected>Choose Variant</option>
                                                 @foreach($product->variants as $variant)
-                                                    <option
+                                                    <option 
                                                         value="variant-{{ $variant->id }}"
                                                         data-name="{{ $product->name }} - {{ $variant->variant_name }}"
                                                         data-price="{{ $variant->sale_price }}"
@@ -232,11 +232,11 @@
                                             </select>
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
-                                            <p class="mb-1">${{ number_format($product->sale_price, 2) }}
+                                            <p class="mb-1">${{ number_format($product->sale_price, 2) }} 
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
                                             @if($product->in_stock)
-                                                <button
+                                                <button 
                                                     class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
                                                     data-id="product-{{ $product->id }}"
                                                     data-name="{{ $product->name }}"
@@ -277,10 +277,57 @@
                             <tbody id="cart-items"></tbody>
                         </table>
 
+                    <div style="margin-top: 15px;">
+
+                        <!-- Tax -->
+                        <div style="margin-bottom: 10px;">
+                            <label for="tax">Tax</label><br>
+                            <div style="display: flex; align-items: center;">
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">%</span>
+                                <input type="number" name="taxrate" id="taxrate" placeholder="Tax" autocomplete="off"
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                            </div>
+                        </div>
+
+                        <!-- Discount Type -->
+                        <div style="margin-top: 8px;">
+                            <label>Discount Type:</label><br>
+                            <label>
+                                <input type="radio" name="discount_type" value="fixed" checked onclick="updateDiscountSymbol()"> Fixed
+                            </label>
+                            <label style="margin-left: 15px;">
+                                <input type="radio" name="discount_type" value="percentage" onclick="updateDiscountSymbol()"> Percentage
+                            </label>
+                        </div>
+
+                        <!-- Discount -->
+                        <div style="margin-bottom: 10px;">
+                            <label for="discount">Discount</label><br>
+                            <div style="display: flex; align-items: center;">
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                            </div>
+                        </div>
+
+                        <!-- Shipping -->
+                        <div style="margin-bottom: 10px;">
+                            <label for="shipping">Shipping</label><br>
+                            <div style="display: flex; align-items: center;">
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                            </div>
+                        </div>
+
+                    </div>
+
+
                         <div class="mt-3">
                             <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
                             <p><strong>Discount:</strong> $<span id="discount">0.00</span></p>
                             <p><strong>Tax (1%):</strong> $<span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> $<span id="shipping">0.00</span></p>
                             <hr>
                             <h5><strong>Total:</strong> $<span id="total">0.00</span></h5>
                         </div>
@@ -306,6 +353,7 @@
                 <input type="hidden" id="subtotal_hidden" name="subtotal">
                 <input type="hidden" id="tax_hidden" name="tax">
                 <input type="hidden" id="discount_hidden" name="discount">
+                <input type="hidden" id="shipping_hidden" name="shipping">
                 <input type="hidden" name="balance_due" id="balance_due_raw">
                 <input type="hidden" name="customer_id" id="selected_customer_id">
                 <input type="hidden" name="branch_id" id="selected_branch_id">
@@ -385,14 +433,49 @@
 
 <!-- JavaScript -->
 <script>
+    function updateDiscountSymbol() {
+        var symbol = document.getElementById('discount-symbol');
+        var selectedType = document.querySelector('input[name="discount_type"]:checked').value;
+        symbol.textContent = selectedType === 'percentage' ? '%' : '$';
+    }
     document.addEventListener('DOMContentLoaded', () => {
         const cart = {};
-        const taxRate = 0.01;
-        const discountAmount = 0;
 
+        // Declare variables to hold real-time values
+        let taxValue = 0;
+        let discountValue = 0;
+        let discountType = 'fixed';
+        let shipping =  0;
+
+        // Input listeners to update variables
+        document.getElementById('taxrate').addEventListener('input', function () {
+            taxValue = parseFloat(this.value) || 0;
+            updateCartUI();
+        });
+
+        document.getElementById('discountRate').addEventListener('input', function () {
+            discountValue = parseFloat(this.value) || 0;
+            updateCartUI();
+        });
+
+        document.getElementById('shippingRate').addEventListener('input', function () {
+            shipping = parseFloat(this.value) || 0;
+            updateCartUI();
+        });
+
+        document.querySelectorAll('input[name="discount_type"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                discountType = this.value;
+                updateDiscountSymbol(); // Update symbol UI
+                updateCartUI();
+            });
+        });
+
+        // Elements
         const cartItemsEl = document.getElementById('cart-items');
         const subtotalEl = document.getElementById('subtotal');
         const discountEl = document.getElementById('discount');
+        const shippingEl = document.getElementById('shipping');
         const taxEl = document.getElementById('tax');
         const totalEl = document.getElementById('total');
         const chargeBtn = document.getElementById('open-checkout');
@@ -406,9 +489,8 @@
         const branchSelect = document.getElementById('branch_id');
         const selectedBranchInput = document.getElementById('selected_branch_id');
 
-        selectedCustomerInput.value = customerSelect.value; // set on load
-        selectedBranchInput.value = branchSelect.value; // set on load
-
+        selectedCustomerInput.value = customerSelect.value;
+        selectedBranchInput.value = branchSelect.value;
 
         customerSelect.addEventListener('change', () => {
             selectedCustomerInput.value = customerSelect.value;
@@ -447,32 +529,43 @@
                 cartItemsEl.appendChild(tr);
             }
 
-            const discount = discountAmount;
-            const tax = (subtotal - discount) * taxRate;
-            const total = subtotal - discount + tax;
+            // Calculate discount
+            const discount = discountType === 'percentage'
+                ? (discountValue / 100) * subtotal
+                : discountValue;
 
+            // Calculate tax
+            const tax = (subtotal - discount) * (taxValue / 100);
+
+            // Final total
+            const total = subtotal - discount + tax + shipping;
+
+            // Update UI values
             subtotalEl.textContent = subtotal.toFixed(2);
             discountEl.textContent = discount.toFixed(2);
             taxEl.textContent = tax.toFixed(2);
+            shippingEl.textContent = shipping.toFixed(2); // ✅ Add this
             totalEl.textContent = total.toFixed(2);
 
             document.getElementById('subtotal_hidden').value = subtotal.toFixed(2);
             document.getElementById('discount_hidden').value = discount.toFixed(2);
             document.getElementById('tax_hidden').value = tax.toFixed(2);
-            totalPayableInput.value = total.toFixed(2);
-            const structuredCart = {};
+            document.getElementById('shipping_hidden').value = shipping.toFixed(2);
 
+            totalPayableInput.value = total.toFixed(2);
+
+            // Serialize cart
+            const structuredCart = {};
             for (const id in cart) {
                 const [type, numericId] = id.split('-');
                 structuredCart[id] = {
-                    type: type, // "product" or "variant"
+                    type: type,
                     id: parseInt(numericId),
                     ...cart[id]
                 };
             }
 
             cartDataInput.value = JSON.stringify(structuredCart);
-
             chargeBtn.disabled = Object.keys(cart).length === 0;
         }
 
@@ -497,7 +590,7 @@
                 const id = selected.value;
                 const name = selected.dataset.name;
                 const price = parseFloat(selected.dataset.price);
-                const unit_id = selected.dataset.unitId;
+                const unit_id = selected.dataset.unitId; // ✅ FIXED HERE
                 const addBtn = card.querySelector('.add-variant-to-cart');
 
                 addBtn.disabled = false;
@@ -509,32 +602,18 @@
         });
 
 
-        // This part needs to be reviewed as it uses `$(this)` which suggests jQuery, but the
-        // `document.querySelectorAll` implies plain JavaScript.
-        // If jQuery is available in your environment, this might work, otherwise
-        // it needs to be converted to plain JavaScript.
         document.querySelectorAll('.add-variant-to-cart').forEach(btn => {
-            // Replaced `$(this).closest('.card')` with plain JS equivalent `btn.closest('.card')`
-            const card = btn.closest('.card');
-            // Assuming .variant-quantity is an input inside the card for selecting quantity,
-            // if not, this will need adjustment.
-            const quantityInput = card.querySelector('.variant-quantity');
-            const quantity = quantityInput ? parseInt(quantityInput.value) : 1; // Default to 1 if not found
+            const card = $(this).closest('.card');
+            const quantity = card.find('.variant-quantity').val();
+            const selectedOption = card.find('.variant-selector option:selected');
+            const stock = selectedOption.data('stock');
 
-            const selectedOption = card.querySelector('.variant-selector option:checked');
-            const stock = selectedOption ? parseFloat(selectedOption.dataset.stock) : 0;
-
+            if (parseInt(quantity) > stock) {
+                alert('Requested quantity exceeds available stock.');
+                return;
+            }
 
             btn.addEventListener('click', () => {
-                // Re-check stock before adding to cart for robustness
-                const currentId = btn.getAttribute('data-id');
-                const currentQtyInCart = cart[currentId] ? cart[currentId].qty : 0;
-
-                if (currentQtyInCart + 1 > stock) { // Check if adding one more exceeds stock
-                    showStockError('Requested quantity exceeds available stock for this variant.');
-                    return;
-                }
-
                 const id = btn.getAttribute('data-id');
                 const name = btn.getAttribute('data-name');
                 const price = parseFloat(btn.getAttribute('data-price'));
@@ -545,24 +624,15 @@
         });
 
         document.querySelectorAll('.add-simple-to-cart').forEach(btn => {
-            // Replaced `$(this).closest('.card')` with plain JS equivalent `btn.closest('.card')`
-            const card = btn.closest('.card');
-            // Assuming .simple-quantity is an input inside the card for selecting quantity,
-            // if not, this will need adjustment.
-            const quantityInput = card.querySelector('.simple-quantity');
-            const quantity = quantityInput ? parseInt(quantityInput.value) : 1; // Default to 1 if not found
+            const quantity = $(this).closest('.card').find('.simple-quantity').val();
+            const maxStock = $(this).data('stock');
 
-            const maxStock = parseFloat(btn.dataset.stock);
+            if (parseInt(quantity) > maxStock) {
+                alert('Requested quantity exceeds available stock.');
+                return;
+            }
 
             btn.addEventListener('click', () => {
-                const currentId = btn.getAttribute('data-id');
-                const currentQtyInCart = cart[currentId] ? cart[currentId].qty : 0;
-
-                if (currentQtyInCart + 1 > maxStock) { // Check if adding one more exceeds stock
-                    showStockError('Requested quantity exceeds available stock for this product.');
-                    return;
-                }
-
                 const id = btn.getAttribute('data-id');
                 const name = btn.getAttribute('data-name');
                 const price = parseFloat(btn.getAttribute('data-price'));
@@ -577,29 +647,8 @@
             const id = btn.getAttribute('data-id');
             if (!id) return;
 
-            // Get the current stock of the item being incremented
-            let currentStock = 0;
-            if (id.startsWith('product-')) {
-                const productId = id.split('-')[1];
-                const productElement = document.querySelector(`.add-simple-to-cart[data-id="product-${productId}"]`);
-                if (productElement) {
-                    currentStock = parseFloat(productElement.dataset.stock);
-                }
-            } else if (id.startsWith('variant-')) {
-                const variantId = id.split('-')[1];
-                const variantOption = document.querySelector(`.variant-selector option[value="variant-${variantId}"]`);
-                if (variantOption) {
-                    currentStock = parseFloat(variantOption.dataset.stock);
-                }
-            }
-
-
             if (btn.classList.contains('btn-increment')) {
-                if (cart[id].qty + 1 <= currentStock) {
-                    cart[id].qty++;
-                } else {
-                    showStockError(`Cannot add more. Only ${currentStock} in stock for ${cart[id].name}.`);
-                }
+                cart[id].qty++;
             } else if (btn.classList.contains('btn-decrement')) {
                 cart[id].qty > 1 ? cart[id].qty-- : delete cart[id];
             } else if (btn.classList.contains('btn-remove')) {
@@ -621,43 +670,32 @@
             document.getElementById('balance_due_raw').value = due.toFixed(2);
         });
 
-        // Using native JS for modal event if jQuery is not strictly required for this part
-        const checkoutModal = document.getElementById('checkoutModal');
-        if (checkoutModal) {
-            checkoutModal.addEventListener('show.bs.modal', () => {
-                amountPaidInput.value = '';
-                balanceDisplay.value = '';
+        $('#checkoutModal').on('show.bs.modal', () => {
+            amountPaidInput.value = '';
+            balanceDisplay.value = '';
+        });
+
+        document.getElementById('product-search').addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            document.querySelectorAll('.product-item').forEach(item => {
+                const name = item.getAttribute('data-name') || '';
+                item.style.display = name.includes(query) ? '' : 'none';
             });
-        }
-
-
-        // The original search functionality is tied to a GET request.
-        // For a more dynamic client-side search without page reload,
-        // you would need to adjust the backend to return JSON or filter client-side.
-        // This current implementation is for triggering a form submission.
-        const productSearchInput = document.querySelector('input[name="search"]');
-        if (productSearchInput) {
-            productSearchInput.addEventListener('input', function () {
-                // This input is part of a form that submits via GET, so client-side filtering
-                // directly on `product-item` elements won't persist across search submissions.
-                // The existing Laravel route handles the search.
-                // If you intend for client-side live search, the backend search form should be removed
-                // and an AJAX call made here, or all products loaded initially.
-                // For now, this event listener doesn't perform any client-side filtering as the form handles it.
-            });
-        }
-
+        });
 
         function showStockError(message) {
-            const errorDiv = document.getElementById('stock-error');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('d-none');
+        const errorDiv = document.getElementById('stock-error');
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('d-none');
 
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                errorDiv.classList.add('d-none');
-            }, 3000);
-        }
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            errorDiv.classList.add('d-none');
+        }, 3000);
+    }
+
+
+
     });
 
     // Calculator and Fullscreen functions are outside DOMContentLoaded because they

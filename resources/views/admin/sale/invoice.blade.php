@@ -76,6 +76,10 @@
                             <td>{{ number_format($sale->tax_amount, 2) }}</td>
                         </tr>
                         <tr>
+                            <th>Shipping:</th>
+                            <td>{{ number_format($sale->shipping, 2) }}</td>
+                        </tr>
+                        <tr>
                             <th><strong>Grand Total:</strong></th>
                             <td><strong>{{ number_format($sale->final_amount, 2) }}</strong></td>
                         </tr>

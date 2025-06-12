@@ -108,6 +108,7 @@ class SaleController extends Controller
     }
 
     public function process(Request $request){
+        // dd($request->all());
         $year = date('Y');
 
         // Generate the next invoice number
@@ -148,6 +149,7 @@ class SaleController extends Controller
                 'total_amount'    => $request->subtotal,
                 'discount_amount' => $request->discount,
                 'tax_amount'      => $request->tax,
+                'shipping'        => $request->shipping,
                 'final_amount'    => $request->total_payable,
                 'paid_amount'     => $request->amount_paid,
                 'due_amount'      => $request->balance_due,

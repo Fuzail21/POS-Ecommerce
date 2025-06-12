@@ -162,10 +162,57 @@
                             <tbody id="cart-items"></tbody>
                         </table>
 
+                    <div style="margin-top: 15px;">
+
+                        <!-- Tax -->
+                        <div style="margin-bottom: 10px;">
+                            <label for="tax">Tax</label><br>
+                            <div style="display: flex; align-items: center;">
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">%</span>
+                                <input type="number" name="taxrate" id="taxrate" placeholder="Tax" autocomplete="off"
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                            </div>
+                        </div>
+
+                        <!-- Discount Type -->
+                        <div style="margin-top: 8px;">
+                            <label>Discount Type:</label><br>
+                            <label>
+                                <input type="radio" name="discount_type" value="fixed" checked onclick="updateDiscountSymbol()"> Fixed
+                            </label>
+                            <label style="margin-left: 15px;">
+                                <input type="radio" name="discount_type" value="percentage" onclick="updateDiscountSymbol()"> Percentage
+                            </label>
+                        </div>
+
+                        <!-- Discount -->
+                        <div style="margin-bottom: 10px;">
+                            <label for="discount">Discount</label><br>
+                            <div style="display: flex; align-items: center;">
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                            </div>
+                        </div>
+
+                        <!-- Shipping -->
+                        <div style="margin-bottom: 10px;">
+                            <label for="shipping">Shipping</label><br>
+                            <div style="display: flex; align-items: center;">
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                            </div>
+                        </div>
+
+                    </div>
+
+
                         <div class="mt-3">
                             <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
                             <p><strong>Discount:</strong> $<span id="discount">0.00</span></p>
                             <p><strong>Tax (1%):</strong> $<span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> $<span id="shipping">0.00</span></p>
                             <hr>
                             <h5><strong>Total:</strong> $<span id="total">0.00</span></h5>
                         </div>
@@ -191,6 +238,7 @@
                 <input type="hidden" id="subtotal_hidden" name="subtotal">
                 <input type="hidden" id="tax_hidden" name="tax">
                 <input type="hidden" id="discount_hidden" name="discount">
+                <input type="hidden" id="shipping_hidden" name="shipping">
                 <input type="hidden" name="balance_due" id="balance_due_raw">
                 <input type="hidden" name="customer_id" id="selected_customer_id">
                 <input type="hidden" name="branch_id" id="selected_branch_id">
@@ -270,14 +318,49 @@
 
 <!-- JavaScript -->
 <script>
+function updateDiscountSymbol() {
+        var symbol = document.getElementById('discount-symbol');
+        var selectedType = document.querySelector('input[name="discount_type"]:checked').value;
+        symbol.textContent = selectedType === 'percentage' ? '%' : '$';
+    }
 document.addEventListener('DOMContentLoaded', () => {
     const cart = {};
-    const taxRate = 0.01;
-    const discountAmount = 0;
 
+    // Declare variables to hold real-time values
+    let taxValue = 0;
+    let discountValue = 0;
+    let discountType = 'fixed';
+    let shipping =  0;
+
+    // Input listeners to update variables
+    document.getElementById('taxrate').addEventListener('input', function () {
+        taxValue = parseFloat(this.value) || 0;
+        updateCartUI();
+    });
+
+    document.getElementById('discountRate').addEventListener('input', function () {
+        discountValue = parseFloat(this.value) || 0;
+        updateCartUI();
+    });
+
+    document.getElementById('shippingRate').addEventListener('input', function () {
+        shipping = parseFloat(this.value) || 0;
+        updateCartUI();
+    });
+
+    document.querySelectorAll('input[name="discount_type"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            discountType = this.value;
+            updateDiscountSymbol(); // Update symbol UI
+            updateCartUI();
+        });
+    });
+
+    // Elements
     const cartItemsEl = document.getElementById('cart-items');
     const subtotalEl = document.getElementById('subtotal');
     const discountEl = document.getElementById('discount');
+    const shippingEl = document.getElementById('shipping');
     const taxEl = document.getElementById('tax');
     const totalEl = document.getElementById('total');
     const chargeBtn = document.getElementById('open-checkout');
@@ -291,9 +374,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const branchSelect = document.getElementById('branch_id');
     const selectedBranchInput = document.getElementById('selected_branch_id');
 
-    selectedCustomerInput.value = customerSelect.value; // set on load
-    selectedBranchInput.value = branchSelect.value; // set on load
-
+    selectedCustomerInput.value = customerSelect.value;
+    selectedBranchInput.value = branchSelect.value;
 
     customerSelect.addEventListener('change', () => {
         selectedCustomerInput.value = customerSelect.value;
@@ -332,32 +414,43 @@ document.addEventListener('DOMContentLoaded', () => {
             cartItemsEl.appendChild(tr);
         }
 
-        const discount = discountAmount;
-        const tax = (subtotal - discount) * taxRate;
-        const total = subtotal - discount + tax;
+        // Calculate discount
+        const discount = discountType === 'percentage'
+            ? (discountValue / 100) * subtotal
+            : discountValue;
 
+        // Calculate tax
+        const tax = (subtotal - discount) * (taxValue / 100);
+
+        // Final total
+        const total = subtotal - discount + tax + shipping;
+
+        // Update UI values
         subtotalEl.textContent = subtotal.toFixed(2);
         discountEl.textContent = discount.toFixed(2);
         taxEl.textContent = tax.toFixed(2);
+        shippingEl.textContent = shipping.toFixed(2); // ✅ Add this
         totalEl.textContent = total.toFixed(2);
 
         document.getElementById('subtotal_hidden').value = subtotal.toFixed(2);
         document.getElementById('discount_hidden').value = discount.toFixed(2);
         document.getElementById('tax_hidden').value = tax.toFixed(2);
-        totalPayableInput.value = total.toFixed(2);
-        const structuredCart = {};
+        document.getElementById('shipping_hidden').value = shipping.toFixed(2);
 
+        totalPayableInput.value = total.toFixed(2);
+
+        // Serialize cart
+        const structuredCart = {};
         for (const id in cart) {
             const [type, numericId] = id.split('-');
             structuredCart[id] = {
-                type: type, // "product" or "variant"
+                type: type,
                 id: parseInt(numericId),
                 ...cart[id]
             };
         }
 
         cartDataInput.value = JSON.stringify(structuredCart);
-
         chargeBtn.disabled = Object.keys(cart).length === 0;
     }
 
