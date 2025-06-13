@@ -1,98 +1,115 @@
-@extends('layouts.app')
+@extends('standalone-template')
 
-{{-- The style section includes all the CSS for the layout and the embedded calculator. --}}
 <style>
-    /* Styles for the navigation bar at the top */
+    /* Navbar with proper alignment and padding */
     .navbar {
+        display: flex;
+        justify-content: space-between; /* space between logo/left and right controls */
+        align-items: center;
+        padding: 10px;
         background-color: #f8f9fa; /* Light grey background */
-        padding: 10px; /* Padding around the navbar content */
-        display: flex; /* Use flexbox for alignment of items */
-        gap: 10px; /* Space between flex items */
+        border-bottom: 1px solid #ccc;
     }
-
-    /* General button styles */
+    
+    /* Right side controls (calculator + fullscreen button) */
+    .right-controls {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* General button styling */
     .btn {
-        background-color: #4a90e2; /* Blue background */
-        color: white; /* White text */
-        border: none; /* No border */
-        padding: 10px 20px; /* Padding inside buttons */
-        cursor: pointer; /* Pointer cursor on hover */
-        border-radius: 5px; /* Slightly rounded corners */
+        background-color: #4a90e2;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
     }
-
-    /* Dropdown container styles */
+    
+    /* Dropdown wrapper */
     .dropdown {
-        position: relative; /* Essential for positioning dropdown-content */
-        display: inline-block; /* Allows side-by-side with other inline elements */
+        position: relative;
+        display: inline-block;
     }
-
-    /* Dropdown content (the calculator) styles */
+    
+    /* Dropdown (calculator) content */
     .dropdown-content {
-        display: none; /* Hidden by default */
-        position: absolute; /* Positioned relative to its parent (.dropdown) */
-        background-color: #f9f9f9; /* Light background for the dropdown */
-        min-width: 200px; /* Minimum width for the calculator */
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); /* Soft shadow for depth */
-        z-index: 1; /* Ensures it appears above other content */
-        padding: 10px; /* Padding inside the dropdown content */
-        right: 0; /* Aligns the dropdown to the right edge of its parent (.dropdown) */
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 200px;
+        box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+        z-index: 1;
+        padding: 10px;
+        right: 0;
     }
-
-    /* Calculator container specific styles */
-    .calculator {
-        width: 180px; /* Fixed width for the calculator */
-    }
-
-    /* Calculator display input field */
-    .display {
-        width: 100%; /* Full width within its container */
-        height: 40px; /* Fixed height */
-        margin-bottom: 10px; /* Space below the display */
-        text-align: right; /* Text aligns to the right */
-        padding: 5px; /* Padding inside the display */
-        font-size: 18px; /* Font size for readability */
-        border: none; /* No border */
-        border-radius: 5px; /* Rounded corners */
-        background: #fff; /* White background */
-    }
-
-    /* Styles for the calculator buttons grid */
-    .buttons {
-        display: grid; /* Use CSS Grid for button layout */
-        grid-template-columns: repeat(4, 1fr); /* 4 columns, equal width */
-        gap: 5px; /* Space between buttons */
-    }
-
-    /* Styles for individual calculator buttons within the dropdown */
-    .dropdown-content button {
-        padding: 10px; /* Padding inside buttons */
-        font-size: 16px; /* Font size */
-        border: none; /* No border */
-        border-radius: 5px; /* Rounded corners */
-        background: #4a90e2; /* Blue background */
-        color: white; /* White text */
-        cursor: pointer; /* Pointer cursor on hover */
-    }
-
-    /* Hover effect for calculator buttons */
-    .dropdown-content button:hover {
-        background: #357abd; /* Darker blue on hover */
-    }
-
-    /* Operator specific button styles (e.g., +, -, *, /) */
-    .operator {
-        background: #d9534f; /* Red background for operators */
-    }
-
-    /* Hover effect for operator buttons */
-    .operator:hover {
-        background: #c9302c; /* Darker red on hover */
-    }
-
-    /* Shows the dropdown content when the dropdown is hovered over */
+    
+    /* Show dropdown on hover */
     .dropdown:hover .dropdown-content {
-        display: block; /* Makes the dropdown content visible */
+        display: block;
     }
+    
+    /* Calculator box */
+    .calculator {
+        width: 180px;
+    }
+    
+    /* Display screen */
+    .display {
+        width: 100%;
+        height: 40px;
+        margin-bottom: 10px;
+        text-align: right;
+        padding: 5px;
+        font-size: 18px;
+        border: none;
+        border-radius: 5px;
+        background: #fff;
+    }
+    
+    /* Grid for buttons */
+    .buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    
+    /* Button inside calculator */
+    .dropdown-content button {
+        padding: 10px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        background: #4a90e2;
+        color: white;
+        cursor: pointer;
+    }
+    
+    /* Hover state */
+    .dropdown-content button:hover {
+        background: #357abd;
+    }
+    
+    /* Operator-specific styling */
+    .operator {
+        background: #d9534f;
+    }
+    
+    .operator:hover {
+        background: #c9302c;
+    }
+
+    .content-page {
+        margin-left: 0 !important;
+    }
+    .wrapper {
+        padding-left: 0 !important;
+    }
+
 </style>
 {{-- @endsection --}}
 
@@ -100,7 +117,7 @@
 {{-- @include('layouts.sidebar') --}}
 
     <div class="navbar">
-        <button class="btn" onclick="toggleFullScreen()">Fullscreen</button>
+    <div class="right-controls">
         <div class="dropdown">
             <button class="btn">Calculator</button>
             <div class="dropdown-content">
@@ -129,7 +146,13 @@
                 </div>
             </div>
         </div>
+
+        <button class="btn" onclick="toggleFullScreen()">
+            <i id="fullscreen-icon" class="fas fa-expand"></i>
+        </button>
     </div>
+</div>
+
 
 
 <div class="content-page">
@@ -729,6 +752,19 @@
         } catch (e) {
             display.value = 'Error';
             setTimeout(clearDisplay, 1000);
+        }
+    }
+    function toggleFullScreen() {
+        const icon = document.getElementById('fullscreen-icon');
+    
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+            icon.classList.remove('fa-expand');
+            icon.classList.add('fa-compress');
+        } else {
+            document.exitFullscreen();
+            icon.classList.remove('fa-compress');
+            icon.classList.add('fa-expand');
         }
     }
 </script>

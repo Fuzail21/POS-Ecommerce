@@ -405,6 +405,32 @@
                         </a>
                     </li>
 
+                    <li class="{{ Route::is('expense_categories.list') || Route::is('expense.list') ? 'active' : '' }}">
+                        <a href="#expense" class="{{ Route::is('expense_categories.list') || Route::is('expense.list') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('expense.list') || Route::is('expense.create') ? 'true' : 'false' }}">
+                            <!-- Expense Icon (Money Bill) -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 16v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM5 12h14v2H5zm0-4h14v2H5zm8-7h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" />
+                            </svg>
+                            <span class="ml-4">Expenses</span>
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                            </svg>
+                        </a>
+                    
+                        <ul id="expense" class="iq-submenu collapse {{ Route::is('expense_categories.list') || Route::is('expense.list') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                            <li class="{{ Route::is('expense_categories.list') ? 'active' : '' }}">
+                                <a href="{{ route('expense_categories.list') }}">
+                                    <i class="las la-minus"></i><span>Expense Categories</span>
+                                </a>
+                            </li>
+                            <li class="{{ Route::is('expense.list') ? 'active' : '' }}">
+                                <a href="{{ route('expense.list') }}">
+                                    <i class="las la-minus"></i><span>Expense</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     {{-- <li class="{{ Route::is('company.list') || Route::is('company.create') ? 'active' : '' }}">
                         <a href="#company" class="{{ Route::is('company.list') || Route::is('company.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('company.list') || Route::is('company.create') ? 'true' : 'false' }}">
                             <!-- Company Icon -->
@@ -507,32 +533,6 @@
                             <li class="{{ Route::is('loan.create') ? 'active' : '' }}">
                                 <a href="{{ route('loan.create') }}">
                                     <i class="las la-minus"></i><span>Add Loan</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    
-                    <li class="{{ Route::is('expense.list') || Route::is('expense.create') ? 'active' : '' }}">
-                        <a href="#expense" class="{{ Route::is('expense.list') || Route::is('expense.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('expense.list') || Route::is('expense.create') ? 'true' : 'false' }}">
-                            <!-- Expense Icon (Money Bill) -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 16v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM5 12h14v2H5zm0-4h14v2H5zm8-7h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" />
-                            </svg>
-                            <span class="ml-4">Expenses</span>
-                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                            </svg>
-                        </a>
-                    
-                        <ul id="expense" class="iq-submenu collapse {{ Route::is('expense.list') || Route::is('expense.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
-                            <li class="{{ Route::is('expense.list') ? 'active' : '' }}">
-                                <a href="{{ route('expense.list') }}">
-                                    <i class="las la-minus"></i><span>List Expenses</span>
-                                </a>
-                            </li>
-                            <li class="{{ Route::is('expense.create') ? 'active' : '' }}">
-                                <a href="{{ route('expense.create') }}">
-                                    <i class="las la-minus"></i><span>Add Expense</span>
                                 </a>
                             </li>
                         </ul>

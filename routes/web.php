@@ -206,10 +206,31 @@ Route::middleware('auth', 'verified')->group(function () {
     });
 
 
+    // Stocks
     Route::get('/stock/list', [StockAdjustmentController::class, 'stockIndex'])->name('stock.list');
     Route::get('/stock-ledger', [StockAdjustmentController::class, 'stockLedger'])->name('stock.ledger');
 
+    // POS
     Route::get('/pos', [SaleController::class, 'pos'])->name('pos.index');
+
+
+    // Expense Category
+    Route::get('/expense_categories/list', [ExpenseController::class, 'index'])->name('expense_categories.list');
+    Route::post('/expense_categories/store', [ExpenseController::class, 'store'])->name('expense_categories.store');
+    Route::put('/expense_categories/{id}', [ExpenseController::class, 'update'])->name('expense_categories.update');
+    Route::get('/expense_categories/{id}', [ExpenseController::class, 'destroy'])->name('expense_categories.destroy');
+
+
+
+    // Expense
+    Route::get('/expense/list', [ExpenseController::class, 'list'])->name('expense.list');
+    Route::get('/expense/create', [ExpenseController::class, 'expenseCreate'])->name('expense.create');
+    Route::post('/expense/store', [ExpenseController::class, 'expenseStore'])->name('expense.store');
+    Route::get('/expenses/edit/{id}', [ExpenseController::class, 'expenseEdit'])->name('expense.edit');
+    Route::put('/expenses/update/{id}', [ExpenseController::class, 'expenseUpdate'])->name('expense.update');
+    Route::get('/expenses/delete/{id}', [ExpenseController::class, 'expenseDestroy'])->name('expense.destroy');
+    
+
 
 
     // Prodfile
