@@ -71,10 +71,6 @@
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center list-action">
-                                                    {{-- <a class="badge bg-success mr-2 p-1" href="{{ route('purchases.edit', $purchase->id) }}" data-toggle="tooltip" title="Edit">
-                                                        <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
-                                                    </a> --}}
-                                                    
                                                     <form action="{{ route('sales.destroy', $sale->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
@@ -83,16 +79,13 @@
                                                         </button>
                                                     </form>
 
-
-
                                                     <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Invoice" href="{{ route('sales.invoice', $sale->id) }}">
                                                         <i class="ri-file-list-3-line" style="font-size: 1.1rem;"></i>
                                                     </a>
 
-
-                                                    {{-- <a class="badge bg-info p-1" href="" data-toggle="tooltip" title="View">
-                                                        <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
-                                                    </a> --}}
+                                                    <a class="badge bg-primary mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Create Sale Return" href="{{ route('sale_return.create', ['sale_id' => $sale->id]) }}">
+                                                        <i class="ri-refresh-line" style="font-size: 1.1rem;"></i>
+                                                    </a>
                                                 </div>
                                             </td>
                                         </tr>

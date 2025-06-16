@@ -191,6 +191,17 @@ Route::middleware('auth', 'verified')->group(function () {
 
     });
 
+    Route::prefix('sale_return')->name('sale_return.')->group(function () {
+        Route::get('/', [SaleController::class, 'index'])->name('list');
+        Route::get('/create', [SaleController::class, 'create'])->name('create');
+        Route::post('/checkout', [SaleController::class, 'process'])->name('checkout.process');
+        Route::delete('/{id}', [SaleController::class, 'destroy'])->name('destroy');
+        // Purchase Items View
+        // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
+        Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
+
+    });
+
 
 
     //Payments
@@ -202,7 +213,6 @@ Route::middleware('auth', 'verified')->group(function () {
 
 
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
-
     });
 
 
@@ -212,6 +222,7 @@ Route::middleware('auth', 'verified')->group(function () {
 
     // POS
     Route::get('/pos', [SaleController::class, 'pos'])->name('pos.index');
+    Route::post('/pos/checkout', [SaleController::class, 'posProcess'])->name('checkout.pos');
 
 
     // Expense Category
@@ -230,7 +241,6 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::put('/expenses/update/{id}', [ExpenseController::class, 'expenseUpdate'])->name('expense.update');
     Route::get('/expenses/delete/{id}', [ExpenseController::class, 'expenseDestroy'])->name('expense.destroy');
     
-
 
 
     // Prodfile

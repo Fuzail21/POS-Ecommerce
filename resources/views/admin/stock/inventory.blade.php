@@ -98,7 +98,14 @@
                             @foreach($products as $index => $product)
                                 @php
                                     $conversion = $product->baseUnit->conversion_factor ?? 1;
+                                    $baseQty = $product->inventoryStock ? $product->inventoryStock->quantity_in_base_unit : 0;
+                                
+                                    // Always fallback to 1 to avoid divide by zero
+                                    $actualQty = ($conversion && $conversion > 0) ? ($baseQty / $conversion) : $baseQty;
+                                
+                                    $isLow = $actualQty <= 5;
                                 @endphp
+
 
                                 @if($product->has_variants && $product->variants->count())
                                     @foreach($product->variants as $variant)
@@ -125,7 +132,7 @@
                                     @endforeach
                                 @else
                                     @php
-                                        $baseQty = $product->inventoryStock ? $product->inventoryStock->sum('quantity_in_base_unit') : 0;
+                                        $baseQty = $product->inventoryStock ? $product->inventoryStock->quantity_in_base_unit : 0;
                                         $actualQty = $conversion > 0 ? ($baseQty / $conversion) : 0;
                                         $isLow = $actualQty <= 5;
                                     @endphp
@@ -136,7 +143,7 @@
                                         {{-- <td>{{ $product->sku }}</td> --}}
                                         <td>{{ $product->category->name ?? '-' }}</td>
                                         {{-- <td>{{ $product->branch->name ?? '-' }}</td> --}}
-                                        <td>{{ number_format($actualQty, 2) }} {{ $product->baseUnit->name ?? '' }}</td>
+                                        <td>{{ number_format($actualQty, 0) }} {{ $product->baseUnit->name ?? '' }}</td>
                                         <td>
                                             @if($isLow)
                                                 <span class="badge badge-danger">Low Stock</span>

@@ -19,8 +19,10 @@ class FinanceController extends Controller
 
     public function index(){
         $title =  "Payments List";
-        $payments = Payment::with(['entity','creator', 'reference'])
-                           ->paginate(20);
+        $payments = Payment::with(['entity', 'creator', 'reference'])
+                   ->orderBy('created_at', 'desc')
+                   ->paginate(20);
+
                         //    dd($payments);
     
         return view('admin.payments.list', compact('payments', 'title'));

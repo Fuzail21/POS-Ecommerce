@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('css')
-
 <style>
     #datatable_info,
     #datatable_paginate,
@@ -9,7 +8,6 @@
         display: none !important;
     }
 </style>
-
 @endsection
 
 @section('content')

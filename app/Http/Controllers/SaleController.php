@@ -18,6 +18,7 @@ use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use Auth;
 
 class SaleController extends Controller
 {
@@ -108,7 +109,6 @@ class SaleController extends Controller
     }
 
     public function process(Request $request){
-        // dd($request->all());
         $year = date('Y');
 
         // Generate the next invoice number
@@ -244,7 +244,7 @@ class SaleController extends Controller
             return back()->withInput()->with('error', 'Something went wrong. Please try again.');
         }
     }
-
+   
     public function destroy($id){
         $sale = Sale::with('items')->findOrFail($id);
 
@@ -398,5 +398,147 @@ class SaleController extends Controller
             'customers', 
             'branches'
         ));
+    }
+
+    public function posProcess(Request $request){
+        $year = date('Y');
+
+        // Generate the next invoice number
+        $lastSale = Sale::whereYear('created_at', $year)
+            ->where('invoice_number', 'like', "{$year}-invoice-%")
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastSale && preg_match("/{$year}-invoice-(\d+)/", $lastSale->invoice_number, $matches)) {
+            $nextNumber = (int)$matches[1] + 1;
+        }
+
+        $invoiceNo = "{$year}-invoice-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        $branch = Branch::find($request->branch_id);
+        $warehouse_id = $branch->warehouse_id ?? null;
+
+        if (!$warehouse_id) {
+            return back()->withInput()->with('error', 'Branch does not have an associated warehouse.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $cart = json_decode($request->cart_data, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE || !is_array($cart)) {
+                throw new \Exception('Invalid cart data.');
+            }
+
+            // Create the sale
+            $sale = Sale::create([
+                'customer_id'     => $request->customer_id,
+                'branch_id'       => $request->branch_id,
+                'invoice_number'  => $invoiceNo,
+                'sale_date'       => now(),
+                'total_amount'    => $request->subtotal,
+                'discount_amount' => $request->discount,
+                'tax_amount'      => $request->tax,
+                'shipping'        => $request->shipping,
+                'final_amount'    => $request->total_payable,
+                'paid_amount'     => $request->amount_paid,
+                'due_amount'      => $request->balance_due,
+                'payment_method'  => $request->payment_method,
+                'created_by'      => auth()->id(),
+            ]);
+
+            foreach ($cart as $item) {
+                $variantId = $item['type'] === 'variant' ? $item['id'] : null;
+                $productId = $variantId ? ProductVariant::find($variantId)?->product_id : $item['id'];
+
+                if (!$productId || !Product::find($productId)) {
+                    continue; // Skip invalid product
+                }
+
+                $unitId     = $item['unit_id'] ?? null;
+                $quantity   = $item['qty'];
+                $unitPrice  = $item['sale_price'];
+                $totalPrice = $unitPrice * $quantity;
+
+                $unit = Unit::find($unitId);
+                $baseQty = $quantity * ($unit->conversion_factor ?? 1);
+
+                SaleItem::create([
+                    'sale_id'               => $sale->id,
+                    'product_id'            => $productId,
+                    'variant_id'            => $variantId,
+                    'unit_id'               => $unitId,
+                    'quantity'              => $quantity,
+                    'unit_price'            => $unitPrice,
+                    'total_price'           => $totalPrice,
+                    'quantity_in_base_unit' => $baseQty,
+                    'discount'              => null,
+                    'tax'                   => null,
+                ]);
+
+                // Update stock
+                $stock = InventoryStock::where([
+                    'product_id'   => $productId,
+                    'variant_id'   => $variantId,
+                    'warehouse_id' => $warehouse_id,
+                ])->first();
+
+                if (!$stock || $stock->quantity_in_base_unit < $baseQty) {
+                    // skip this product, do not fail the whole transaction
+                    continue;
+                }
+
+                $stock->decrement('quantity_in_base_unit', $baseQty);
+
+                StockLedger::create([
+                    'product_id'                   => $productId,
+                    'variant_id'                   => $variantId,
+                    'warehouse_id'                 => $warehouse_id,
+                    'ref_type'                     => 'sale',
+                    'ref_id'                       => $sale->id,
+                    'quantity_change_in_base_unit' => $baseQty,
+                    'unit_cost'                    => $unitPrice,
+                    'direction'                    => 'out',
+                    'created_by'                   => auth()->id(),
+                ]);
+            }
+
+            // Handle payment
+            if ($request->amount_paid > 0) {
+                Payment::create([
+                    'entity_type'      => 'customer',
+                    'entity_id'        => $request->customer_id,
+                    'transaction_type' => 'out',
+                    'ref_type'         => 'sale',
+                    'ref_id'           => $sale->id,
+                    'amount'           => $request->amount_paid,
+                    'method'           => $request->payment_method,
+                    'created_by'       => auth()->id(),
+                    'note'             => null,
+                ]);
+            }
+
+            // Adjust balance
+            $dueAmount = $request->balance_due;
+            if ($dueAmount > 0) {
+                Customer::where('id', $request->customer_id)->increment('balance', $dueAmount);
+            } elseif ($dueAmount < 0) {
+                Customer::where('id', $request->customer_id)->decrement('balance', abs($dueAmount));
+            }
+
+            DB::commit();
+            session([
+                'show_invoice' => true,
+                'sale_id' => $sale->id,
+            ]);
+
+            return redirect()->route('pos.index');
+            // return redirect()->route('sales.list')->with('success', 'Sale recorded successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Something went wrong. Please try again.');
+        }
     }
 }

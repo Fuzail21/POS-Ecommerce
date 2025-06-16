@@ -48,6 +48,7 @@
                                 <select name="customer_id" id="customer_id" class="form-control" required>
                                     <option value="">Select Customer</option>
                                     @foreach($customers as $customer)
+<option value="{{ $customer->id }}" {{ $sale->customer_id == $customer->id ? 'selected' : '' }}>
                                         <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                     @endforeach
                                 </select>
@@ -58,6 +59,7 @@
                                 <select name="branch_id" id="branch_id" class="form-control" required>
                                     <option value="">Select Branch</option>
                                     @foreach($branches as $branch)
+<option value="{{ $branch->id }}" {{ $sale->branch_id == $branch->id ? 'selected' : '' }}>
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                     @endforeach
                                 </select>
@@ -76,7 +78,8 @@
                 <div class="card">
                     <div class="card-header">
                         <h4>Search Products</h4>
-                        <form method="GET" action="{{ route('sales.create') }}" style="display: flex; gap: 10px; align-items: center;">
+                        <form>
+    <input type="hidden" name="sale_id" value="{{ $sale->id }}"> method="GET" action="{{ route('sales.create') }}" style="display: flex; gap: 10px; align-items: center;">
                             <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ request('search') }}" style="flex: 1;" autocomplete="off">
                             <button type="submit" class="btn btn-primary">Search</button>
                         </form>
@@ -238,7 +241,7 @@
                 <input type="hidden" id="subtotal_hidden" name="subtotal">
                 <input type="hidden" id="tax_hidden" name="tax">
                 <input type="hidden" id="discount_hidden" name="discount">
-                <input type="hidden" id="shipping_hidden" name="shipping">
+                <input type="hidden" id="shipping_hidden" name="shipping" value="{{ $sale->shipping }}">
                 <input type="hidden" name="balance_due" id="balance_due_raw">
                 <input type="hidden" name="customer_id" id="selected_customer_id">
                 <input type="hidden" name="branch_id" id="selected_branch_id">

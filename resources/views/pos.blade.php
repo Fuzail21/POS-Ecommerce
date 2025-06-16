@@ -40,22 +40,24 @@
     .dropdown-content {
         display: none;
         position: absolute;
-        background-color: #f9f9f9;
-        min-width: 200px;
-        box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
-        z-index: 1;
-        padding: 10px;
+        top: 100%;
         right: 0;
+        z-index: 999;
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 250px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
     
     /* Show dropdown on hover */
-    .dropdown:hover .dropdown-content {
+    .dropdown-content.show {
         display: block;
     }
     
     /* Calculator box */
     .calculator {
-        width: 180px;
+        width: 230px;
     }
     
     /* Display screen */
@@ -117,41 +119,42 @@
 {{-- @include('layouts.sidebar') --}}
 
     <div class="navbar">
-    <div class="right-controls">
-        <div class="dropdown">
-            <button class="btn">Calculator</button>
-            <div class="dropdown-content">
-                <div class="calculator">
-                    <input type="text" class="display" id="display" readonly>
-                    <div class="buttons">
-                        <button onclick="clearDisplay()">AC</button>
-                        <button onclick="appendToDisplay('C')">C</button>
-                        <button class="operator" onclick="appendToDisplay('/')">/</button>
-                        <button class="operator" onclick="appendToDisplay('*')">×</button>
-                        <button onclick="appendToDisplay('7')">7</button>
-                        <button onclick="appendToDisplay('8')">8</button>
-                        <button onclick="appendToDisplay('9')">9</button>
-                        <button class="operator" onclick="appendToDisplay('-')">-</button>
-                        <button onclick="appendToDisplay('4')">4</button>
-                        <button onclick="appendToDisplay('5')">5</button>
-                        <button onclick="appendToDisplay('6')">6</button>
-                        <button class="operator" onclick="appendToDisplay('+')">+</button>
-                        <button onclick="appendToDisplay('1')">1</button>
-                        <button onclick="appendToDisplay('2')">2</button>
-                        <button onclick="appendToDisplay('3')">3</button>
-                        <button onclick="calculate()">=</button>
-                        <button onclick="appendToDisplay('0')">0</button>
-                        <button onclick="appendToDisplay('.')">.</button>
+        <div class="right-controls">
+            <div class="dropdown" id="calculatorDropdown">
+                <button class="btn" id="toggleCalculator">Calculator</button>
+                <div class="dropdown-content" id="calculatorContent">
+                    <div class="calculator">
+                        <input type="text" class="display" id="display" readonly>
+                        <div class="buttons">
+                            <button onclick="clearDisplay()">AC</button>
+                            <button onclick="appendToDisplay('C')">C</button>
+                            <button class="operator" onclick="appendToDisplay('/')">/</button>
+                            <button class="operator" onclick="appendToDisplay('*')">×</button>
+                            <button onclick="appendToDisplay('7')">7</button>
+                            <button onclick="appendToDisplay('8')">8</button>
+                            <button onclick="appendToDisplay('9')">9</button>
+                            <button class="operator" onclick="appendToDisplay('-')">-</button>
+                            <button onclick="appendToDisplay('4')">4</button>
+                            <button onclick="appendToDisplay('5')">5</button>
+                            <button onclick="appendToDisplay('6')">6</button>
+                            <button class="operator" onclick="appendToDisplay('+')">+</button>
+                            <button onclick="appendToDisplay('1')">1</button>
+                            <button onclick="appendToDisplay('2')">2</button>
+                            <button onclick="appendToDisplay('3')">3</button>
+                            <button onclick="calculate()">=</button>
+                            <button onclick="appendToDisplay('0')">0</button>
+                            <button onclick="appendToDisplay('.')">.</button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <button class="btn" onclick="toggleFullScreen()">
-            <i id="fullscreen-icon" class="fas fa-expand"></i>
-        </button>
+
+            <button class="btn" onclick="toggleFullScreen()">
+                <i id="fullscreen-icon" class="fas fa-expand"></i>
+            </button>
+        </div>
     </div>
-</div>
 
 
 
@@ -183,7 +186,7 @@
                         <div class="row align-items-end">
                             <div class="col-md-5 mb-3">
                                 <label for="customer_id">Select Customer</label>
-                                <select name="customer_id" id="customer_id" class="form-control" required>
+                                <select name="customer_id" id="customer_id" class="form-control select2" required>
                                     <option value="">Select Customer</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}">{{ $customer->name }}</option>
@@ -193,13 +196,14 @@
 
                             <div class="col-md-5 mb-3">
                                 <label for="branch_id">Select Branch</label>
-                                <select name="branch_id" id="branch_id" class="form-control" required>
+                                <select name="branch_id" id="branch_id" class="form-control select2" required>
                                     <option value="">Select Branch</option>
                                     @foreach($branches as $branch)
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
+
 
                             <div class="col-md-2 mb-3 text-right">
                                 <button type="button" class="btn btn-outline-primary mt-4 w-100" data-toggle="modal" data-target="#addCustomerModal">
@@ -349,7 +353,7 @@
                         <div class="mt-3">
                             <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
                             <p><strong>Discount:</strong> $<span id="discount">0.00</span></p>
-                            <p><strong>Tax (1%):</strong> $<span id="tax">0.00</span></p>
+                            <p><strong>Tax:</strong> $<span id="tax">0.00</span></p>
                             <p><strong>Shipping:</strong> $<span id="shipping">0.00</span></p>
                             <hr>
                             <h5><strong>Total:</strong> $<span id="total">0.00</span></h5>
@@ -369,7 +373,7 @@
     <!-- Checkout Modal -->
     <div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form id="checkout-form" method="POST" action="{{ route('sales.checkout.process') }}">
+            <form id="checkout-form" method="POST" action="{{ route('checkout.pos') }}">
                 @csrf
                 <input type="hidden" name="cart_data" id="cart_data">
                 <input type="hidden" name="total_payable" id="total_payable">
@@ -452,6 +456,42 @@
     </form>
   </div>
 </div>
+
+
+@if(session('show_invoice') && session('sale_id'))
+    @php
+        $sale = \App\Models\Sale::with(['items.product', 'customer'])->find(session('sale_id'));
+        $invoiceHtml = view('partials.invoice', compact('sale'))->render();
+        session()->forget(['show_invoice', 'sale_id']);
+    @endphp
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            Swal.fire({
+                title: 'Invoice Preview',
+                html: {!! json_encode($invoiceHtml) !!},
+                width: 600,
+                showCancelButton: true,
+                confirmButtonText: 'Print',
+                cancelButtonText: 'Close',
+                didOpen: () => {
+                    // Optional styling tweaks or JS initialization
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const content = document.getElementById('invoice-content').innerHTML;
+                    const printWindow = window.open('', '', 'width=800,height=600');
+                    printWindow.document.write('<html><head><title>Invoice</title></head><body>' + content + '</body></html>');
+                    printWindow.document.close();
+                    printWindow.print();
+                }
+            });
+        });
+    </script>
+@endif
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <!-- JavaScript -->
@@ -592,19 +632,32 @@
             chargeBtn.disabled = Object.keys(cart).length === 0;
         }
 
-        function addToCart(id, name, price, unit_id) {
+        function addToCart(id, name, price, unit_id, stock) {
+            // If already in cart
             if (cart[id]) {
-                cart[id].qty++;
+                // ✅ Ensure stock is always updated in case it's missing or wrong
+                cart[id].stock = stock;
+
+                if (cart[id].qty < cart[id].stock) {
+                    cart[id].qty++;
+                } else {
+                    showStockError('Stock exceeds available quantity.');
+                    return;
+                }
             } else {
+                // Add for first time
                 cart[id] = {
                     name,
                     sale_price: price,
                     unit_id,
-                    qty: 1
+                    qty: 1,
+                    stock: stock
                 };
             }
+
             updateCartUI();
         }
+
 
         document.querySelectorAll('.variant-selector').forEach(selector => {
             selector.addEventListener('change', function () {
@@ -626,25 +679,28 @@
 
 
         document.querySelectorAll('.add-variant-to-cart').forEach(btn => {
-            const card = $(this).closest('.card');
-            const quantity = card.find('.variant-quantity').val();
-            const selectedOption = card.find('.variant-selector option:selected');
-            const stock = selectedOption.data('stock');
-
-            if (parseInt(quantity) > stock) {
-                alert('Requested quantity exceeds available stock.');
-                return;
-            }
-
             btn.addEventListener('click', () => {
+                const card = btn.closest('.card');
+                const selectedOption = card.querySelector('.variant-selector option:checked');
+                const stock = parseInt(selectedOption.dataset.stock);
                 const id = btn.getAttribute('data-id');
                 const name = btn.getAttribute('data-name');
                 const price = parseFloat(btn.getAttribute('data-price'));
                 const unit_id = btn.getAttribute('data-unit-id');
 
-                addToCart(id, name, price, unit_id);
+                // Ensure cart item exists and check quantity
+                const currentQty = cart[id]?.qty || 0;
+
+                if (currentQty >= stock) {
+                    showStockError('Stock exceeds available quantity.');
+                    return;
+                }
+
+                addToCart(id, name, price, unit_id, stock);
             });
         });
+
+
 
         document.querySelectorAll('.add-simple-to-cart').forEach(btn => {
             const quantity = $(this).closest('.card').find('.simple-quantity').val();
@@ -660,8 +716,9 @@
                 const name = btn.getAttribute('data-name');
                 const price = parseFloat(btn.getAttribute('data-price'));
                 const unit_id = btn.getAttribute('data-unit-id');
+                const stock = parseInt(btn.getAttribute('data-stock')); // ✅ ADD THIS
 
-                addToCart(id, name, price, unit_id);
+                addToCart(id, name, price, unit_id, stock); // ✅ PASS STOCK
             });
         });
 
@@ -671,7 +728,11 @@
             if (!id) return;
 
             if (btn.classList.contains('btn-increment')) {
-                cart[id].qty++;
+                if (cart[id].qty < cart[id].stock) {
+                    cart[id].qty++;
+                } else {
+                    showStockError('Stock exceeds available quantity.');
+                }
             } else if (btn.classList.contains('btn-decrement')) {
                 cart[id].qty > 1 ? cart[id].qty-- : delete cart[id];
             } else if (btn.classList.contains('btn-remove')) {
@@ -679,6 +740,7 @@
             }
             updateCartUI();
         });
+
 
         resetBtn.addEventListener('click', () => {
             Object.keys(cart).forEach(key => delete cart[key]);
@@ -716,47 +778,51 @@
             errorDiv.classList.add('d-none');
         }, 3000);
     }
-
-
-
     });
 
     // Calculator and Fullscreen functions are outside DOMContentLoaded because they
     // are global and referenced directly in the HTML onclick attributes.
-    let display = document.getElementById('display');
-    function toggleFullScreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+    const toggleButton = document.getElementById('toggleCalculator');
+    const dropdown = document.getElementById('calculatorContent');
+
+    toggleButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function (event) {
+        const isClickInside = dropdown.contains(event.target) || toggleButton.contains(event.target);
+        if (!isClickInside) {
+            dropdown.classList.remove('show');
         }
-    }
+    });
+
+    // Calculator functions
+    const display = document.getElementById('display');
+
     function appendToDisplay(value) {
-        // Handle 'C' (Clear last character) specifically
         if (value === 'C') {
             display.value = display.value.slice(0, -1);
         } else {
             display.value += value;
         }
     }
+
     function clearDisplay() {
         display.value = '';
     }
+
     function calculate() {
         try {
-            // Using eval() can be a security risk in untrusted environments.
-            // For a production application, consider a safer math expression parser.
             display.value = eval(display.value) || 0;
         } catch (e) {
             display.value = 'Error';
             setTimeout(clearDisplay, 1000);
         }
     }
+
     function toggleFullScreen() {
         const icon = document.getElementById('fullscreen-icon');
-    
         if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen();
             icon.classList.remove('fa-expand');
