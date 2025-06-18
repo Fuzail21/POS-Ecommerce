@@ -83,7 +83,11 @@
                                                         <i class="ri-file-list-3-line" style="font-size: 1.1rem;"></i>
                                                     </a>
 
-                                                    <a class="badge bg-primary mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Create Sale Return" href="{{ route('sale_return.create', ['sale_id' => $sale->id]) }}">
+                                                    <a class="badge bg-primary mr-2 p-1 {{ $sale->sales_returns_count > 0 ? 'pointer-events-none opacity-50' : '' }}"
+                                                       data-toggle="tooltip"
+                                                       data-placement="top"
+                                                       title="{{ $sale->sales_returns_count > 0 ? 'Return already processed' : 'Create Sale Return' }}"
+                                                       href="{{ $sale->sales_returns_count > 0 ? '#' : route('sale_return.create', $sale->id) }}">
                                                         <i class="ri-refresh-line" style="font-size: 1.1rem;"></i>
                                                     </a>
                                                 </div>

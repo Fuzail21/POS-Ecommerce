@@ -23,6 +23,18 @@ class SalesReturn extends Model
         'created_by',
     ];
 
+    protected $casts = [
+        'return_date' => 'datetime', // <--- Add this line
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    public function salesReturnItems() 
+    {
+        return $this->hasMany(SalesReturnItem::class, 'sales_return_id');
+    }
+
     public function sale()
     {
         return $this->belongsTo(Sale::class);

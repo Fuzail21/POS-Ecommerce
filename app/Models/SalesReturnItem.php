@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\ProductVariant; // <--- Make sure this line is present
+use App\Models\Product;
+use App\Models\Unit;
+use App\Models\Sale;
+use App\Models\SalesReturn;
+
 
 class SalesReturnItem extends Model
 {
@@ -37,7 +43,8 @@ class SalesReturnItem extends Model
 
     public function variant()
     {
-        return $this->belongsTo(Variant::class);
+        // THIS IS THE LINE TO CORRECT:
+        return $this->belongsTo(ProductVariant::class, 'variant_id'); // Use ProductVariant::class
     }
 
     public function unit()

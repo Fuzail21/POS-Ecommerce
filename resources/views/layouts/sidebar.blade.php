@@ -327,27 +327,32 @@
                         </ul>
                     </li>
 
-                    <li class="{{ Route::is('sales.list') || Route::is('sales.create') ? 'active' : '' }}">
+                    <li class="{{ Route::is('sales.list') || Route::is('sales.create') || Route::is('sales_return.list') ? 'active' : '' }}">
                         <a href="#sales" 
-                           class="{{ Route::is('sales.list') || Route::is('sales.create') ? '' : 'collapsed' }}" 
+                           class="{{ Route::is('sales.list') || Route::is('sales.create') || Route::is('sales_return.list') ? '' : 'collapsed' }}" 
                            data-toggle="collapse" 
-                           aria-expanded="{{ Route::is('sales.list') || Route::is('sales.create') ? 'true' : 'false' }}">
+                           aria-expanded="{{ Route::is('sales.list') || Route::is('sales.create') || Route::is('sales_return.list') ? 'true' : 'false' }}">
 
                             <!-- Sales Icon -->
-                            <svg class="svg-icon" id="sales-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="svg-icon" id="sales-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 17L10 10L21 21"></path>
                                 <path d="M7 3H4a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1z"></path>
                             </svg>
 
                             <span class="ml-4">Sales</span>
 
-                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20"
+                                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="10 15 15 20 20 15"></polyline>
                                 <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                             </svg>
                         </a>
 
-                        <ul id="sales" class="iq-submenu collapse {{ Route::is('sales.list') || Route::is('sales.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                        <ul id="sales" class="iq-submenu collapse {{ Route::is('sales.list') || Route::is('sales.create') || Route::is('sales_return.list') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
                             <li class="{{ Route::is('sales.list') ? 'active' : '' }}">
                                 <a href="{{ route('sales.list') }}">
                                     <i class="las la-minus"></i><span>Sales List</span>
@@ -358,8 +363,14 @@
                                     <i class="las la-minus"></i><span>Add Sale</span>
                                 </a>
                             </li>
+                            <li class="{{ Route::is('sales_return.*') ? 'active' : '' }}">
+                                <a href="{{ route('sale_return.list') }}">
+                                    <i class="las la-minus"></i><span>Sale Returns</span>
+                                </a>
+                            </li>
                         </ul>
                     </li>
+
 
                     <li class="{{ Route::is('payments.list') || Route::is('payments.create') ? 'active' : '' }}">
                         <a href="#payments" class="{{ Route::is('payments.list') || Route::is('payments.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('payments.list') || Route::is('payments.create') ? 'true' : 'false' }}">
@@ -652,11 +663,19 @@
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ml-auto navbar-list align-items-center">
                             <!-- POS Button -->
-                            <li class="nav-item">
+                            {{-- <li class="nav-item">
                                 <a href="{{ route('pos.index') }}" class="btn btn-primary px-4 py-2 mx-2" style="font-size: 14px; height: 40px; line-height: 26px; border-radius: 8px;">
                                     POS
                                 </a>
+                            </li> --}}
+
+                            <li class="nav-item">
+                                <a href="#" id="posBtn" class="btn btn-primary px-4 py-2 mx-2 text-white"
+                                   style="font-size: 14px; height: 40px; line-height: 26px; border-radius: 8px;">
+                                    POS
+                                </a>
                             </li>
+
 
                             
                             <!-- Profile Dropdown -->
@@ -689,3 +708,72 @@
             </nav>
         </div>
     </div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const posBtn = document.getElementById('posBtn');
+
+    if (posBtn) {
+        posBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            fetch("{{ route('pos.checkRegister') }}")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.open) {
+                        Swal.fire({
+                            title: 'POS Register',
+                            text: 'Enter Opening Cash:',
+                            input: 'number',
+                            inputAttributes: {
+                                min: 0,
+                                step: 0.01
+                            },
+                            inputValue: 0,
+                            showCancelButton: true, // ✅ Enable cancel button (X)
+                            confirmButtonText: 'Submit',
+                            cancelButtonText: 'Cancel',
+                            allowOutsideClick: false,
+                            allowEscapeKey: true,
+                            preConfirm: (opening_cash) => {
+                                return fetch("{{ route('pos.openRegister') }}", {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'Accept': 'application/json',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ opening_cash: parseFloat(opening_cash) })
+                                })
+                                .then(async response => {
+                                    const result = await response.json();
+                                    if (!response.ok || !result.success) {
+                                        throw new Error(result.message || 'Failed to open register.');
+                                    }
+                                    return result;
+                                })
+                                .catch(error => {
+                                    Swal.showValidationMessage(error.message);
+                                });
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed && result.value && result.value.success) {
+                                window.location.href = result.value.redirect;
+                            }
+                        });
+                    } else {
+                        window.location.href = "{{ route('pos.index') }}";
+                    }
+                })
+                .catch(err => {
+                    console.error("Error checking register:", err);
+                    Swal.fire('Error', 'Could not verify register status.', 'error');
+                });
+        });
+    }
+});
+</script>
+

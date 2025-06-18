@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Models\SalesReturn;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
             'supplier' => Supplier::class,
             'purchase' => Purchase::class,
             'sale' => Sale::class,
+            'sales_return' => SalesReturn::class,
 
         ]);
     }

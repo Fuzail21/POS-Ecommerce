@@ -22,6 +22,8 @@ use App\Http\Controllers\WarehouseController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SalesReturnController;
+use App\Http\Controllers\POSController;
 
 
 
@@ -36,16 +38,6 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth', 'verified')->group(function () {
-
-
-    // // Expense
-    // Route::get('/expense/list', [ExpenseController::class, 'index'])->name('expense.list');
-    // Route::get('/expense/create', [ExpenseController::class, 'create'])->name('expense.create');
-    // Route::post('/expense/store', [ExpenseController::class, 'store'])->name('expense.store');
-    // Route::get('/expense/edit/{id}', [ExpenseController::class, 'edit'])->name('expense.edit');
-    // Route::post('/expense/edit/{id}', [ExpenseController::class, 'update'])->name('expense.update');
-    // Route::get('/expense/delete/{id}', [ExpenseController::class, 'destroy'])->name('expense.delete');
-
 
 
     // // Profits
@@ -191,15 +183,17 @@ Route::middleware('auth', 'verified')->group(function () {
 
     });
 
-    Route::prefix('sale_return')->name('sale_return.')->group(function () {
-        Route::get('/', [SaleController::class, 'index'])->name('list');
-        Route::get('/create', [SaleController::class, 'create'])->name('create');
-        Route::post('/checkout', [SaleController::class, 'process'])->name('checkout.process');
-        Route::delete('/{id}', [SaleController::class, 'destroy'])->name('destroy');
-        // Purchase Items View
-        // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
-        Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
 
+
+    //Sales Return
+    Route::prefix('sale_return')->name('sale_return.')->group(function () {
+        Route::get('/', [SalesReturnController::class, 'list'])->name('list');
+        Route::get('/create/{sale}', [SalesReturnController::class, 'create'])->name('create');
+        Route::post('/{sale}/store', [SalesReturnController::class, 'store'])->name('store');
+        Route::delete('/{id}', [SalesReturnController::class, 'destroy'])->name('destroy');
+
+        Route::get('/details/{id}', [SalesReturnController::class, 'details'])->name('details');
+        Route::get('/{sales_return}', [SalesReturnController::class, 'show'])->name('show');
     });
 
 
@@ -241,6 +235,13 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::put('/expenses/update/{id}', [ExpenseController::class, 'expenseUpdate'])->name('expense.update');
     Route::get('/expenses/delete/{id}', [ExpenseController::class, 'expenseDestroy'])->name('expense.destroy');
     
+
+
+    //Cash Register
+    Route::post('/pos/open-register', [POSController::class, 'openRegister'])->name('pos.openRegister');
+    Route::post('/pos/close-register', [POSController::class, 'closeRegister'])->name('pos.closeRegister');
+    Route::get('/pos/check-register', [POSController::class, 'checkRegister'])->name('pos.checkRegister');
+
 
 
     // Prodfile

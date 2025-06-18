@@ -64,4 +64,9 @@ class Sale extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
+    public function salesReturns()
+    {
+        return $this->hasMany(SalesReturn::class, 'sale_id'); // Ensure 'sale_id' is the foreign key in sales_returns table
+    }
+
 }

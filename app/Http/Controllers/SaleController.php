@@ -24,7 +24,10 @@ class SaleController extends Controller
 {
     public function index(){
         $title = "Sales List";
-        $sales = Sale::with(['customer', 'items', 'payments', 'branch'])->latest()->paginate(10);
+        $sales = Sale::with(['customer', 'items', 'payments', 'branch'])
+                     ->withCount('salesReturns')
+                     ->latest()
+                     ->paginate(10);
         return view('admin.sale.list', compact('sales', 'title'));
     }
 

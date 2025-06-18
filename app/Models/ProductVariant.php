@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\InventoryStock;
 
 class ProductVariant extends Model
 {
@@ -38,6 +39,10 @@ class ProductVariant extends Model
         return $this->belongsTo(Unit::class, 'display_unit_id');
     }
 
-
+    public function inventoryStocks()
+    {
+        // Corrected line: Use a comma (,) to separate the arguments
+        return $this->hasMany(InventoryStock::class, 'variant_id');
+    }
 }
 
