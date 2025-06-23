@@ -54,6 +54,10 @@
                         </div>
                     </div>
 
+                            @php
+                                use App\Models\Setting;
+                                $setting = \App\Models\Setting::first();
+                            @endphp
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
@@ -72,8 +76,8 @@
                                         N/A
                                     @endif
                                 </p>
-                                <p><strong>Total Returned Amount:</strong> ${{ number_format($salesReturn->total_return_amount, 2) }}</p>
-                                <p><strong>Refund Amount:</strong> ${{ number_format($salesReturn->refund_amount, 2) }}</p>
+                                <p><strong>Total Returned Amount:</strong> {{ $setting->currency_symbol }} {{ number_format($salesReturn->total_return_amount, 2) }}</p>
+                                <p><strong>Refund Amount:</strong> {{ $setting->currency_symbol }} {{ number_format($salesReturn->refund_amount, 2) }}</p>
                                 <p><strong>Payment Method:</strong> {{ ucfirst($salesReturn->payment_method) }}</p>
                             </div>
                         </div>
@@ -116,10 +120,10 @@
                                                     Unknown Product
                                                 @endif
                                             </td>
-                                            <td>${{ number_format($item->unit_price, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($item->unit_price, 2) }}</td>
                                             <td>{{ number_format($item->quantity, 2) }} ({{ $item->unit->name ?? 'N/A Unit' }})</td>
                                             <td>{{ number_format($item->quantity, 0) }}</td>
-                                            <td>${{ number_format($item->total_price, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($item->total_price, 2) }}</td>
                                         </tr>
                                     @empty
                                         <tr>

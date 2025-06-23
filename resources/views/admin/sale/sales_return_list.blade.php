@@ -22,6 +22,11 @@
             <div class="col-sm-12">
                 <div class="card">
 
+                    @php
+                        use App\Models\Setting;
+                        $setting = \App\Models\Setting::first();
+                    @endphp
+
                     <!-- Flash Messages -->
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -84,8 +89,8 @@
                                             <td>{{ $salesReturn->branch->name ?? 'N/A' }}</td>
                                             {{-- Ensure 'return_date' is cast to datetime in SalesReturn model --}}
                                             <td>{{ $salesReturn->return_date ? $salesReturn->return_date->format('d M Y') : 'N/A' }}</td>
-                                            <td>${{ number_format($salesReturn->total_return_amount, 2) }}</td>
-                                            <td>${{ number_format($salesReturn->refund_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($salesReturn->total_return_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($salesReturn->refund_amount, 2) }}</td>
                                             <td>{{ ucfirst($salesReturn->payment_method) }}</td>
                                             <td>{{ $salesReturn->sales_return_items_count }}</td> {{-- Count from withCount --}}
                                             <td>{{ $salesReturn->user->name ?? 'N/A' }}</td>

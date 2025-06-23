@@ -66,13 +66,17 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @php
+                                    use App\Models\Setting;
+                                    $setting = \App\Models\Setting::first();
+                                @endphp
                                 @foreach($customers as $customer)
                                 <tr>
                                     <td>{{ $customer->id }}</td>
                                     <td>{{ $customer->name }}</td>
                                     <td>{{ $customer->phone }}</td>
                                     <td>{{ $customer->email }}</td>
-                                    <td>{{ $customer->balance }}</td>
+                                    <td>{{ $setting->currency_symbol }} {{ number_format($customer->balance, 2) }}</td>
                                     <td>
                                      <div class="d-flex align-items-center list-action">
                                          <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('customers.edit', $customer->id) }}">

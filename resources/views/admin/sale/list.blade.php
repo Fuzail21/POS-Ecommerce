@@ -57,6 +57,10 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php
+                                        use App\Models\Setting;
+                                        $setting = \App\Models\Setting::first();
+                                    @endphp
                                     @forelse ($sales as $index => $sale)
                                         <tr>
                                             <td>{{ $sale->id }}</td>
@@ -64,10 +68,10 @@
                                             <td>{{ $sale->customer->name ?? '-' }}</td>
                                             <td>{{ $sale->branch->name ?? '-' }}</td>
                                             <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}</td>
-                                            <td>{{ number_format($sale->total_amount, 2) }}</td>
-                                            <td>{{ number_format($sale->paid_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->total_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->paid_amount, 2) }}</td>
                                             <td class="{{ $sale->due_amount > 0 ? 'text-danger' : 'text-success' }}">
-                                                {{ number_format($sale->due_amount, 2) }}
+                                                {{ $setting->currency_symbol }} {{ number_format($sale->due_amount, 2) }}
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center list-action">

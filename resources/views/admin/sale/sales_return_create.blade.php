@@ -26,6 +26,11 @@
     <div class="container-fluid">
         <div class="row">
 
+            @php
+                use App\Models\Setting;
+                $setting = \App\Models\Setting::first();
+            @endphp
+
             @if (session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div>
             @endif
@@ -111,7 +116,7 @@
                                                         data-stock="{{ $variant->stock_quantity }}"
                                                         data-unit-id="{{ $product->default_display_unit_id }}" {{-- Assuming unit from parent product --}}
                                                         {{ !$variant->in_stock ? 'disabled' : '' }}>
-                                                        {{ $variant->variant_name }} - ${{ number_format($variant->sale_price, 2) }}
+                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }}
                                                         {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
                                                     </option>
                                                 @endforeach
@@ -119,7 +124,7 @@
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
                                             {{-- Simple product (no variants): show direct price and add to cart button --}}
-                                            <p class="mb-1">${{ number_format($product->sale_price, 2) }}
+                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }}
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
                                             @if($product->in_stock)
@@ -188,7 +193,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="discount">Discount</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
                                 <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -197,7 +202,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="shipping">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
                                 <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -207,12 +212,12 @@
 
 
                         <div class="mt-3">
-                            <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
-                            <p><strong>Discount:</strong> $<span id="discount">0.00</span></p>
-                            <p><strong>Tax:</strong> $<span id="tax">0.00</span></p>
-                            <p><strong>Shipping:</strong> $<span id="shipping">0.00</span></p>
+                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol }} <span id="subtotal">0.00</span></p>
+                            <p><strong>Discount:</strong> {{ $setting->currency_symbol }} <span id="discount">0.00</span></p>
+                            <p><strong>Tax:</strong> {{ $setting->currency_symbol }} <span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol }} <span id="shipping">0.00</span></p>
                             <hr>
-                            <h5><strong>Total:</strong> $<span id="total">0.00</span></h5>
+                            <h5><strong>Total:</strong> {{ $setting->currency_symbol }} <span id="total">0.00</span></h5>
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
@@ -315,10 +320,12 @@
 
 
 <script>
+    const currencySymbol = @json($setting->currency_symbol);
+    
     function updateDiscountSymbol() {
-        var symbol = document.getElementById('discount-symbol');
-        var selectedType = document.querySelector('input[name="discount_type"]:checked').value;
-        symbol.textContent = selectedType === 'percentage' ? '%' : '$';
+        const symbol = document.getElementById('discount-symbol');
+        const selectedType = document.querySelector('input[name="discount_type"]:checked').value;
+        symbol.textContent = selectedType === 'percentage' ? '%' : currencySymbol;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -449,7 +456,7 @@
                         </div>
                         <small class="text-muted">(Max: ${item.purchased_qty})</small>
                     </td>
-                    <td>$${lineTotal.toFixed(2)}</td>
+                    <td>${currencySymbol} ${lineTotal.toFixed(2)}</td>
                     <td><button class="btn btn-sm btn-danger btn-remove" data-id="${id}">&times;</button></td>
                 `;
                 cartItemsEl.appendChild(tr);
@@ -626,7 +633,7 @@
             const paid = parseFloat(amountPaidInput.value) || 0;
             // For returns, `balance_due` will typically be positive (refund amount)
             const due = total - paid;
-            balanceDisplay.value = (due <= 0 ? 'Refund: $' : 'Due (Additional Payment): $') + Math.abs(due).toFixed(2);
+            balanceDisplay.value = (due >= 0 ? 'Due: ' : 'Change: ') + currencySymbol + ' ' + Math.abs(due).toFixed(2);
             document.getElementById('balance_due_raw').value = due.toFixed(2);
         });
 

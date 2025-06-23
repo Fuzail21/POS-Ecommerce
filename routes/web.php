@@ -24,6 +24,8 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\POSController;
+use App\Http\Middleware\CheckOpenRegister;
+use App\Http\Controllers\SettingController;
 
 
 
@@ -215,8 +217,11 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/stock-ledger', [StockAdjustmentController::class, 'stockLedger'])->name('stock.ledger');
 
     // POS
-    Route::get('/pos', [SaleController::class, 'pos'])->name('pos.index');
-    Route::post('/pos/checkout', [SaleController::class, 'posProcess'])->name('checkout.pos');
+    Route::middleware(['auth', CheckOpenRegister::class])->group(function () {
+        Route::get('/pos', [SaleController::class, 'pos'])->name('pos.index');
+        Route::post('/pos/checkout', [SaleController::class, 'posProcess'])->name('checkout.pos');
+    });
+
 
 
     // Expense Category
@@ -241,7 +246,11 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::post('/pos/open-register', [POSController::class, 'openRegister'])->name('pos.openRegister');
     Route::post('/pos/close-register', [POSController::class, 'closeRegister'])->name('pos.closeRegister');
     Route::get('/pos/check-register', [POSController::class, 'checkRegister'])->name('pos.checkRegister');
+    Route::get('/pos/register-details', [POSController::class, 'getRegisterDetails'])->name('pos.getRegisterDetails');
 
+
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
 
 
     // Prodfile

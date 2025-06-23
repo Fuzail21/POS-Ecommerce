@@ -74,6 +74,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @php
+                                            use App\Models\Setting;
+                                            $setting = \App\Models\Setting::first();
+                                        @endphp
+
                                         @foreach($payments as $payment)
                                         @php
                                             $dueAmount = method_exists($payment->reference, 'total') 
@@ -85,7 +90,7 @@
                                             <td>{{ $payment->entity->name ?? '-' }}</td>
                                             <td>{{ ucfirst($payment->entity_type) ?? '-' }}</td>
                                             <td>{{ class_basename($payment->ref_type) }} #{{ $payment->reference->id ?? '-' }}</td>
-                                            <td>{{ number_format($payment->amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($payment->amount, 2) }}</td>
                                             <td>{{ ucfirst($payment->payment_method) }}</td>
                                             <td>{{ $payment->creator->name ?? '-' }}</td>
                                             <td>

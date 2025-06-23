@@ -57,6 +57,10 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @php
+                                        use App\Models\Setting;
+                                        $setting = \App\Models\Setting::first();
+                                    @endphp
                                     @forelse ($purchases as $index => $purchase)
                                         <tr>
                                             <td>{{ $purchase->id }}</td>
@@ -64,10 +68,10 @@
                                             <td>{{ $purchase->supplier->name ?? '-' }}</td>
                                             <td>{{ $purchase->warehouse->name ?? '-' }}</td>
                                             <td>{{ \Carbon\Carbon::parse($purchase->purchase_date)->format('d M Y') }}</td>
-                                            <td>{{ number_format($purchase->total_amount, 2) }}</td>
-                                            <td>{{ number_format($purchase->paid_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($purchase->total_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol }} {{ number_format($purchase->paid_amount, 2) }}</td>
                                             <td class="{{ $purchase->due_amount > 0 ? 'text-danger' : 'text-success' }}">
-                                                {{ number_format($purchase->due_amount, 2) }}
+                                                {{ $setting->currency_symbol }} {{ number_format($purchase->due_amount, 2) }}
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center list-action">

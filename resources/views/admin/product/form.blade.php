@@ -140,19 +140,19 @@
                                 </div>
 
                                 {{-- Track Expiry --}}
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label>Track Expiry</label>
                                     <select name="track_expiry" class="form-control" required>
                                         <option value="1" {{ old('track_expiry', $product->track_expiry ?? '') == 1 ? 'selected' : '' }}>Yes</option>
                                         <option value="0" {{ old('track_expiry', $product->track_expiry ?? '') == 0 ? 'selected' : '' }}>No</option>
                                     </select>
-                                </div>
+                                </div> --}}
 
                                 {{-- Tax Rate --}}
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label>Tax Rate (%)</label>
                                     <input type="number" step="0.01" name="tax_rate" class="form-control" value="{{ old('tax_rate', $product->tax_rate ?? '') }}" required>
-                                </div>
+                                </div> --}}
 
                                 {{-- Product Image --}}
                                 <div class="form-group">

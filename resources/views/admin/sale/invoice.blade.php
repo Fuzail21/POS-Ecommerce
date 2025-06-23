@@ -44,6 +44,10 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @php
+                            use App\Models\Setting;
+                            $setting = \App\Models\Setting::first();
+                        @endphp
                         @foreach ($sale->items as $index => $item)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
@@ -51,8 +55,8 @@
                                 <td>{{ $item->variant->variant_name ?? '-' }}</td>
                                 <td>{{ number_format($item->quantity, 0) }}</td>
                                 <td>{{ $item->unit->name }}</td> 
-                                <td>{{ number_format($item->unit_price, 2) }}</td>
-                                <td>{{ number_format($item->total_price, 2) }}</td>
+                                <td>{{ $setting->currency_symbol }} {{ number_format($item->unit_price, 2) }}</td>
+                                <td>{{ $setting->currency_symbol }} {{ number_format($item->total_price, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -65,31 +69,31 @@
                     <table class="table table-bordered">
                         <tr>
                             <th>Subtotal:</th>
-                            <td>{{ number_format($sale->total_amount, 2) }}</td>
+                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->total_amount, 2) }}</td>
                         </tr>
                         <tr>
                             <th>Discount:</th>
-                            <td>{{ number_format($sale->discount_amount, 2) }}</td>
+                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->discount_amount, 2) }}</td>
                         </tr>
                         <tr>
                             <th>Tax:</th>
-                            <td>{{ number_format($sale->tax_amount, 2) }}</td>
+                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->tax_amount, 2) }}</td>
                         </tr>
                         <tr>
                             <th>Shipping:</th>
-                            <td>{{ number_format($sale->shipping, 2) }}</td>
+                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->shipping, 2) }}</td>
                         </tr>
                         <tr>
                             <th><strong>Grand Total:</strong></th>
-                            <td><strong>{{ number_format($sale->final_amount, 2) }}</strong></td>
+                            <td><strong>{{ $setting->currency_symbol }} {{ number_format($sale->final_amount, 2) }}</strong></td>
                         </tr>
                         <tr>
                             <th>Paid:</th>
-                            <td>{{ number_format($sale->paid_amount, 2) }}</td>
+                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->paid_amount, 2) }}</td>
                         </tr>
                         <tr>
                             <th>Due:</th>
-                            <td>{{ number_format($sale->due_amount, 2) }}</td>
+                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->due_amount, 2) }}</td>
                         </tr>
                     </table>
                 </div>

@@ -1,5 +1,8 @@
 @extends('standalone-template')
 
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <style>
     /* Navbar with proper alignment and padding */
     .navbar {
@@ -120,6 +123,31 @@
 
     <div class="navbar">
         <div class="right-controls">
+
+            @php
+                use App\Models\Setting;
+                $setting = \App\Models\Setting::first();
+            @endphp
+
+
+            <div class="dropdown">
+                <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button" id="registerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-briefcase me-2"></i> Cash Register
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="registerDropdown">
+                    <li>
+                        <a id="showRegisterDetailsBtn" class="dropdown-item">
+                            <i class="fas fa-info-circle me-2"></i> Register Details
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" id="closeRegisterBtn">
+                            <i class="fas fa-lock me-2"></i> Close Register
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
             <div class="dropdown" id="calculatorDropdown">
                 <button class="btn" id="toggleCalculator">Calculator</button>
                 <div class="dropdown-content" id="calculatorContent">
@@ -252,14 +280,14 @@
                                                         data-stock="{{ $variant->stock_quantity }}"
                                                         data-unit-id="{{ $product->default_display_unit_id }}"
                                                         {{ !$variant->in_stock ? 'disabled' : '' }}>
-                                                        {{ $variant->variant_name }} - ${{ number_format($variant->sale_price, 2) }}
+                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }}
                                                         {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
-                                            <p class="mb-1">${{ number_format($product->sale_price, 2) }} 
+                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }} 
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
                                             @if($product->in_stock)
@@ -331,7 +359,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="discount">Discount</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
                                 <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -341,7 +369,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="shipping">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">$</span>
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
                                 <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -351,12 +379,12 @@
 
 
                         <div class="mt-3">
-                            <p><strong>Subtotal:</strong> $<span id="subtotal">0.00</span></p>
-                            <p><strong>Discount:</strong> $<span id="discount">0.00</span></p>
-                            <p><strong>Tax:</strong> $<span id="tax">0.00</span></p>
-                            <p><strong>Shipping:</strong> $<span id="shipping">0.00</span></p>
+                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol }} <span id="subtotal">0.00</span></p>
+                            <p><strong>Discount:</strong> {{ $setting->currency_symbol }} <span id="discount">0.00</span></p>
+                            <p><strong>Tax:</strong> {{ $setting->currency_symbol }} <span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol }} <span id="shipping">0.00</span></p>
                             <hr>
-                            <h5><strong>Total:</strong> $<span id="total">0.00</span></h5>
+                            <h5><strong>Total:</strong> {{ $setting->currency_symbol }} <span id="total">0.00</span></h5>
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
@@ -397,8 +425,7 @@
                             <select name="payment_method" class="form-control" required>
                                 <option value="cash">Cash</option>
                                 <option value="card">Card</option>
-                                <option value="mixed">Mixed</option>
-                                <option value="online">Online</option>
+                                <option value="bank">Bank</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -492,14 +519,196 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Bootstrap JS Bundle (includes Popper) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 
 
 <!-- JavaScript -->
 <script>
+
+        document.getElementById('showRegisterDetailsBtn').addEventListener('click', async () => {
+            // Show a loading spinner while fetching data
+            Swal.fire({
+                title: 'Fetching Register Details...',
+                html: '<div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-blue-500" role="status"><span class="visually-hidden">Loading...</span></div>',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                // *** IMPORTANT: Replace '/pos/register-details' with your actual Laravel route ***
+                const response = await fetch('/pos/register-details', {
+                    method: 'GET', // Or 'POST' if your route is configured that way
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        // If you are using Laravel CSRF protection with AJAX, uncomment and set the token:
+                        // 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                });
+
+                const data = await response.json();
+
+                // Close the loading spinner
+                Swal.close();
+
+                if (response.ok && data.details) {
+                    const { payment_type, total_sales, total_refund, total_payment, date } = data.details;
+
+                    // Construct the HTML content for the SweetAlert popup
+
+                    const sanitized = (value) => {
+                        return value.replace(/^\s*\$\s*/, currencySymbol + ' ');
+                    };
+                    const popupHtml = `
+                        <div class="space-y-4">
+                            <!-- Payment Type & Amount Section -->
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-700 text-sm md:text-base">
+                                <div class="col-span-1 font-semibold text-gray-800">Payment Type</div>
+                                <div class="col-span-1 font-semibold text-right text-gray-800">Amount</div>
+
+                                ${Object.entries(payment_type).map(([type, amount]) => `
+                                    <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">${type}:</div>
+                                    <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(amount)}</div>
+                                `).join('')}
+                            </div>
+
+                            <!-- Totals Section -->
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-700 text-sm md:text-base pt-4 border-t border-gray-200">
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Sales:</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_sales)}</div>
+
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Refund:</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_refund)}</div>
+
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Payment:</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_payment)}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    Swal.fire({
+                        title: `Register Details - (${date})`,
+                        html: popupHtml,
+                        width: '700px', // Increased popup width
+                        showCancelButton: true,
+                        confirmButtonText: 'Print',
+                        cancelButtonText: 'Close',
+                        customClass: {
+                            container: 'swal2-container',
+                            popup: 'swal2-popup',
+                            title: 'swal2-title text-lg font-semibold text-gray-800 mb-3', // Slightly smaller & bolder title
+                            htmlContainer: 'swal2-html-container text-sm text-gray-700', // Smaller, cleaner text
+                            confirmButton: 'swal2-confirm-button text-black font-bold py-2 px-5 rounded-lg focus:outline-none transition',
+                            cancelButton: 'swal2-cancel-button text-black font-bold py-2 px-5 rounded-lg focus:outline-none ms-2 transition',
+                            actions: 'swal2-actions flex justify-end w-full mt-4 gap-2'
+                        },
+                        buttonsStyling: false,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Logic for the "Print" button
+                            // In a real application, you might trigger a print dialog or a server-side print action
+                            console.log('Print button clicked!');
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            console.log('Popup closed');
+                        }
+                    });
+                } else {
+                     Swal.fire({
+                        icon: 'info',
+                        title: 'No Register Details',
+                        text: data.message || 'Could not retrieve register details.',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'swal2-confirm-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline',
+                            popup: 'swal2-popup',
+                            title: 'swal2-title',
+                            htmlContainer: 'swal2-html-container'
+                        },
+                        buttonsStyling: false,
+                    });
+                }
+            } catch (error) {
+                // Close the loading spinner on error
+                Swal.close();
+                console.error('Error fetching register details:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while fetching register details. Please try again.',
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        confirmButton: 'swal2-confirm-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline',
+                        popup: 'swal2-popup',
+                        title: 'swal2-title',
+                        htmlContainer: 'swal2-html-container'
+                    },
+                    buttonsStyling: false,
+                });
+            }
+        });
+
+    //CLOSE Register    
+    document.addEventListener('DOMContentLoaded', function () {
+        const closeBtn = document.getElementById('closeRegisterBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+    
+                Swal.fire({
+                    title: 'Close Register?',
+                    text: "This will finalize today's session.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, close it',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch("{{ route('pos.closeRegister') }}", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Closed',
+                                    text: data.message,
+                                    showConfirmButton: false,
+                                    timer: 1500,
+                                    timerProgressBar: true,
+                                    didClose: () => {
+                                        window.location.href = data.redirect;
+                                    }
+                                });
+                            } else {
+                                Swal.fire('Error', data.message || 'Something went wrong while closing the register.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire('Error', 'Something went wrong while closing the register.', 'error');
+                            console.error(error);
+                        });
+                    }
+                });
+            });
+        }
+    });
+
+    const currencySymbol = @json($setting->currency_symbol);
     function updateDiscountSymbol() {
         var symbol = document.getElementById('discount-symbol');
         var selectedType = document.querySelector('input[name="discount_type"]:checked').value;
-        symbol.textContent = selectedType === 'percentage' ? '%' : '$';
+        symbol.textContent = selectedType === 'percentage' ? '%' : currencySymbol;
     }
     document.addEventListener('DOMContentLoaded', () => {
         const cart = {};
@@ -586,7 +795,7 @@
                             </div>
                         </div>
                     </td>
-                    <td>$${lineTotal.toFixed(2)}</td>
+                    <td>${currencySymbol} ${lineTotal.toFixed(2)}</td>
                     <td><button class="btn btn-sm btn-danger btn-remove" data-id="${id}">&times;</button></td>
                 `;
                 cartItemsEl.appendChild(tr);
@@ -751,7 +960,7 @@
             const total = parseFloat(totalEl.textContent) || 0;
             const paid = parseFloat(amountPaidInput.value) || 0;
             const due = total - paid;
-            balanceDisplay.value = (due >= 0 ? 'Due: $' : 'Change: $') + Math.abs(due).toFixed(2);
+            balanceDisplay.value = (due >= 0 ? 'Due: ' : 'Change: ') + currencySymbol + ' ' + Math.abs(due).toFixed(2);
             document.getElementById('balance_due_raw').value = due.toFixed(2);
         });
 
@@ -780,8 +989,6 @@
     }
     });
 
-    // Calculator and Fullscreen functions are outside DOMContentLoaded because they
-    // are global and referenced directly in the HTML onclick attributes.
     const toggleButton = document.getElementById('toggleCalculator');
     const dropdown = document.getElementById('calculatorContent');
 

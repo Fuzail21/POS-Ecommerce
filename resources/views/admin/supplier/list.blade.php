@@ -66,23 +66,27 @@
                              </tr>
                           </thead>
                           <tbody>
+                            @php
+                                use App\Models\Setting;
+                                $setting = \App\Models\Setting::first();
+                            @endphp
                              @forelse($suppliers as $supplier)
                                 <tr>
-                                  <td>{{ $supplier->id }}</td>
-                                  <td>{{ $supplier->name }}</td>
-                                  <td>{{ $supplier->email }}</td>
-                                  <td>{{ $supplier->phone }}</td>
-                                  <td>{{ $supplier->balance }}</td>
-                                  <td>
-                                     <div class="d-flex align-items-center list-action">
-                                         <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('suppliers.edit', $supplier->id) }}">
-                                             <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
-                                         </a>
-                                         <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('suppliers.destroy', $supplier->id) }}">
-                                             <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                         </a>
-                                     </div>
-                                  </td>
+                                    <td>{{ $supplier->id }}</td>
+                                    <td>{{ $supplier->name }}</td>
+                                    <td>{{ $supplier->email }}</td>
+                                    <td>{{ $supplier->phone }}</td>
+                                    <td>{{ $setting->currency_symbol }} {{ number_format($supplier->balance, 2) }}</td>
+                                    <td>
+                                       <div class="d-flex align-items-center list-action">
+                                           <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('suppliers.edit', $supplier->id) }}">
+                                               <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
+                                           </a>
+                                           <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('suppliers.destroy', $supplier->id) }}">
+                                               <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                           </a>
+                                       </div>
+                                    </td>
                                 </tr>
                              @empty
                                <tr>

@@ -65,12 +65,17 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                @php
+                                    use App\Models\Setting;
+                                    $setting = \App\Models\Setting::first();
+                                @endphp
+
                                 @foreach($expenses as $expense)
                                 <tr>
                                     <td>{{ $expense->id }}</td>
                                     <td>{{ $expense->branch->name ?? '-' }}</td>
                                     <td>{{ $expense->category->name ?? '-' }}</td>
-                                    <td>{{ number_format($expense->amount, 2) }}</td>
+                                    <td>{{$setting->currency_symbol}} {{ number_format($expense->amount, 2) }}</td>
                                     <td>{{ \Carbon\Carbon::parse($expense->expense_date)->format('d M Y') }}</td>
                                     <td>{{ $expense->creator->name ?? '-' }}</td>
                                     <td>

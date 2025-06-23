@@ -11,6 +11,12 @@
                     <div class="card-header d-flex justify-content-between">
                         <h4>Add Payment</h4>
                     </div>
+
+                        @php
+                            use App\Models\Setting;
+                            $setting = \App\Models\Setting::first();
+                        @endphp
+
                         @if (session('error'))
                             <div class="alert alert-danger">{{ session('error') }}</div>
                         @endif
@@ -95,6 +101,8 @@
 <script>
     const customers = @json($customers);
     const suppliers = @json($suppliers);
+    const currencySymbol = @json($setting->currency_symbol);
+
 
     document.getElementById('entityType').addEventListener('change', function () {
         const type = this.value;
@@ -146,7 +154,7 @@
                 const id = ref.id;
                 const invoice = ref.invoice_number || 'N/A';
                 const due = parseFloat(ref.due_amount).toFixed(2); // <-- FIXED here
-                referenceSelect.innerHTML += `<option value="${id}">${id} - ${invoice} - $${due}</option>`;
+                referenceSelect.innerHTML += `<option value="${id}">${id} - ${invoice} - ${currencySymbol} ${due}</option>`;
             });
             document.getElementById('referenceContainer').classList.remove('d-none');
         }
