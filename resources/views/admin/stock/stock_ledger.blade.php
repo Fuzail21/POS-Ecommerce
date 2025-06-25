@@ -6,6 +6,12 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12 mb-4">
                 <div class="card p-4 shadow-sm w-100">
                     <h5 class="card-title mb-3">Filter Stock Ledger</h5>
@@ -81,7 +87,7 @@
                         </div>
                 
                         <div class="col-md-2 d-grid mt-2">
-                            <button type="submit" class="btn btn-primary">Filter</button>
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Filter</button>
                         </div>
                     </form>
                 </div>

@@ -20,11 +20,16 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-3">Branch List</h4>
-                    <a href="{{ route('branch.create') }}" class="btn btn-primary"><i class="las la-plus mr-2"></i>Add Branch</a>
+                    <a href="{{ route('branch.create') }}" class="btn text-white" style="background-color: {{ $primaryColor }};"><i class="las la-plus mr-2"></i>Add Branch</a>
                 </div>
             </div>
 

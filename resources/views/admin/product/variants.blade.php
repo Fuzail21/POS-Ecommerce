@@ -7,13 +7,18 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="mb-3">{{ $title }} - {{ $product->name }}</h4>
                     </div>
-                    <a href="{{ route('products.list') }}" class="btn btn-secondary">
+                    <a href="{{ route('products.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">
                         <i class="las la-arrow-left mr-2"></i>Back to Products
                     </a>
                 </div>

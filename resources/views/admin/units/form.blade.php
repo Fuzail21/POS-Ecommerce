@@ -6,11 +6,16 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-0">{{ $unit->exists ? 'Edit Unit' : 'Add Unit' }}</h4>
-                    <a href="{{ route('units.list') }}" class="btn btn-secondary">Back to List</a>
+                    <a href="{{ route('units.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Back to List</a>
                 </div>
             </div>
 
@@ -51,7 +56,7 @@
                                 <input type="number" step="any" name="conversion_factor" class="form-control" value="{{ old('conversion_factor', $unit->conversion_factor) }}" required>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">
                                 {{ $unit->exists ? 'Update' : 'Create' }}
                             </button>
                         </form>

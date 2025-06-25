@@ -14,7 +14,9 @@
 
                         @php
                             use App\Models\Setting;
-                            $setting = \App\Models\Setting::first();
+                            $setting = Setting::first();
+                            $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                            $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
                         @endphp
 
                         @if (session('error'))
@@ -88,8 +90,8 @@
                                 <textarea name="note" class="form-control" placeholder="Optional note..."></textarea>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">Submit Payment</button>
-                            <a href="{{ route('payments.list') }}" class="btn btn-secondary">Back</a>
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Submit Payment</button>
+                            <a href="{{ route('payments.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Back</a>
                         </form>
                     </div>
                 </div>

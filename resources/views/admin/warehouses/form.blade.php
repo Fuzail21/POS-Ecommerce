@@ -6,6 +6,12 @@
 <div class="content-page">
     <div class="container-fluid add-form-list">
         <div class="row">
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
@@ -72,10 +78,10 @@
                                     value="{{ old('capacity_unit', $warehouse->capacity_unit ?? '') }}" required>
                             </div> --}}
 
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">
                                 {{ isset($warehouse) ? 'Update Warehouse' : 'Add Warehouse' }}
                             </button>
-                            <a href="{{ route('warehouse.list') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('warehouse.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Cancel</a>
                         </form>
                     </div>
                 </div>

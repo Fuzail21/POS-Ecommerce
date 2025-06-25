@@ -17,7 +17,7 @@ class ProductController extends Controller
 {
     public function index(){
         $title = 'Products List';
-        $products = Product::paginate(20);
+        $products = Product::paginate(10);
         return view('admin.product.list', compact('products', 'title'));
     }
 
@@ -39,10 +39,10 @@ class ProductController extends Controller
             'sku' => 'required|unique:products,sku',
             'barcode' => 'nullable|unique:products,barcode',
             'brand' => 'nullable|string|max:255',
-            'track_expiry' => 'required|boolean',
-            'tax_rate' => 'required|numeric|between:0,100.00',
+            // 'track_expiry' => 'required|boolean',
+            // 'tax_rate' => 'required|numeric|between:0,100.00',
             'sale_price' => 'required|numeric|min:0',
-            'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
         ]);
 
         $product = new Product();
@@ -108,10 +108,10 @@ class ProductController extends Controller
                 Rule::unique('products')->ignore($id)->whereNull('deleted_at'),
             ],
             'brand' => 'nullable|string|max:255',
-            'track_expiry' => 'required|boolean',
-            'tax_rate' => 'required|numeric|between:0,100.00',
+            // 'track_expiry' => 'required|boolean',
+            // 'tax_rate' => 'required|numeric|between:0,100.00',
             'sale_price' => 'required|numeric|min:0',
-            'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
         ]);
 
          $product->fill($validatedData);

@@ -126,12 +126,14 @@
 
             @php
                 use App\Models\Setting;
-                $setting = \App\Models\Setting::first();
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
             @endphp
 
 
             <div class="dropdown">
-                <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center" type="button" id="registerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <button class="btn text-white dropdown-toggle d-flex align-items-center" style="background-color: {{ $primaryColor }};" type="button" id="registerDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-briefcase me-2"></i> Cash Register
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="registerDropdown">
@@ -149,7 +151,7 @@
             </div>
 
             <div class="dropdown" id="calculatorDropdown">
-                <button class="btn" id="toggleCalculator">Calculator</button>
+                <button class="btn text-white" style="background-color: {{ $secondaryColor }};" id="toggleCalculator">Calculator</button>
                 <div class="dropdown-content" id="calculatorContent">
                     <div class="calculator">
                         <input type="text" class="display" id="display" readonly>
@@ -234,7 +236,7 @@
 
 
                             <div class="col-md-2 mb-3 text-right">
-                                <button type="button" class="btn btn-outline-primary mt-4 w-100" data-toggle="modal" data-target="#addCustomerModal">
+                                <button type="button" class="btn text-white mt-4 w-100" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#addCustomerModal">
                                     + Customer
                                 </button>
                             </div>
@@ -246,9 +248,9 @@
                 <div class="card">
                     <div class="card-header">
                         <h4>Search Products</h4>
-                        <form method="GET" action="{{ route('sales.create') }}" style="display: flex; gap: 10px; align-items: center;">
+                        <form method="GET" action="{{ route('pos.index') }}" style="display: flex; gap: 10px; align-items: center;">
                             <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ request('search') }}" style="flex: 1;" autocomplete="off">
-                            <button type="submit" class="btn btn-primary">Search</button>
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Search</button>
                         </form>
 
 
@@ -323,10 +325,10 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Total</th>
-                                    <th></th>
+                                    <th style="min-width: 150px;">Product</th>
+                                    <th style="min-width: 120px; text-align: center;">Qty</th>
+                                    <th style="min-width: 130px; text-align: right;">Total</th>
+                                    <th style="width: 40px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="cart-items"></tbody>
@@ -388,8 +390,8 @@
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
-                            <button class="btn btn-danger" id="reset-cart">Cancel</button>
-                            <button class="btn btn-primary" data-toggle="modal" data-target="#checkoutModal" id="open-checkout" disabled>Charge</button>
+                            <button class="btn text-white" style="background-color: {{ $secondaryColor }};" id="reset-cart">Cancel</button>
+                            <button class="btn text-white" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#checkoutModal" id="open-checkout" disabled>Charge</button>
                         </div>
                     </div>
                 </div>
@@ -424,8 +426,8 @@
                             <label>Payment Method</label>
                             <select name="payment_method" class="form-control" required>
                                 <option value="cash">Cash</option>
-                                <option value="card">Card</option>
-                                <option value="bank">Bank</option>
+                                {{-- <option value="card">Card</option>
+                                <option value="bank">Bank</option> --}}
                             </select>
                         </div>
                         <div class="form-group">

@@ -14,6 +14,12 @@
                                 <h5>{{ isset($product) ? 'Edit' : 'Add' }} Product</h5>
                             </div>
                         </div>
+                            @php
+                                use App\Models\Setting;
+                                $setting = Setting::first();
+                                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+                            @endphp
 
                             @if (session('error'))
                                 <div class="alert alert-danger">{{ session('error') }}</div>
@@ -62,7 +68,7 @@
                                         <option value="">Select Base Unit</option>
                                         @foreach($units as $unit)
                                             <option value="{{ $unit->id }}" {{ (old('base_unit_id', $product->base_unit_id ?? '') == $unit->id) ? 'selected' : '' }}>
-                                                {{ $unit->base_unit }}
+                                                {{ $unit->name }} - {{ $unit->base_unit }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -163,8 +169,8 @@
                                     @endif
                                 </div>
 
-                                <button type="submit" class="btn btn-primary">{{ isset($product) ? 'Update' : 'Save' }}</button>
-                                <a href="{{ route('products.list') }}" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">{{ isset($product) ? 'Update' : 'Save' }}</button>
+                                <a href="{{ route('products.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Cancel</a>
                             </form>
                         </div>
                     </div>

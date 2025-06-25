@@ -4,7 +4,13 @@
 
 @include('layouts.sidebar')
 
-<div class="content-page">
+<div class="content-page">  
+        @php
+            use App\Models\Setting;
+            $setting = Setting::first();
+            $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+            $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+        @endphp
     <div class="container-fluid add-form-list">
         <div class="row">
             <div class="col-sm-12">
@@ -119,10 +125,10 @@
                                 </div> 
                             </div>                            
 
-                            <button type="submit" class="btn btn-primary mr-2">
+                            <button type="submit" class="btn text-white mr-2" style="background-color: {{ $primaryColor }};"> 
                                 {{ isset($user) ? 'Update User' : 'Add User' }}
                             </button>
-                            <a href="{{ route('user.list') }}" class="btn btn-secondary">Cancel</a>
+                            <a href="{{ route('user.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Cancel</a>
                         </form>
                     </div>
                 </div>

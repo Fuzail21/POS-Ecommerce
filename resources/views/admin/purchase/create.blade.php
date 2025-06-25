@@ -9,6 +9,12 @@
 <div class="content-page">
     <div class="container-fluid add-form-list">
         <div class="row">
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-sm-12">
                 <!-- Tabs -->
                 <ul class="nav nav-tabs mb-3" role="tablist">
@@ -104,7 +110,7 @@
                                         </thead>
                                         <tbody id="product-rows"></tbody>
                                     </table>
-                                    <button type="button" class="btn btn-secondary" onclick="addProductRow()">+ Add Product</button>
+                                    <button type="button" class="btn text-white" style="background-color: {{ $secondaryColor }};" onclick="addProductRow()">+ Add Product</button>
                                 </div>
                             </div>
                         </div>
@@ -154,8 +160,8 @@
 
                         <!-- Submit Buttons -->
                         <div class="form-group text-right">
-                            <button type="submit" class="btn btn-primary" id="saveAndNewBtn">Save</button>
-                            <a href="{{ route('purchases.list') }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};" id="saveAndNewBtn">Save</button>
+                            <a href="{{ route('purchases.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Cancel</a>
                         </div>
 
                     </div>

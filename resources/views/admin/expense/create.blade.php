@@ -6,13 +6,18 @@
 <div class="content-page">
   <div class="container-fluid">
     <div class="row">
-
+        @php
+            use App\Models\Setting;
+            $setting = Setting::first();
+            $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+            $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+        @endphp
       <div class="col-lg-12">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
           <div>
             <h4 class="mb-3">{{ isset($expense) ? 'Edit Expense' : 'Add Expense' }}</h4>
           </div>
-          <a href="{{ route('expense.list') }}" class="btn btn-secondary">Back to List</a>
+          {{-- <a href="{{ route('expense.list') }}" class="btn btn-secondary">Back to List</a> --}}
         </div>
       </div>
 
@@ -68,10 +73,10 @@
                 <textarea name="description" class="form-control" rows="3">{{ old('description', $expense->description ?? '') }}</textarea>
               </div>
 
-              <button type="submit" class="btn btn-success">
+              <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">
                 {{ isset($expense) ? 'Update Expense' : 'Add Expense' }}
               </button>
-              <a href="{{ route('expense.list') }}" class="btn btn-secondary">Cancel</a>
+              <a href="{{ route('expense.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Cancel</a>
             </form>
 
           </div>

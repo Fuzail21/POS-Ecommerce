@@ -7,13 +7,18 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="mb-3">{{ $title }}</h4> {{-- Uses the $title passed from controller --}}
                     </div>
-                    <a href="{{ route('sales.list') }}" class="btn btn-primary add-list">
+                    <a href="{{ route('sales.list') }}" class="btn text-white add-list" style="background-color: {{ $primaryColor }};">
                         <i class="ri-arrow-left-line mr-3"></i>Back to Sales
                     </a>
                 </div>
@@ -21,12 +26,6 @@
 
             <div class="col-sm-12">
                 <div class="card">
-
-                    @php
-                        use App\Models\Setting;
-                        $setting = \App\Models\Setting::first();
-                    @endphp
-
                     <!-- Flash Messages -->
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">

@@ -17,13 +17,18 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
              <div class="col-lg-12">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="mb-3">Payemnts List</h4>
                     </div>
-                    <a href="{{ route('payments.create') }}" class="btn btn-primary add-list">
+                    <a href="{{ route('payments.create') }}" class="btn text-white add-list" style="background-color: {{ $primaryColor }};">
                         <i class="las la-plus mr-3"></i>Add Payment
                     </a>
 
@@ -74,11 +79,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-                                            use App\Models\Setting;
-                                            $setting = \App\Models\Setting::first();
-                                        @endphp
-
                                         @foreach($payments as $payment)
                                         @php
                                             $dueAmount = method_exists($payment->reference, 'total') 

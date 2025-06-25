@@ -28,7 +28,9 @@
 
             @php
                 use App\Models\Setting;
-                $setting = \App\Models\Setting::first();
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
             @endphp
 
             @if (session('error'))
@@ -70,7 +72,7 @@
 
                             <div class="col-md-2 mb-3 text-right">
                                 {{-- Add Customer button is hidden for sales return --}}
-                                <button type="button" class="btn btn-outline-primary mt-4 w-100" style="display: none;">
+                                <button type="button" class="btn text-white mt-4 w-100"  style="display: none; background-color: {{ $secondaryColor }};">
                                     + Customer
                                 </button>
                             </div>
@@ -83,7 +85,7 @@
                         <h4>Search Products</h4>
                         <form method="GET" action="{{ route('sale_return.create', $sale->id) }}" style="display: flex; gap: 10px; align-items: center;">
                             <input type="text" name="search" class="form-control" placeholder="Search by name, SKU, barcode..." value="{{ request('search') }}" style="flex: 1;" autocomplete="off" id="product-search">
-                            <button type="submit" class="btn btn-primary">Search</button>
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Search</button>
                         </form>
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
@@ -160,10 +162,10 @@
                         <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>Product</th>
-                                    <th>Qty (Max Return)</th>
-                                    <th>Total</th>
-                                    <th></th>
+                                    <th style="min-width: 150px;">Product</th>
+                                    <th style="min-width: 120px; text-align: center;">Qty (Max Return)</th>
+                                    <th style="min-width: 130px; text-align: right;">Total</th>
+                                    <th style="width: 40px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="cart-items"></tbody>
@@ -221,8 +223,8 @@
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
-                            <button class="btn btn-danger" id="reset-cart">Cancel Return</button>
-                            <button class="btn btn-primary" data-toggle="modal" data-target="#checkoutModal" id="open-checkout" disabled>Process Return</button>
+                            <button class="btn text-white" style="background-color: {{ $secondaryColor }};" id="reset-cart">Cancel Return</button>
+                            <button class="btn text-white" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#checkoutModal" id="open-checkout" disabled>Process Return</button>
                         </div>
                     </div>
                 </div>
@@ -257,9 +259,8 @@
                             <label>Payment Method (Refund)</label>
                             <select name="payment_method" class="form-control" required>
                                 <option value="cash">Cash</option>
-                                <option value="card">Card</option>
-                                <option value="mixed">Mixed</option>
-                                <option value="online">Online</option>
+                                {{-- <option value="card">Card</option>
+                                <option value="bank">Bank</option> --}}
                             </select>
                         </div>
                         <div class="form-group">

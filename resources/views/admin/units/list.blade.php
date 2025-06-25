@@ -21,11 +21,16 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-0">Units List</h4>
-                    <a href="{{ route('units.create') }}" class="btn btn-primary"><i class="las la-plus mr-2"></i>Add Unit</a>
+                    <a href="{{ route('units.create') }}" class="btn text-white" style="background-color: {{ $primaryColor }};"><i class="las la-plus mr-2"></i>Add Unit</a>
                 </div>
             </div>
 

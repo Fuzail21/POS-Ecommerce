@@ -7,7 +7,12 @@
 <div class="content-page">
   <div class="container-fluid">
      <div class="row">
-
+        @php
+            use App\Models\Setting;
+            $setting = Setting::first();
+            $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+            $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+        @endphp
         <div class="col-lg-12 mb-4">
           <div class="card p-3 shadow-sm">
             <form method="GET" action="{{ route('stock.list') }}" class="row g-3 align-items-center">
@@ -58,7 +63,7 @@
               </div>
         
               <div class="col-md-1 d-grid">
-                <button type="submit" class="btn btn-primary mt-4">Filter</button>
+                <button type="submit" class="btn text-white mt-4" style="background-color: {{ $primaryColor }};">Filter</button>
               </div>
         
             </form>

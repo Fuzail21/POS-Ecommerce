@@ -34,24 +34,16 @@ use App\Http\Controllers\SettingController;
 //     return view('welcome');
 // });
 
-Route::get('/dashboard', function () {
-    $title = "POS - Dashboard"; 
-    return view('dashboard', compact('title'));
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     $title = "POS - Dashboard"; 
+//     return view('dashboard', compact('title'));
+// })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/dashboard', [POSController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
+
 
 Route::middleware('auth', 'verified')->group(function () {
-
-
-    // // Profits
-    // Route::get('/profit/list', [FinanceController::class, 'profits'])->name('profit.list');
-    // Route::get('/profit/create', [FinanceController::class, 'createProfit'])->name('profit.create');
-    // Route::post('/profit/store', [FinanceController::class, 'storeProfit'])->name('profit.store');
-    // Route::get('/profit/edit/{id}', [FinanceController::class, 'editProfit'])->name('profit.edit');
-    // Route::post('/profit/update/{id}', [FinanceController::class, 'updateProfit'])->name('profit.update');
-    // Route::get('/profit/delete/{id}', [FinanceController::class, 'deleteProfit'])->name('profit.delete');
-
-
-    
+   
     // Users
     Route::get('/user/list', [UserController::class, 'index'])->name('user.list');
     Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
@@ -205,7 +197,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->name('list');
         Route::get('/create', [FinanceController::class, 'create'])->name('create');
         Route::post('/store', [FinanceController::class, 'store'])->name('store');
-        Route::delete('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
 
 
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
@@ -251,6 +243,8 @@ Route::middleware('auth', 'verified')->group(function () {
 
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
+
+    Route::post('/mail-settings/save', [SettingController::class, 'saveMailSettings'])->name('mail-settings.save');
 
 
     // Prodfile

@@ -56,14 +56,18 @@ class SaleController extends Controller
                 ->get()
                 ->map(function ($product) {
                     $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                    $baseQuantity = $product->inventoryStocks?->quantity_in_base_unit ?? 0;
+                    // $baseQuantity = $product->inventoryStocks?->quantity_in_base_unit ?? 0;
+                    $baseQuantity = $product->inventoryStocks?->sum('quantity_in_base_unit') ?? 0;
+
 
                     $product->stock_quantity = $baseQuantity / $conversionFactor;
                     $product->in_stock = $product->stock_quantity > 0;
 
                     foreach ($product->variants as $variant) {
                         $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                        $variantQuantity = $variant->inventoryStocks?->quantity_in_base_unit ?? 0;
+                        // $variantQuantity = $variant->inventoryStocks?->quantity_in_base_unit ?? 0;
+                        $variantQuantity = $variant->inventoryStocks?->sum('quantity_in_base_unit') ?? 0;
+
 
                         $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
                         $variant->in_stock = $variant->stock_quantity > 0;
@@ -348,14 +352,18 @@ class SaleController extends Controller
                 ->get()
                 ->map(function ($product) {
                     $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                    $baseQuantity = $product->inventoryStocks?->quantity_in_base_unit ?? 0;
+                    // $baseQuantity = $product->inventoryStocks?->quantity_in_base_unit ?? 0;
+                    $baseQuantity = $product->inventoryStocks?->sum('quantity_in_base_unit') ?? 0;
+
 
                     $product->stock_quantity = $baseQuantity / $conversionFactor;
                     $product->in_stock = $product->stock_quantity > 0;
 
                     foreach ($product->variants as $variant) {
                         $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                        $variantQuantity = $variant->inventoryStocks?->quantity_in_base_unit ?? 0;
+                        // $variantQuantity = $variant->inventoryStocks?->quantity_in_base_unit ?? 0;
+                        $variantQuantity = $variant->inventoryStocks?->sum('quantity_in_base_unit') ?? 0;
+
 
                         $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
                         $variant->in_stock = $variant->stock_quantity > 0;

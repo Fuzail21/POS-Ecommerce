@@ -7,6 +7,15 @@ use App\Models\CashRegister;
 use App\Models\Payment;
 use App\Models\Sale;
 use App\Models\Expense;
+use App\Models\Purchase;
+use App\Models\Setting;
+use App\Models\SalesReturn;
+use App\Models\ReturnPurchase;
+use App\Models\SalesReturnItem;
+use App\Models\SaleItem;
+use App\Models\PurchaseItem;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 use Auth;
@@ -200,4 +209,206 @@ class POSController extends Controller
             ]
         ]);
     }
+
+    // Method 5: Dashboard
+    public function dashboard(Request $request)
+    {
+        $title = "Dashboard";
+
+        // Get date range from request or set defaults
+        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : Carbon::today()->startOfDay();
+        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : Carbon::today()->endOfDay();
+
+        // Total Sales (from payments table) - Filtered by date range
+        $sales = Payment::where('ref_type', 'Sale')
+                        ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
+                            $query->whereBetween('created_at', [$startDate, $endDate]);
+                        })
+                        ->sum('amount');
+
+        // Total Purchases (from payments table) - Filtered by date range
+        $purchases = Payment::where('ref_type', 'Purchase')
+                            ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
+                                $query->whereBetween('created_at', [$startDate, $endDate]);
+                            })
+                            ->sum('amount');
+
+        // Sales Returns (from payments table) - Filtered by date range
+        $salesReturns = Payment::where('ref_type', 'sales_return')
+                                ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
+                                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                                })
+                                ->sum('amount');
+
+        // Today’s Sales (from payments) - always for today
+        $todaySales = Payment::where('ref_type', 'Sale')
+                                ->whereDate('created_at', Carbon::today())
+                                ->sum('amount');
+
+        // Today’s Received (same as today's sales)
+        $todayReceived = $todaySales;
+
+        // Today’s Purchases (total purchase value from payments) - always for today
+        $todayPurchases = Payment::where('ref_type', 'Purchase')
+                                    ->whereDate('created_at', Carbon::today())
+                                    ->sum('amount');
+
+        // Today’s Expense - always for today
+        $todayExpense = Expense::whereDate('created_at', Carbon::today())->sum('amount');
+
+        // Today’s Purchase Payments (separate for dashboard card)
+        $todayPurchasePayments = $todayPurchases;
+
+
+        // --- Data for Charts and Recent Sales ---
+
+        // 1. This Week Sales & Purchases (always for the current week, not affected by the date filter)
+        $startOfWeek = Carbon::now()->startOfWeek(); // Monday
+        $endOfWeek = Carbon::now()->endOfWeek();     // Sunday
+        $weeklySalesPurchases = [];
+        $currentDate = clone $startOfWeek;
+        while ($currentDate->lessThanOrEqualTo($endOfWeek)) {
+            $date = $currentDate->toDateString();
+            $dailySales = Payment::where('ref_type', 'Sale')
+                                 ->whereDate('created_at', $date)
+                                 ->sum('amount');
+            $dailyPurchases = Payment::where('ref_type', 'Purchase')
+                                     ->whereDate('created_at', $date)
+                                     ->sum('amount');
+
+            $weeklySalesPurchases[] = [
+                'date' => $currentDate->format('Y-m-d'),
+                'sales' => (float) $dailySales,
+                'purchases' => (float) $dailyPurchases,
+            ];
+            $currentDate->addDay();
+        }
+
+        $weekDates = array_column($weeklySalesPurchases, 'date');
+        $weekSalesData = array_column($weeklySalesPurchases, 'sales');
+        $weekPurchasesData = array_column($weeklySalesPurchases, 'purchases');
+
+
+        // 2. Top Selling Products (Current Month) - Now includes variant name if available
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+
+        $topSellingProductsWithTotal = SaleItem::select('sale_items.product_id', 'sale_items.variant_id')
+            ->selectRaw('SUM(sale_items.quantity) as total_quantity')
+            ->selectRaw('SUM(sale_items.quantity * products.sale_price) as grand_total_amount') // Using product sale price, adjust if variant price_adjustment affects this
+            ->join('products', 'sale_items.product_id', '=', 'products.id')
+            // Conditionally join product_variants if product_variant_id is not null
+            ->leftJoin('product_variants', 'sale_items.variant_id', '=', 'product_variants.id')
+            ->whereHas('sale', function ($query) use ($startOfMonth, $endOfMonth) {
+                $query->whereBetween('created_at', [$startOfMonth, $endOfMonth]);
+            })
+            ->with(['product', 'variant']) // Eager load product and variant relationships
+            ->groupBy('sale_items.product_id', 'sale_items.variant_id') // Group by both product and variant
+            ->orderByDesc('total_quantity')
+            ->limit(2)
+            ->get();
+
+        // Fetch setting for currency symbol
+        $setting = Setting::first();
+
+        // Refined data for Top Selling Products - Concatenate product and variant name
+        $topProductNames = $topSellingProductsWithTotal->map(function($item) {
+            $productName = $item->product->name ?? 'Unknown Product';
+            $variantName = $item->variant->variant_name ?? null; // Get variant name
+            return $variantName ? "{$productName} ({$variantName})" : $productName;
+        })->toArray();
+
+        $topProductQuantities = $topSellingProductsWithTotal->pluck('total_quantity')->map(function($quantity) {
+            return (float) $quantity;
+        })->toArray();
+
+        $topProductTableData = $topSellingProductsWithTotal->map(function ($item) use ($setting) {
+            $productName = $item->product->name ?? 'Unknown Product';
+            $variantName = $item->variant->name ?? null; // This gets the variant name if available
+            $fullProductName = $variantName ? "{$productName} ({$variantName})" : $productName; // Combines them
+
+            return [
+                'product_name' => $fullProductName, // This key now holds "Product Name (Variant Name)"
+                'quantity' => (float) $item->total_quantity,
+                'grand_total' => $setting->currency_symbol . ' ' . number_format((float) $item->grand_total_amount, 2),
+            ];
+        });
+
+
+        // 3. Top Customers (Current Month) - Unchanged, still limited to 2
+        $topCustomers = Sale::selectRaw('customer_id, SUM(total_amount) as total_spent')
+            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+            ->with('customer')
+            ->groupBy('customer_id')
+            ->orderByDesc('total_spent')
+            ->limit(2)
+            ->get();
+
+        // Refined data for Top Customers
+        $topCustomerNames = $topCustomers->map(function($customer) {
+            return $customer->customer->name ?? 'Walk-in Customer';
+        })->toArray();
+
+        $topCustomerAmounts = $topCustomers->pluck('total_spent')->map(function($amount) {
+            return (float) $amount;
+        })->toArray();
+
+
+        // 4. Recent Sales - affected by the date range filter, now includes variant name
+        $recentSales = Sale::with(['customer', 'items.product', 'items.variant']) // Eager load 'items.variant'
+            ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            })
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        // 5. Low Stock Products Alert
+        // Adjusted the query to specifically fetch products or variants that are low in stock
+        $stockAlertProducts = Product::with([
+            'category',
+            'baseUnit',
+            'variants.inventoryStock', // Ensure this relationship exists and `inventoryStock` on variant works
+            'variants.displayUnit',
+            'inventoryStock', // Ensure this relationship exists and `inventoryStock` on product works
+            'branch'
+        ])->where(function ($query) {
+            $query->whereHas('inventoryStock', function ($q) {
+                // Products with general inventory stock <= 5
+                $q->where('quantity_in_base_unit', '<=', 5);
+            })
+            ->orWhereDoesntHave('inventoryStock') // Products with no general inventory stock record
+            ->orWhereHas('variants', function($q) { // Check variants within the same product
+                $q->whereHas('inventoryStock', function ($q2) {
+                    // Variants with their own inventory stock <= 5
+                    $q2->where('quantity_in_base_unit', '<=', 5);
+                })
+                ->orWhereDoesntHave('inventoryStock'); // Variants with no inventory stock record
+            });
+        })->paginate(5);
+        
+        return view('dashboard', compact(
+            'title',
+            'sales',
+            'purchases',
+            'salesReturns',
+            'todaySales',
+            'todayReceived',
+            'todayPurchases',
+            'todayExpense',
+            'todayPurchasePayments',
+            'weekDates',
+            'weekSalesData',
+            'weekPurchasesData',
+            'topProductNames',
+            'topProductQuantities',
+            'topProductTableData',
+            'topCustomerNames',
+            'topCustomerAmounts',
+            'recentSales',
+            'stockAlertProducts',
+            'setting'
+        ));
+    }
+
 }

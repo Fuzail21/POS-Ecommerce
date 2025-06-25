@@ -11,6 +11,12 @@
         <div class="content-page">
             <div class="container-fluid add-form-list">
                 <div class="row">
+                    @php
+                        use App\Models\Setting;
+                        $setting = Setting::first();
+                        $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                        $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+                    @endphp
                     <div class="col-sm-12">
                         <div class="card">
                             <div class="card-header d-flex justify-content-between">
@@ -57,8 +63,8 @@
                                         </select>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary">{{ isset($category) ? 'Update' : 'Create' }}</button>
-                                    <a href="{{ route('categories.list') }}" class="btn btn-secondary">Back</a>
+                                    <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">{{ isset($category) ? 'Update' : 'Create' }}</button>
+                                    <a href="{{ route('categories.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Back</a>
                                 </form>
                             </div>
                         </div>

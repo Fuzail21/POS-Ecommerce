@@ -4,10 +4,16 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4>{{ isset($branch) ? 'Edit Branch' : 'Add Branch' }}</h4>
-                    <a href="{{ route('branch.list') }}" class="btn btn-secondary">Back to List</a>
+                    <a href="{{ route('branch.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Back to List</a>
                 </div>
                 <div class="card">
 
@@ -54,7 +60,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <button type="submit" class="btn btn-primary mt-3">{{ isset($branch) ? 'Update' : 'Create' }}</button>
+                            <button type="submit" class="btn text-white mt-3" style="background-color: {{ $primaryColor }};">{{ isset($branch) ? 'Update' : 'Create' }}</button>
                         </form>
                     </div>
                 </div>

@@ -6,6 +6,12 @@
 <div class="content-page">
     <div class="container-fluid add-form-list">
         <div class="row">
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between">
@@ -53,8 +59,8 @@
                                 <input type="number" name="balance" class="form-control" step="0.01" value="{{ old('balance', $customer->balance ?? '0') }}">
                             </div>
 
-                            <button type="submit" class="btn btn-primary">{{ isset($customer) ? 'Update' : 'Create' }}</button>
-                            <a href="{{ route('customers.list') }}" class="btn btn-secondary">Back</a>
+                            <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">{{ isset($customer) ? 'Update' : 'Create' }}</button>
+                            <a href="{{ route('customers.list') }}" class="btn text-white" style="background-color: {{ $secondaryColor }};">Back</a>
                         </form>
                     </div>
                 </div>

@@ -11,13 +11,18 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-
+            @php
+                use App\Models\Setting;
+                $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+            @endphp
             <div class="col-lg-12">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                     <div>
                         <h4 class="mb-3">Sales Return Details: RET-{{ $salesReturn->id }}</h4>
                     </div>
-                    <a href="{{ route('sale_return.list') }}" class="btn btn-primary add-list">
+                    <a href="{{ route('sale_return.list') }}" class="btn text-white add-list" style="background-color: {{ $primaryColor }};">
                         <i class="ri-arrow-left-line mr-3"></i>Back to Sales Returns List
                     </a>
                 </div>
@@ -53,11 +58,6 @@
                             {{-- <a href="#" class="btn btn-sm btn-outline-primary">Print Return Receipt</a> --}}
                         </div>
                     </div>
-
-                            @php
-                                use App\Models\Setting;
-                                $setting = \App\Models\Setting::first();
-                            @endphp
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
