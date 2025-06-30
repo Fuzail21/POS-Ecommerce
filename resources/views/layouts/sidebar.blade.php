@@ -305,8 +305,8 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                     </ul>
                 </li>
 
-                <li class="{{ Route::is('suppliers.list') || Route::is('suppliers.create') ? 'active' : '' }}">
-                    <a href="#supplier" class="{{ Route::is('suppliers.list') || Route::is('suppliers.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('suppliers.list') || Route::is('suppliers.create') ? 'true' : 'false' }}">
+                <li class="{{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? 'active' : '' }}">
+                    <a href="#supplier" class="{{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? 'true' : 'false' }}">
                         <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path d="M3 4a2 2 0 0 1 2-2h3.5a2 2 0 0 1 1.41.59L12 4.09l2.09-1.5A2 2 0 0 1 15.5 2H19a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4z" />
                         </svg>
@@ -316,7 +316,7 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                         </svg>
                     </a>
 
-                    <ul id="supplier" class="iq-submenu collapse {{ Route::is('suppliers.list') || Route::is('suppliers.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                    <ul id="supplier" class="iq-submenu collapse {{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
                         <li class="{{ Route::is('suppliers.list') ? 'active' : '' }}">
                             <a href="{{ route('suppliers.list') }}">
                                 <i class="las la-minus"></i><span>Suppliers List</span>
@@ -327,8 +327,14 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                                 <i class="las la-minus"></i><span>Add Supplier</span>
                             </a>
                         </li>
+                        <li class="{{ Route::is('reports.supplier_products') ? 'active' : '' }}">
+                            <a href="{{ route('reports.supplier_products') }}">
+                                <i class="las la-minus"></i><span>Supplier Products</span>
+                            </a>
+                        </li>
                     </ul>
                 </li>
+
 
                 <li class="{{ Route::is('customers.list') || Route::is('customers.create') ? 'active' : '' }}">
                     <a href="#customer" class="{{ Route::is('customers.list') || Route::is('customers.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('customers.list') || Route::is('customers.create') ? 'true' : 'false' }}">
@@ -367,6 +373,61 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                         </li>
                         <li class="{{ Route::is('purchases.create') ? 'active' : '' }}">
                             <a href="{{ route('purchases.create') }}"><i class="las la-minus"></i><span>Add Purchase</span></a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="{{ Route::is('expense_categories.list') || Route::is('expense.list') ? 'active' : '' }}">
+                    <a href="#expense" class="{{ Route::is('expense_categories.list') || Route::is('expense.list') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('expense.list') || Route::is('expense.create') ? 'true' : 'false' }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 16v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2zM5 12h14v2H5zm0-4h14v2H5zm8-7h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z" />
+                        </svg>
+                        <span class="ml-4">Expenses</span>
+                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                        </svg>
+                    </a>
+
+                    <ul id="expense" class="iq-submenu collapse {{ Route::is('expense_categories.list') || Route::is('expense.list') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                        <li class="{{ Route::is('expense_categories.list') ? 'active' : '' }}">
+                            <a href="{{ route('expense_categories.list') }}">
+                                <i class="las la-minus"></i><span>Expense Categories</span>
+                            </a>
+                        </li>
+                        <li class="{{ Route::is('expense.list') ? 'active' : '' }}">
+                            <a href="{{ route('expense.list') }}">
+                                <i class="las la-minus"></i><span>Expense</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="{{ Route::is('quotations.*') ? 'active' : '' }}">
+                    <a href="#quotations" class="{{ Route::is('quotations.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('quotations.*') ? 'true' : 'false' }}">
+                        {{-- SVG Icon for Quotations (e.g., File, Document, Invoice icon) --}}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 10 12 13 12"></polyline>
+                        </svg>
+                        <span class="ml-4">Quotations</span>
+                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                        </svg>
+                    </a>
+                
+                    <ul id="quotations" class="iq-submenu collapse {{ Route::is('quotations.*') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                        <li class="{{ Route::is('quotations.index') ? 'active' : '' }}">
+                            <a href="{{ route('quotations.index') }}">
+                                <i class="las la-minus"></i><span>List Quotations</span>
+                            </a>
+                        </li>
+                        <li class="{{ Route::is('quotations.create') ? 'active' : '' }}">
+                            <a href="{{ route('quotations.create') }}">
+                                <i class="las la-minus"></i><span>Create Quotation</span>
+                            </a>
                         </li>
                     </ul>
                 </li>
@@ -440,24 +501,6 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                     </ul>
                 </li>
 
-                <li class="{{ Route::is('stock.list') ? 'active' : '' }}">
-                    <a href="{{ route('stock.list') }}" class="svg-icon">
-                        <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
-                        </svg>
-                        <span class="ml-4">Stock Inventory</span>
-                    </a>
-                </li>
-
-                <li class="{{ Route::is('stock.ledger') ? 'active' : '' }}">
-                    <a href="{{ route('stock.ledger') }}" class="svg-icon">
-                        <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
-                        </svg>
-                        <span class="ml-4">Stock Ledger</span>
-                    </a>
-                </li>
-
                 <li class="{{ Route::is('expense_categories.list') || Route::is('expense.list') ? 'active' : '' }}">
                     <a href="#expense" class="{{ Route::is('expense_categories.list') || Route::is('expense.list') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('expense.list') || Route::is('expense.create') ? 'true' : 'false' }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -481,6 +524,24 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                             </a>
                         </li>
                     </ul>
+                </li>
+
+                <li class="{{ Route::is('stock.list') ? 'active' : '' }}">
+                    <a href="{{ route('stock.list') }}" class="svg-icon">
+                        <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                        <span class="ml-4">Stock Inventory</span>
+                    </a>
+                </li>
+
+                <li class="{{ Route::is('stock.ledger') ? 'active' : '' }}">
+                    <a href="{{ route('stock.ledger') }}" class="svg-icon">
+                        <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                        <span class="ml-4">Stock Ledger</span>
+                    </a>
                 </li>
 
                 <li class="{{ Route::is('settings.index') ? 'active' : '' }}">

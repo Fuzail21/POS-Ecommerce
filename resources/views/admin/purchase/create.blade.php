@@ -184,140 +184,159 @@
 
 <!-- JavaScript -->
     <script>
-        let productIndex = 0;
+    let productIndex = 0;
 
-        function addProductRow() {
-            const row = `
-                <tr>
-                    <td>
-                        <select name="products[${productIndex}][id]" class="form-control main-product-select" required>
-                            <option value="">-- Select Product --</option>
-                            ${productsList.map((p, i) => 
-                                `<option value="${p.id}" data-index="${i}" data-unit="${p.unit}" data-unit-id="${p.unit_id}">${p.name}</option>`
-                            ).join('')}
+    function addProductRow() {
+        const row = `
+            <tr>
+                <td style="min-width: 500px;">
+                    <div class="mb-2">
+                        <select name="products[${productIndex}][id]" 
+                                class="form-control main-product-select select2-ajax text-sm" 
+                                data-row="${productIndex}" required>
                         </select>
-                        <select name="products[${productIndex}][variant_id]" class="form-control variant-select mt-2" required>
+                    </div>
+                    <div>
+                        <select name="products[${productIndex}][variant_id]" 
+                                class="form-control variant-select" required>
                             <option value="">-- Select Variant --</option>
                         </select>
-                    </td>
-                    <td><input type="number" name="products[${productIndex}][quantity]" class="form-control quantity-input" min="1" required></td>
-                    <td><input type="text" class="form-control unit-name-input" readonly>
-                        <input type="hidden" name="products[${productIndex}][unit]" class="unit-id-input">
-                    </td>
-                    <td><input type="number" step="0.01" name="products[${productIndex}][unit_cost]" class="form-control price-input"></td>
-                    <td><input type="number" step="0.01" name="products[${productIndex}][subtotal]" class="form-control subtotal-input" readonly></td>
-                    <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
+                    </div>
+                </td>
+                <td>
+                    <input type="number" name="products[${productIndex}][quantity]" 
+                           class="form-control quantity-input" min="1" required>
+                </td>
+                <td>
+                    <input type="text" class="form-control unit-name-input" readonly>
+                    <input type="hidden" name="products[${productIndex}][unit]" class="unit-id-input">
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="products[${productIndex}][unit_cost]" 
+                           class="form-control price-input">
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="products[${productIndex}][subtotal]" 
+                           class="form-control subtotal-input" readonly>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-row">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
 
-            $('#product-rows').append(row);
+        $('#product-rows').append(row);
+        initSelect2Ajax(productIndex);
+        attachEvents();
+        productIndex++;
+    }
 
-            setTimeout(() => {
-                $('.select2').select2({ width: '100%' });
-            }, 100);
-
-            attachEvents();
-            productIndex++;
-        }
-
-        function attachEvents() {
-            // Handle product select
-            $('.main-product-select').off('change').on('change', function () {
-                const row = $(this).closest('tr');
-                const selectedOption = $(this).find(':selected');
-
-                // Use real ID as value; use array index to get variants
-                const productIndex = selectedOption.data('index');
-
-                // Get base unit info
-                const unitName = selectedOption.data('unit');
-                const unitId = selectedOption.data('unit-id');
-
-                row.find('.unit-name-input').val(unitName || '');
-                row.find('.unit-id-input').val(unitId || '');
-
-                const variants = productsList[productIndex]?.variants || [];
-
-                const variantSelect = row.find('.variant-select');
-                variantSelect.html('<option value="">-- Select Variant --</option>');
-
-                variants.forEach(variant => {
-                    variantSelect.append(`
-                        <option value="${variant.id}">${variant.name}</option>
-                    `);
-                });
-
-                // Handle quantity and price input changes
-                $('.quantity-input, .price-input').off('input').on('input', function () {
-                    const row = $(this).closest('tr');
-                    updateRowSubtotal(row);
-                });
-
-                // Handle remove row
-                $('.remove-row').off('click').on('click', function () {
-                    $(this).closest('tr').remove();
-                    calculateTotals(); // recalculate after row removal
-                });
-
-            })
-        }
-
-        function updateRowSubtotal(row) {
-            const qty = parseFloat(row.find('.quantity-input').val()) || 0;
-            const price = parseFloat(row.find('.price-input').val()) || 0;
-            const subtotal = qty * price;
-            row.find('.subtotal-input').val(subtotal.toFixed(2));
-            calculateTotals();
-        }
-
-        function calculateTotals() {
-            let subtotal = 0;
-            $('.subtotal-input').each(function () {
-                subtotal += parseFloat($(this).val()) || 0;
-            });
-        
-            $('#subtotal').val(subtotal.toFixed(2));
-        
-            // Optional: Add discount and tax if needed
-            const discount = parseFloat($('#discount').val()) || 0;
-            const tax = parseFloat($('#tax').val()) || 0;
-        
-            const totalDue = subtotal - discount + tax;
-        
-            const paymentNow = parseFloat($('#payment_now').val()) || 0;
-            const due = totalDue - paymentNow;
-        
-            // Update due field
-            $('#due').val(due.toFixed(2));
-        }
-
-        $(document).ready(function () {
-            $('#payment_now').on('input', function () {
-                calculateTotals();
-            });
-        });
-
-        $(document).ready(function () {
-            $('.select2').select2({ width: '100%' });
-            addProductRow(); // Add one default row on load
-        });
-
-        let paymentTabShown = false;
-
-        document.getElementById('saveAndNewBtn').addEventListener('click', function (e) {
-            const paymentTabElement = document.querySelector('#paymentTab');
-            const paymentTabPane = document.querySelector('#payment');
-
-            // Check if the payment tab is already visible
-            if (!paymentTabShown || !paymentTabPane.classList.contains('active')) {
-                e.preventDefault(); // Prevent submit the first time
-                const paymentTab = new bootstrap.Tab(paymentTabElement);
-                paymentTab.show();
-                paymentTabShown = true;
-            } else {
-                // Proceed to submit the form on second click
-                document.getElementById('productForm').submit();
+    function initSelect2Ajax(index) {
+        $(`select[name="products[${index}][id]"]`).select2({
+            placeholder: "-- Select Product --",
+            width: '100%',
+            ajax: {
+                url: '/api/search-products',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.map(p => ({
+                            id: p.id,
+                            text: p.name,
+                            unit: p.unit,
+                            unit_id: p.unit_id,
+                            variants: p.variants
+                        }))
+                    };
+                },
+                cache: true
             }
+        }).on('select2:select', function (e) {
+            const row = $(this).closest('tr');
+            const selectedData = e.params.data;
+
+            // Set unit name and ID
+            row.find('.unit-name-input').val(selectedData.unit);
+            row.find('.unit-id-input').val(selectedData.unit_id);
+
+            // Populate variants
+            const variantSelect = row.find('.variant-select');
+            variantSelect.html('<option value="">-- Select Variant --</option>');
+            selectedData.variants.forEach(v => {
+                variantSelect.append(`<option value="${v.id}">${v.name}</option>`);
+            });
+        });
+    }
+
+    function attachEvents() {
+        // Re-attach input and remove events
+        $('.quantity-input, .price-input').off('input').on('input', function () {
+            const row = $(this).closest('tr');
+            updateRowSubtotal(row);
         });
 
-    </script>
+        $('.remove-row').off('click').on('click', function () {
+            $(this).closest('tr').remove();
+            calculateTotals();
+        });
+    }
+
+    function updateRowSubtotal(row) {
+        const qty = parseFloat(row.find('.quantity-input').val()) || 0;
+        const price = parseFloat(row.find('.price-input').val()) || 0;
+        const subtotal = qty * price;
+        row.find('.subtotal-input').val(subtotal.toFixed(2));
+        calculateTotals();
+    }
+
+    function calculateTotals() {
+        let subtotal = 0;
+        $('.subtotal-input').each(function () {
+            subtotal += parseFloat($(this).val()) || 0;
+        });
+
+        $('#subtotal').val(subtotal.toFixed(2));
+
+        const discount = parseFloat($('#discount').val()) || 0;
+        const tax = parseFloat($('#tax').val()) || 0;
+        const totalDue = subtotal - discount + tax;
+
+        const paymentNow = parseFloat($('#payment_now').val()) || 0;
+        const due = totalDue - paymentNow;
+
+        $('#due').val(due.toFixed(2));
+    }
+
+    $(document).ready(function () {
+        $('#payment_now').on('input', function () {
+            calculateTotals();
+        });
+
+        addProductRow(); // Add one row by default
+    });
+
+    // Tab save handler
+    let paymentTabShown = false;
+    document.getElementById('saveAndNewBtn').addEventListener('click', function (e) {
+        const paymentTabElement = document.querySelector('#paymentTab');
+        const paymentTabPane = document.querySelector('#payment');
+
+        if (!paymentTabShown || !paymentTabPane.classList.contains('active')) {
+            e.preventDefault();
+            const paymentTab = new bootstrap.Tab(paymentTabElement);
+            paymentTab.show();
+            paymentTabShown = true;
+        } else {
+            document.getElementById('productForm').submit();
+        }
+    });
+</script>
+
 @endsection

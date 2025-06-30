@@ -32,7 +32,7 @@
 
 
         <!-- Footer -->
-        <footer class="iq-footer mt-auto">
+        {{-- <footer class="iq-footer mt-auto">
             <div class="container-fluid">
                 <div class="card">
                     <div class="card-body">
@@ -51,7 +51,7 @@
                     </div>
                 </div>
             </div>
-        </footer>
+        </footer> --}}
 
     </div>
 

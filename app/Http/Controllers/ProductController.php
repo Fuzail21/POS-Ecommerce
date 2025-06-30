@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Unit;
+use App\Models\Supplier;
 use App\Models\ProductVariant;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
@@ -27,7 +28,8 @@ class ProductController extends Controller
             ->orWhereDoesntHave('children')
             ->get();
         $units = Unit::all();
-        return view('admin.product.form', compact('title', 'categories', 'units'));
+        $suppliers = Supplier::all();
+        return view('admin.product.form', compact('title', 'categories', 'units', 'suppliers'));
     }
 
     public function store(Request $request){    
@@ -39,10 +41,13 @@ class ProductController extends Controller
             'sku' => 'required|unique:products,sku',
             'barcode' => 'nullable|unique:products,barcode',
             'brand' => 'nullable|string|max:255',
+            'low_stock' => 'nullable|numeric',
             // 'track_expiry' => 'required|boolean',
             // 'tax_rate' => 'required|numeric|between:0,100.00',
             'sale_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
+            'supplier_ids' => 'nullable|array',
+            'supplier_ids.*' => 'exists:suppliers,id',
         ]);
 
         $product = new Product();
@@ -56,6 +61,11 @@ class ProductController extends Controller
         }
 
         $product->save();
+
+        if ($request->filled('supplier_ids')) {
+            $product->suppliers()->sync($request->supplier_ids);
+        }
+
 
         // Save product variants
         if ($request->has('variants')) {
@@ -72,6 +82,7 @@ class ProductController extends Controller
                     'sku' => $variantData['sku'],
                     'barcode' => $variantData['barcode'] ?? null,
                     'sale_price' => $variantData['sale_price'] ?? 0,
+                    'low_stock' => $variantData['low_stock'] ?? 0,
                     'product_img' => $variantImagePath,
                 ]);
             }
@@ -87,8 +98,10 @@ class ProductController extends Controller
             ->orWhereDoesntHave('children')
             ->get();
         $units = Unit::all();
-        $product = Product::findOrFail($id);
-        return view('admin.product.form', compact('product', 'title', 'categories', 'units'));
+        $product = Product::with('suppliers')->findOrFail($id); // Load attached suppliers
+        $suppliers = Supplier::all(); // Load all suppliers
+
+        return view('admin.product.form', compact('product', 'title', 'categories', 'units', 'suppliers'));
     }
 
     public function update(Request $request, $id){
@@ -108,10 +121,14 @@ class ProductController extends Controller
                 Rule::unique('products')->ignore($id)->whereNull('deleted_at'),
             ],
             'brand' => 'nullable|string|max:255',
+            'low_stock' => 'nullable|numeric',
             // 'track_expiry' => 'required|boolean',
             // 'tax_rate' => 'required|numeric|between:0,100.00',
             'sale_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
+            'supplier_ids' => 'nullable|array',
+            'supplier_ids.*' => 'exists:suppliers,id',
+
         ]);
 
          $product->fill($validatedData);
@@ -132,6 +149,10 @@ class ProductController extends Controller
         }
 
         $product->save();
+
+        if ($request->filled('supplier_ids')) {
+            $product->suppliers()->sync($request->supplier_ids);
+        }
 
         // Handle variants
         if ($request->has_variants && $request->has('variants')) {
@@ -154,7 +175,9 @@ class ProductController extends Controller
                     $needsUpdate = (
                         $variant->variant_name !== $variantData['variant_name'] ||
                         $variant->barcode !== ($variantData['barcode'] ?? null) ||
-                        $variant->sale_price != ($variantData['sale_price'] ?? 0)
+                        $variant->sale_price != ($variantData['sale_price'] ?? 0) ||
+                        $variant->low_stock != ($variantData['low_stock'] ?? 0)
+
                     );
 
                     if ($needsUpdate) {
@@ -162,6 +185,8 @@ class ProductController extends Controller
                             'variant_name' => $variantData['variant_name'],
                             'barcode' => $variantData['barcode'] ?? null,
                             'sale_price' => $variantData['sale_price'] ?? 0,
+                            'low_stock' => $variantData['low_stock'] ?? 0,
+
                         ]);
                     }
 
@@ -180,6 +205,7 @@ class ProductController extends Controller
                             'sku' => $sku,
                             'barcode' => $variantData['barcode'] ?? null,
                             'sale_price' => $variantData['sale_price'] ?? 0,
+                            'low_stock' => $variantData['low_stock'] ?? 0,
                         ]);
 
                         // Handle image
@@ -202,7 +228,6 @@ class ProductController extends Controller
         return redirect()->route('products.list')->with('success', 'Product updated successfully.');
     }
 
-
     public function destroy($id){
         $product = Product::findOrFail($id);
         if (!empty($product->product_img) && Storage::disk('public')->exists($product->product_img)) {
@@ -218,5 +243,27 @@ class ProductController extends Controller
         $product = Product::with('variants')->findOrFail($id);
         return view('admin.product.variants', compact('product', 'title'));
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('q');
+    
+        $products = Product::with(['variants:id,product_id,variant_name', 'baseUnit:id,name'])
+            ->where('name', 'like', '%' . $query . '%')
+            ->limit(20)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'unit' => $product->baseUnit->name ?? '',
+                    'unit_id' => $product->base_unit_id,
+                    'variants' => $product->variants->map(fn($v) => ['id' => $v->id, 'name' => $v->variant_name])
+                ];
+            });
+        
+        return response()->json($products);
+    }
+
 }
 

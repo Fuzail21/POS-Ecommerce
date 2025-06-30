@@ -80,12 +80,6 @@
                                     <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku ?? '') }}">
                                 </div>
 
-                                {{-- Barcode --}}
-                                <div class="form-group" id="main-barcode">
-                                    <label>Barcode</label>
-                                    <input type="text" name="barcode" class="form-control" value="{{ old('barcode', $product->barcode ?? '') }}">
-                                </div>
-
                                 {{-- Brand --}}
                                 <div class="form-group">
                                     <label>Brand</label>
@@ -97,6 +91,21 @@
                                     <label>Sale Price</label>
                                     <input type="number" name="sale_price" step="0.01" class="form-control" value="{{ old('sale_price', $product->sale_price ?? '') }}">
                                 </div>
+
+                                <div class="row">
+                                    {{-- Barcode --}}
+                                    <div class="form-group col-md-6" id="main-barcode">
+                                        <label>Barcode</label>
+                                        <input type="text" name="barcode" class="form-control" value="{{ old('barcode', $product->barcode ?? '') }}">
+                                    </div>
+
+                                    {{-- Low Stock --}}
+                                    <div class="form-group col-md-6" id="main-lowStock">
+                                        <label>Low Stock</label>
+                                        <input type="number" step="1" name="low_stock" class="form-control" value="{{ old('low_stock', $product->low_stock ?? '') }}">
+                                    </div>
+                                </div>
+
 
                                 {{-- Has Variants --}}
                                 <div class="form-group">
@@ -117,6 +126,7 @@
                                                 <th>SKU</th>
                                                 <th>Barcode</th>
                                                 <th>Sale Price</th>
+                                                <th>Low Stock</th>
                                                 <th>Image</th>
                                                 <th>
                                                     <button type="button" class="btn btn-sm btn-primary" onclick="addVariantRow()">Add</button>
@@ -131,6 +141,9 @@
                                                         <td><input type="text" name="variants[{{ $loop->index }}][sku]" value="{{ $variant->sku }}" class="form-control" required></td>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][barcode]" value="{{ $variant->barcode }}" class="form-control"></td>
                                                         <td><input type="number" step="0.01" name="variants[{{ $loop->index }}][sale_price]" value="{{ $variant->sale_price }}" class="form-control"></td>
+                                                        <td>
+                                                            <input type="number" step="1" name="variants[{{ $loop->index }}][low_stock]" value="{{ $variant->low_stock ?? '' }}" class="form-control">
+                                                        </td>
                                                         <td>
                                                             <input type="file" name="variants[{{ $loop->index }}][product_img]" class="form-control-file">
                                                             @if(!empty($variant->product_img))
@@ -159,6 +172,23 @@
                                     <label>Tax Rate (%)</label>
                                     <input type="number" step="0.01" name="tax_rate" class="form-control" value="{{ old('tax_rate', $product->tax_rate ?? '') }}" required>
                                 </div> --}}
+                                
+                                @php
+                                    $selectedSuppliers = old('supplier_ids', isset($product) ? $product->suppliers->pluck('id')->toArray() : []);
+                                @endphp
+
+                                <div class="form-group">
+                                    <label for="suppliers">Suppliers</label>
+                                    <select name="supplier_ids[]" id="supplier_select2" multiple class="form-control" required>
+                                        @foreach($suppliers as $supplier)
+                                            <option value="{{ $supplier->id }}"
+                                                {{ in_array($supplier->id, $selectedSuppliers) ? 'selected' : '' }}>
+                                                {{ $supplier->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
 
                                 {{-- Product Image --}}
                                 <div class="form-group">
@@ -181,20 +211,32 @@
 
 @endsection
 
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
 @section('js')
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const hasVariance = document.getElementById('has_variance');
             const variantSection = document.getElementById('variant-section');
             const mainBarcode = document.getElementById('main-barcode');
+            const lowStock = document.getElementById('main-lowStock');
+
 
             function toggleVariantSection() {
                 if (hasVariance.value === '1') {
                     variantSection.style.display = 'block';
                     mainBarcode.style.display = 'none';
+                    lowStock.style.display = 'none';
+
                 } else {
                     variantSection.style.display = 'none';
                     mainBarcode.style.display = 'block';
+                    lowStock.style.display = 'block';
+
                 }
             }
 
@@ -213,12 +255,14 @@
                 <td><input type="text" name="variants[${variantIndex}][sku]" class="form-control" required></td>
                 <td><input type="text" name="variants[${variantIndex}][barcode]" class="form-control"></td>
                 <td><input type="number" step="0.01" name="variants[${variantIndex}][sale_price]" class="form-control"></td>
+                <td><input type="number" step="1" name="variants[${variantIndex}][low_stock]" class="form-control" placeholder="e.g. 5"></td>
                 <td>
                     <input type="file" name="variants[${variantIndex}][product_img]" class="form-control-file">
                     <div class="img-preview mt-2"></div>
                 </td>
                 <td><button type="button" class="btn btn-sm btn-danger" onclick="removeVariantRow(this)">Remove</button></td>
             `;
+
 
             tableBody.appendChild(row);
             variantIndex++;
@@ -228,5 +272,12 @@
         function removeVariantRow(button) {
             button.closest('tr').remove();
         }
+
+            $(document).ready(function() {
+                $('#supplier_select2').select2({
+                    placeholder: "Select suppliers", // Optional placeholder text
+                    allowClear: true // Optional: allows deselecting all items
+                });
+            });
     </script>
 @endsection

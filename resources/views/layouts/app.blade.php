@@ -18,6 +18,13 @@
 
   <body class="">
 
+        @php
+            use App\Models\Setting;
+            $setting = Setting::first();
+            $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+            $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
+        @endphp
+
     <div id="loading">
           <div id="loading-center">
           </div>
@@ -41,7 +48,7 @@
                             </ul>
                         </div>
                         <div class="col-lg-6 text-right">
-                            <span class="mr-1"><script>document.write(new Date().getFullYear())</script>©</span> <a href="#" class="">POS Dash</a>.
+                            <span class="mr-1"><script>document.write(new Date().getFullYear())</script>©</span> <a href="{{ route('dashboard') }}" class="">{{ $setting->business_name }}</a>.
                         </div>
                     </div>
                 </div>

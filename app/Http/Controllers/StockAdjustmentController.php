@@ -6,11 +6,13 @@ use App\Models\StockAdjustment;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\StockLedger;
+use App\Models\Supplier;
 use App\Models\Category;
 
 class StockAdjustmentController extends Controller
 {
-    public function stockIndex(Request $request){
+    public function stockIndex(Request $request)
+    {
         $title = 'Stock Inventory';
         $categories = Category::all();
 
@@ -23,12 +25,21 @@ class StockAdjustmentController extends Controller
             'branch'
         ]);
 
+        // Always ensure products have an inventory stock record (either directly or via variants)
+        // This is the core change to only show products "inside inventory"
+        $query->where(function ($q) {
+            $q->whereHas('inventoryStock') // Product itself has an inventory record
+              ->orWhereHas('variants.inventoryStock'); // Or at least one of its variants has an inventory record
+        });
+
+
         if ($request->filled('search_name')) {
-            $query->where('name', 'like', '%'.$request->search_name.'%');
+            $query->where('name', 'like', '%' . $request->search_name . '%');
         }
 
         if ($request->filled('search_sku')) {
-            $query->where('sku', 'like', '%'.$request->search_sku.'%');
+            // Adjust this if SKU is only on variants or both
+            $query->where('sku', 'like', '%' . $request->search_sku . '%');
         }
 
         if ($request->filled('search_category')) {
@@ -37,23 +48,41 @@ class StockAdjustmentController extends Controller
 
         if ($request->filled('search_status')) {
             if ($request->search_status == 'low_stock') {
-                $query->where(function ($query) {
-                    $query->whereHas('inventoryStock', function ($q) {
-                        $q->where('quantity_in_base_unit', '<=', 5);
-                    })
-                    ->orWhereDoesntHave('inventoryStock')
-                    ->orWhereHas('variants.inventoryStock', function ($q) {
-                        $q->where('quantity_in_base_unit', '<=', 5);
-                    })
-                    ->orWhereDoesntHave('variants.inventoryStock');
+                $query->where(function ($q) {
+                    // Condition for products without variants (only if they have inventoryStock)
+                    $q->where(function ($subQuery) {
+                        $subQuery->whereDoesntHave('variants')
+                                 ->whereHas('inventoryStock', function ($invStockQuery) {
+                                     $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'products.low_stock');
+                                 });
+                    });
+
+                    // Condition for products with variants (only if variants have inventoryStock)
+                    $q->orWhere(function ($subQuery) {
+                        $subQuery->whereHas('variants', function ($variantQuery) {
+                            $variantQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                                $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'product_variants.low_stock');
+                            });
+                        });
+                    });
                 });
             } elseif ($request->search_status === 'ok') {
-                $query->where(function ($query) {
-                    $query->whereHas('inventoryStock', function ($q) {
-                        $q->where('quantity_in_base_unit', '>', 5);
-                    })
-                    ->orWhereHas('variants.inventoryStock', function ($q) {
-                        $q->where('quantity_in_base_unit', '>', 5);
+                $query->where(function ($q) {
+                    // Condition for products without variants (only if they have inventoryStock)
+                    $q->where(function ($subQuery) {
+                        $subQuery->whereDoesntHave('variants')
+                                 ->whereHas('inventoryStock', function ($invStockQuery) {
+                                     $invStockQuery->whereColumn('quantity_in_base_unit', '>', 'products.low_stock');
+                                 });
+                    });
+
+                    // Condition for products with variants (only if variants have inventoryStock)
+                    $q->orWhere(function ($subQuery) {
+                        $subQuery->whereHas('variants', function ($variantQuery) {
+                            $variantQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                                $invStockQuery->whereColumn('quantity_in_base_unit', '>', 'product_variants.low_stock');
+                            });
+                        });
                     });
                 });
             }
@@ -141,5 +170,86 @@ class StockAdjustmentController extends Controller
         }
 
         return view('admin.stock.stock_ledger', compact('ledgers', 'title'));
+    }
+
+    public function supplierProductReport(Request $request){
+        $title = "Products Supplier";
+        // Fetch all suppliers to populate the dropdown filter
+        $suppliers = Supplier::all();
+
+        // Get the selected supplier ID and filter type from the request
+        $selectedSupplier = $request->supplier_id;
+        $filter = $request->filter;
+
+        // Initialize products as an empty collection; it will be populated if a supplier is selected
+        $products = collect();
+
+        // Only proceed with fetching products if a supplier has been selected
+        if ($selectedSupplier) {
+            // Start a query on the Product model
+            $productsQuery = Product::whereHas('suppliers', function ($q) use ($selectedSupplier) {
+                // Filter products that are associated with the selected supplier
+                $q->where('suppliers.id', $selectedSupplier);
+            });
+
+            // Define the eager loads. The 'variants' relationship eager load is conditional.
+            $eagerLoads = [
+                'inventoryStock', // For main product's stock
+                'baseUnit',       // For conversion factor to base unit
+                'variants.inventoryStock', // For variant's stock (will be loaded for all variants initially)
+                'variants.displayUnit'     // For variant's display unit (if used in blade)
+            ];
+
+            // If low stock filter is active, add a constraint to eager load only low stock variants
+            if ($filter === 'low_stock') {
+                $eagerLoads['variants'] = function ($query) {
+                    $query->where(function ($variantQuery) {
+                        $variantQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                            $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'product_variants.low_stock');
+                        })
+                        ->orWhereDoesntHave('inventoryStock'); // Include variants with no inventory record
+                    });
+                };
+
+                // Apply the low stock filter to the main product query as well
+                $productsQuery->where(function ($query) {
+                    // Condition 1: Products without variants that are low stock or have no stock record
+                    $query->where(function ($subQuery) {
+                        $subQuery->whereDoesntHave('variants') // Ensures we are looking at non-variant products
+                                 ->where(function ($noVariantStockQuery) {
+                                     $noVariantStockQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                                         // Compare the quantity in base unit with the product's low_stock threshold
+                                         $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'products.low_stock');
+                                     })
+                                     ->orWhereDoesntHave('inventoryStock'); // Include products with no inventory record (effectively zero stock)
+                                 });
+                    });
+
+                    // Condition 2: Products that have variants, and at least one of their variants is low stock or has no stock record
+                    $query->orWhere(function ($subQuery) {
+                        $subQuery->whereHas('variants', function ($variantQuery) {
+                            $variantQuery->where(function ($variantStockCheckQuery) {
+                                $variantStockCheckQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                                    // Compare the quantity in base unit with the variant's low_stock threshold
+                                    $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'product_variants.low_stock');
+                                })
+                                ->orWhereDoesntHave('inventoryStock'); // Include variants with no inventory record
+                            });
+                        });
+                    });
+                });
+            }
+
+            // Apply the eager loads to the query
+            $productsQuery->with($eagerLoads);
+
+            // Execute the query and get the results
+            $products = $productsQuery->get();
+        }
+
+        // Return the view with the necessary data
+        return view('admin.stock.supplier_products', compact(
+            'suppliers', 'products', 'selectedSupplier', 'filter', 'title'
+        ));
     }
 }

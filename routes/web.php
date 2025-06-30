@@ -26,6 +26,7 @@ use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\POSController;
 use App\Http\Middleware\CheckOpenRegister;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\QuotationController;
 
 
 
@@ -122,6 +123,8 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/{id}', [ProductController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/variants', [ProductController::class, 'viewVariants'])->name('variants');
     });
+    Route::get('/api/search-products', [ProductController::class, 'search']);
+
 
 
 
@@ -245,6 +248,24 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
 
     Route::post('/mail-settings/save', [SettingController::class, 'saveMailSettings'])->name('mail-settings.save');
+
+    // Supplier Product
+    Route::get('/reports/supplier-products', [StockAdjustmentController::class, 'supplierProductReport'])->name('reports.supplier_products');
+
+
+    // Quotation 
+    Route::get('/quotations', [QuotationController::class, 'index'])->name('quotations.index');
+    Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
+    Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
+    Route::get('/quotations/show/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
+    Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
+    Route::put('/quotations/{quotation}', [QuotationController::class, 'update'])->name('quotations.update');
+    Route::get('/quotations/{quotation}', [QuotationController::class, 'destroy'])->name('quotations.destroy');
+
+
+    // Route::post('/quotations/{quotation}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
+    // Route::delete('/quotations/{quotation}/forceDelete', [QuotationController::class, 'forceDelete'])->name('quotations.forceDelete');
+
 
 
     // Prodfile

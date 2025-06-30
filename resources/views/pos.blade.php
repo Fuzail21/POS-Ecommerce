@@ -1,8 +1,8 @@
 @extends('standalone-template')
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
 <style>
     /* Navbar with proper alignment and padding */
     .navbar {
@@ -13,15 +13,14 @@
         background-color: #f8f9fa; /* Light grey background */
         border-bottom: 1px solid #ccc;
     }
-    
-    /* Right side controls (calculator + fullscreen button) */
+
     .right-controls {
         margin-left: auto;
         display: flex;
         align-items: center;
         gap: 10px;
     }
-    
+
     /* General button styling */
     .btn {
         background-color: #4a90e2;
@@ -32,13 +31,13 @@
         border-radius: 5px;
         font-size: 16px;
     }
-    
+
     /* Dropdown wrapper */
     .dropdown {
         position: relative;
         display: inline-block;
     }
-    
+
     /* Dropdown (calculator) content */
     .dropdown-content {
         display: none;
@@ -52,17 +51,17 @@
         width: 250px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
-    
+
     /* Show dropdown on hover */
     .dropdown-content.show {
         display: block;
     }
-    
+
     /* Calculator box */
     .calculator {
         width: 230px;
     }
-    
+
     /* Display screen */
     .display {
         width: 100%;
@@ -75,14 +74,14 @@
         border-radius: 5px;
         background: #fff;
     }
-    
+
     /* Grid for buttons */
     .buttons {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 5px;
     }
-    
+
     /* Button inside calculator */
     .dropdown-content button {
         padding: 10px;
@@ -93,34 +92,46 @@
         color: white;
         cursor: pointer;
     }
-    
+
     /* Hover state */
     .dropdown-content button:hover {
         background: #357abd;
     }
-    
+
     /* Operator-specific styling */
     .operator {
         background: #d9534f;
     }
-    
+
     .operator:hover {
         background: #c9302c;
     }
 
+    /* Specific styles for product list from previous context */
+    #product-list .card {
+        min-height: 300px;
+    }
+    .pointer-events-none {
+        pointer-events: none;
+    }
+    .opacity-50 {
+        opacity: 0.5;
+    }
+
+    /* Ensure content-page and wrapper are not affected by sidebar if it's not present */
     .content-page {
-        margin-left: 0 !important;
+        margin-left: 0 !important; /* Forces content to full width */
     }
     .wrapper {
-        padding-left: 0 !important;
+        padding-left: 0 !important; /* Removes padding if sidebar was intended to fill it */
     }
-
 </style>
-{{-- @endsection --}}
+
 
 @section('content')
-{{-- @include('layouts.sidebar') --}}
+{{-- Removed @include('layouts.sidebar') as per design --}}
 
+    {{-- START: Navbar from pos.blade.php --}}
     <div class="navbar">
         <div class="right-controls">
 
@@ -185,7 +196,7 @@
             </button>
         </div>
     </div>
-
+    {{-- END: Navbar from pos.blade.php --}}
 
 
 <div class="content-page">
@@ -216,7 +227,7 @@
                         <div class="row align-items-end">
                             <div class="col-md-5 mb-3">
                                 <label for="customer_id">Select Customer</label>
-                                <select name="customer_id" id="customer_id" class="form-control select2" required>
+                                <select name="customer_id" id="customer_id" class="form-control" required>
                                     <option value="">Select Customer</option>
                                     @foreach($customers as $customer)
                                         <option value="{{ $customer->id }}">{{ $customer->name }}</option>
@@ -226,14 +237,13 @@
 
                             <div class="col-md-5 mb-3">
                                 <label for="branch_id">Select Branch</label>
-                                <select name="branch_id" id="branch_id" class="form-control select2" required>
+                                <select name="branch_id" id="branch_id" class="form-control" required>
                                     <option value="">Select Branch</option>
                                     @foreach($branches as $branch)
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-
 
                             <div class="col-md-2 mb-3 text-right">
                                 <button type="button" class="btn text-white mt-4 w-100" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#addCustomerModal">
@@ -248,67 +258,73 @@
                 <div class="card">
                     <div class="card-header">
                         <h4>Search Products</h4>
-                        <form method="GET" action="{{ route('pos.index') }}" style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" name="search" class="form-control" placeholder="Search by name..." value="{{ request('search') }}" style="flex: 1;" autocomplete="off">
+                        <form id="product-search-form" style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" name="search" id="search-input" class="form-control" placeholder="Search by name..." value="{{ request('search') }}" style="flex: 1;" autocomplete="off">
                             <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Search</button>
                         </form>
-
-
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                         <div class="row" id="product-list">
-                            @foreach($products as $product)
-                                @php
-                                    $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                                @endphp
-                                <div class="col-md-3 mb-2 product-item d-flex">
-                                    <div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 {{ $isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '' }}">
-                                        @if (!empty($product->product_img))
-                                            <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">
-                                        @else
-                                            <div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>
-                                        @endif
+                            {{-- Product list loop is now directly embedded here --}}
+                            @php
+                                // This section will only run on the initial page load.
+                                // For AJAX requests, the controller will directly return HTML.
+                                $productsHtml = '';
+                                if (!empty($products)) {
+                                    foreach($products as $product) {
+                                        $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
+                                        $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/70x70/f0f0f0/808080?text=N/A';
 
-                                        <h6 class="mt-2 mb-1">{{ $product->name }}</h6>
+                                        $productsHtml .= '<div class="col-md-3 mb-2 product-item d-flex">';
+                                        $productsHtml .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
 
-                                        @if($product->variants->count())
-                                            <select class="form-control mb-2 variant-selector mt-auto" data-product-id="{{ $product->id }}">
-                                                <option disabled selected>Choose Variant</option>
-                                                @foreach($product->variants as $variant)
-                                                    <option 
-                                                        value="variant-{{ $variant->id }}"
-                                                        data-name="{{ $product->name }} - {{ $variant->variant_name }}"
-                                                        data-price="{{ $variant->sale_price }}"
-                                                        data-stock="{{ $variant->stock_quantity }}"
-                                                        data-unit-id="{{ $product->default_display_unit_id }}"
-                                                        {{ !$variant->in_stock ? 'disabled' : '' }}>
-                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }}
-                                                        {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
-                                        @else
-                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }} 
-                                                <br><small>(Stock: {{ $product->stock_quantity }})</small>
-                                            </p>
-                                            @if($product->in_stock)
-                                                <button 
-                                                    class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
-                                                    data-id="product-{{ $product->id }}"
-                                                    data-name="{{ $product->name }}"
-                                                    data-price="{{ $product->sale_price }}"
-                                                    data-stock="{{ $product->stock_quantity }}"
-                                                    data-unit-id="{{ $product->default_display_unit_id }}">
-                                                    Add to Cart
-                                                </button>
-                                            @else
-                                                <button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
+                                        if (!empty($product->product_img)) {
+                                            $productsHtml .= '<img src="' . asset('storage/' . $product->product_img) . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
+                                        } else {
+                                            $productsHtml .= '<div style="width: 70px; height: 70px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
+                                        }
+
+                                        $productsHtml .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+
+                                        if ($product->variants->count()) {
+                                            $productsHtml .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
+                                            $productsHtml .= '<option disabled selected>Choose Variant</option>';
+                                            foreach ($product->variants as $variant) {
+                                                $disabled = !$variant->in_stock ? 'disabled' : '';
+                                                $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
+                                                $productsHtml .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
+                                                                 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
+                                                                 'data-price="' . $variant->sale_price . '" ' .
+                                                                 'data-stock="' . $variant->stock_quantity . '" ' .
+                                                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
+                                                                 htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->sale_price, 2) . ' ' . $stockText .
+                                                                 '</option>';
+                                            }
+                                            $productsHtml .= '</select>';
+                                            $productsHtml .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
+                                        } else {
+                                            $productsHtml .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->sale_price, 2) .
+                                                             '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+                                            if ($product->in_stock) {
+                                                $productsHtml .= '<button ' .
+                                                                 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
+                                                                 'data-id="product-' . $product->id . '" ' .
+                                                                 'data-name="' . htmlspecialchars($product->name) . '" ' .
+                                                                 'data-price="' . $product->sale_price . '" ' .
+                                                                 'data-stock="' . $product->stock_quantity . '" ' .
+                                                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
+                                                                 'Add to Cart' .
+                                                                 '</button>';
+                                            } else {
+                                                $productsHtml .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+                                            }
+                                        }
+                                        $productsHtml .= '</div>';
+                                        $productsHtml .= '</div>';
+                                    }
+                                }
+                                echo $productsHtml;
+                            @endphp
                         </div>
                     </div>
                 </div>
@@ -346,6 +362,7 @@
                             </div>
                         </div>
 
+
                         <!-- Discount Type -->
                         <div style="margin-top: 8px;">
                             <label>Discount Type:</label><br>
@@ -371,7 +388,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="shipping">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">{{ $setting->currency_symbol }} </span>
                                 <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -403,7 +420,7 @@
     <!-- Checkout Modal -->
     <div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form id="checkout-form" method="POST" action="{{ route('checkout.pos') }}">
+            <form id="checkout-form" method="POST" action="{{ route('sales.checkout.process') }}">
                 @csrf
                 <input type="hidden" name="cart_data" id="cart_data">
                 <input type="hidden" name="total_payable" id="total_payable">
@@ -478,8 +495,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="submit" class="btn btn-success">Save Customer</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Save Customer</button>
+                <button type="button" class="btn text-white" style="background-color: {{ $secondaryColor }};" data-dismiss="modal">Cancel</button>
             </div>
         </div>
     </form>
@@ -487,231 +504,19 @@
 </div>
 
 
-@if(session('show_invoice') && session('sale_id'))
-    @php
-        $sale = \App\Models\Sale::with(['items.product', 'customer'])->find(session('sale_id'));
-        $invoiceHtml = view('partials.invoice', compact('sale'))->render();
-        session()->forget(['show_invoice', 'sale_id']);
-    @endphp
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            Swal.fire({
-                title: 'Invoice Preview',
-                html: {!! json_encode($invoiceHtml) !!},
-                width: 600,
-                showCancelButton: true,
-                confirmButtonText: 'Print',
-                cancelButtonText: 'Close',
-                didOpen: () => {
-                    // Optional styling tweaks or JS initialization
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const content = document.getElementById('invoice-content').innerHTML;
-                    const printWindow = window.open('', '', 'width=800,height=600');
-                    printWindow.document.write('<html><head><title>Invoice</title></head><body>' + content + '</body></html>');
-                    printWindow.document.close();
-                    printWindow.print();
-                }
-            });
-        });
-    </script>
-@endif
-
-
+<!-- JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- Bootstrap JS Bundle (includes Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
-
-<!-- JavaScript -->
 <script>
-
-        document.getElementById('showRegisterDetailsBtn').addEventListener('click', async () => {
-            // Show a loading spinner while fetching data
-            Swal.fire({
-                title: 'Fetching Register Details...',
-                html: '<div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-blue-500" role="status"><span class="visually-hidden">Loading...</span></div>',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            try {
-                // *** IMPORTANT: Replace '/pos/register-details' with your actual Laravel route ***
-                const response = await fetch('/pos/register-details', {
-                    method: 'GET', // Or 'POST' if your route is configured that way
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        // If you are using Laravel CSRF protection with AJAX, uncomment and set the token:
-                        // 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                });
-
-                const data = await response.json();
-
-                // Close the loading spinner
-                Swal.close();
-
-                if (response.ok && data.details) {
-                    const { payment_type, total_sales, total_refund, total_payment, date } = data.details;
-
-                    // Construct the HTML content for the SweetAlert popup
-
-                    const sanitized = (value) => {
-                        return value.replace(/^\s*\$\s*/, currencySymbol + ' ');
-                    };
-                    const popupHtml = `
-                        <div class="space-y-4">
-                            <!-- Payment Type & Amount Section -->
-                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-700 text-sm md:text-base">
-                                <div class="col-span-1 font-semibold text-gray-800">Payment Type</div>
-                                <div class="col-span-1 font-semibold text-right text-gray-800">Amount</div>
-
-                                ${Object.entries(payment_type).map(([type, amount]) => `
-                                    <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">${type}:</div>
-                                    <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(amount)}</div>
-                                `).join('')}
-                            </div>
-
-                            <!-- Totals Section -->
-                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-700 text-sm md:text-base pt-4 border-t border-gray-200">
-                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Sales:</div>
-                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_sales)}</div>
-
-                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Refund:</div>
-                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_refund)}</div>
-
-                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Payment:</div>
-                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_payment)}</div>
-                            </div>
-                        </div>
-                    `;
-
-                    Swal.fire({
-                        title: `Register Details - (${date})`,
-                        html: popupHtml,
-                        width: '700px', // Increased popup width
-                        showCancelButton: true,
-                        confirmButtonText: 'Print',
-                        cancelButtonText: 'Close',
-                        customClass: {
-                            container: 'swal2-container',
-                            popup: 'swal2-popup',
-                            title: 'swal2-title text-lg font-semibold text-gray-800 mb-3', // Slightly smaller & bolder title
-                            htmlContainer: 'swal2-html-container text-sm text-gray-700', // Smaller, cleaner text
-                            confirmButton: 'swal2-confirm-button text-black font-bold py-2 px-5 rounded-lg focus:outline-none transition',
-                            cancelButton: 'swal2-cancel-button text-black font-bold py-2 px-5 rounded-lg focus:outline-none ms-2 transition',
-                            actions: 'swal2-actions flex justify-end w-full mt-4 gap-2'
-                        },
-                        buttonsStyling: false,
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            // Logic for the "Print" button
-                            // In a real application, you might trigger a print dialog or a server-side print action
-                            console.log('Print button clicked!');
-                        } else if (result.dismiss === Swal.DismissReason.cancel) {
-                            console.log('Popup closed');
-                        }
-                    });
-                } else {
-                     Swal.fire({
-                        icon: 'info',
-                        title: 'No Register Details',
-                        text: data.message || 'Could not retrieve register details.',
-                        confirmButtonText: 'OK',
-                        customClass: {
-                            confirmButton: 'swal2-confirm-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline',
-                            popup: 'swal2-popup',
-                            title: 'swal2-title',
-                            htmlContainer: 'swal2-html-container'
-                        },
-                        buttonsStyling: false,
-                    });
-                }
-            } catch (error) {
-                // Close the loading spinner on error
-                Swal.close();
-                console.error('Error fetching register details:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'An error occurred while fetching register details. Please try again.',
-                    confirmButtonText: 'OK',
-                    customClass: {
-                        confirmButton: 'swal2-confirm-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline',
-                        popup: 'swal2-popup',
-                        title: 'swal2-title',
-                        htmlContainer: 'swal2-html-container'
-                    },
-                    buttonsStyling: false,
-                });
-            }
-        });
-
-    //CLOSE Register    
-    document.addEventListener('DOMContentLoaded', function () {
-        const closeBtn = document.getElementById('closeRegisterBtn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-    
-                Swal.fire({
-                    title: 'Close Register?',
-                    text: "This will finalize today's session.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, close it',
-                    cancelButtonText: 'Cancel'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch("{{ route('pos.closeRegister') }}", {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Closed',
-                                    text: data.message,
-                                    showConfirmButton: false,
-                                    timer: 1500,
-                                    timerProgressBar: true,
-                                    didClose: () => {
-                                        window.location.href = data.redirect;
-                                    }
-                                });
-                            } else {
-                                Swal.fire('Error', data.message || 'Something went wrong while closing the register.', 'error');
-                            }
-                        })
-                        .catch(error => {
-                            Swal.fire('Error', 'Something went wrong while closing the register.', 'error');
-                            console.error(error);
-                        });
-                    }
-                });
-            });
-        }
-    });
-
     const currencySymbol = @json($setting->currency_symbol);
+
     function updateDiscountSymbol() {
-        var symbol = document.getElementById('discount-symbol');
-        var selectedType = document.querySelector('input[name="discount_type"]:checked').value;
+        const symbol = document.getElementById('discount-symbol');
+        const selectedType = document.querySelector('input[name="discount_type"]:checked').value;
         symbol.textContent = selectedType === 'percentage' ? '%' : currencySymbol;
     }
+
     document.addEventListener('DOMContentLoaded', () => {
         const cart = {};
 
@@ -818,7 +623,7 @@
             subtotalEl.textContent = subtotal.toFixed(2);
             discountEl.textContent = discount.toFixed(2);
             taxEl.textContent = tax.toFixed(2);
-            shippingEl.textContent = shipping.toFixed(2); // ✅ Add this
+            shippingEl.textContent = shipping.toFixed(2);
             totalEl.textContent = total.toFixed(2);
 
             document.getElementById('subtotal_hidden').value = subtotal.toFixed(2);
@@ -846,13 +651,12 @@
         function addToCart(id, name, price, unit_id, stock) {
             // If already in cart
             if (cart[id]) {
-                // ✅ Ensure stock is always updated in case it's missing or wrong
-                cart[id].stock = stock;
+                cart[id].stock = stock; // Ensure stock is always updated in case it's missing or wrong
 
                 if (cart[id].qty < cart[id].stock) {
                     cart[id].qty++;
                 } else {
-                    showStockError('Stock exceeds available quantity.');
+                    showStockError('Cannot add more. Stock limit reached.');
                     return;
                 }
             } else {
@@ -865,84 +669,93 @@
                     stock: stock
                 };
             }
-
             updateCartUI();
         }
 
+        // --- Event Listener Handlers (defined separately for re-attachment) ---
+        function handleVariantSelection() {
+            const card = this.closest('.product-item');
+            const selected = this.options[this.selectedIndex];
+            const id = selected.value;
+            const name = selected.dataset.name;
+            const price = parseFloat(selected.dataset.price);
+            const unit_id = selected.dataset.unitId;
+            const stock = parseInt(selected.dataset.stock); // Get stock for variant
+            const addBtn = card.querySelector('.add-variant-to-cart');
 
-        document.querySelectorAll('.variant-selector').forEach(selector => {
-            selector.addEventListener('change', function () {
-                const card = this.closest('.product-item');
-                const selected = this.options[this.selectedIndex];
-                const id = selected.value;
-                const name = selected.dataset.name;
-                const price = parseFloat(selected.dataset.price);
-                const unit_id = selected.dataset.unitId; // ✅ FIXED HERE
-                const addBtn = card.querySelector('.add-variant-to-cart');
+            addBtn.disabled = !selected.value || isNaN(stock) || stock <= 0; // Disable if no variant selected or out of stock
+            addBtn.dataset.id = id;
+            addBtn.dataset.name = name;
+            addBtn.dataset.price = price;
+            addBtn.dataset.unitId = unit_id;
+            addBtn.dataset.stock = stock; // Store stock on the button
+        }
 
-                addBtn.disabled = false;
-                addBtn.dataset.id = id;
-                addBtn.dataset.name = name;
-                addBtn.dataset.price = price;
-                addBtn.dataset.unitId = unit_id;
-            });
-        });
+        function handleAddVariantToCart() {
+            const id = this.getAttribute('data-id');
+            const name = this.getAttribute('data-name');
+            const price = parseFloat(this.getAttribute('data-price'));
+            const unit_id = this.getAttribute('data-unit-id');
+            const stock = parseInt(this.getAttribute('data-stock')); // Retrieve stock
 
+            const currentQty = cart[id]?.qty || 0;
 
-        document.querySelectorAll('.add-variant-to-cart').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const card = btn.closest('.card');
-                const selectedOption = card.querySelector('.variant-selector option:checked');
-                const stock = parseInt(selectedOption.dataset.stock);
-                const id = btn.getAttribute('data-id');
-                const name = btn.getAttribute('data-name');
-                const price = parseFloat(btn.getAttribute('data-price'));
-                const unit_id = btn.getAttribute('data-unit-id');
-
-                // Ensure cart item exists and check quantity
-                const currentQty = cart[id]?.qty || 0;
-
-                if (currentQty >= stock) {
-                    showStockError('Stock exceeds available quantity.');
-                    return;
-                }
-
-                addToCart(id, name, price, unit_id, stock);
-            });
-        });
-
-
-
-        document.querySelectorAll('.add-simple-to-cart').forEach(btn => {
-            const quantity = $(this).closest('.card').find('.simple-quantity').val();
-            const maxStock = $(this).data('stock');
-
-            if (parseInt(quantity) > maxStock) {
-                alert('Requested quantity exceeds available stock.');
+            if (currentQty >= stock) {
+                showStockError('Cannot add more. Stock limit reached.');
                 return;
             }
+            addToCart(id, name, price, unit_id, stock);
+        }
 
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-id');
-                const name = btn.getAttribute('data-name');
-                const price = parseFloat(btn.getAttribute('data-price'));
-                const unit_id = btn.getAttribute('data-unit-id');
-                const stock = parseInt(btn.getAttribute('data-stock')); // ✅ ADD THIS
+        function handleAddSimpleToCart() {
+            const id = this.getAttribute('data-id');
+            const name = this.getAttribute('data-name');
+            const price = parseFloat(this.getAttribute('data-price'));
+            const unit_id = this.getAttribute('data-unit-id');
+            const stock = parseInt(this.getAttribute('data-stock'));
 
-                addToCart(id, name, price, unit_id, stock); // ✅ PASS STOCK
+            const currentQty = cart[id]?.qty || 0;
+
+            if (currentQty >= stock) {
+                showStockError('Cannot add more. Stock limit reached.');
+                return;
+            }
+            addToCart(id, name, price, unit_id, stock);
+        }
+
+        // --- Function to attach/re-attach event listeners to products ---
+        function attachProductEventListeners() {
+            // Variant selectors
+            document.querySelectorAll('.variant-selector').forEach(selector => {
+                selector.removeEventListener('change', handleVariantSelection); // Remove old to prevent duplicates
+                selector.addEventListener('change', handleVariantSelection);
             });
-        });
+
+            // Add variant to cart buttons
+            document.querySelectorAll('.add-variant-to-cart').forEach(btn => {
+                btn.removeEventListener('click', handleAddVariantToCart);
+                btn.addEventListener('click', handleAddVariantToCart);
+            });
+
+            // Add simple product to cart buttons
+            document.querySelectorAll('.add-simple-to-cart').forEach(btn => {
+                btn.removeEventListener('click', handleAddSimpleToCart);
+                btn.addEventListener('click', handleAddSimpleToCart);
+            });
+        }
+        // --- End Event Listener Handlers ---
+
 
         cartItemsEl.addEventListener('click', e => {
             const btn = e.target;
             const id = btn.getAttribute('data-id');
-            if (!id) return;
+            if (!id || !cart[id]) return; // Ensure element has data-id and item exists in cart
 
             if (btn.classList.contains('btn-increment')) {
                 if (cart[id].qty < cart[id].stock) {
                     cart[id].qty++;
                 } else {
-                    showStockError('Stock exceeds available quantity.');
+                    showStockError('Cannot add more. Stock limit reached.');
                 }
             } else if (btn.classList.contains('btn-decrement')) {
                 cart[id].qty > 1 ? cart[id].qty-- : delete cart[id];
@@ -971,26 +784,56 @@
             balanceDisplay.value = '';
         });
 
-        document.getElementById('product-search').addEventListener('input', function () {
-            const query = this.value.toLowerCase().trim();
-            document.querySelectorAll('.product-item').forEach(item => {
-                const name = item.getAttribute('data-name') || '';
-                item.style.display = name.includes(query) ? '' : 'none';
+        // --- AJAX Search Implementation for POS page ---
+        const productSearchForm = document.getElementById('product-search-form');
+        const searchInput = document.getElementById('search-input');
+        const productListDiv = document.getElementById('product-list');
+
+        productSearchForm.addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+
+            const searchQuery = searchInput.value;
+
+            // Show a loading indicator (optional)
+            productListDiv.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
+
+            fetch(`{{ route('sales.create') }}?search=${encodeURIComponent(searchQuery)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest' // Identify as an AJAX request
+                }
+            })
+            .then(response => response.text()) // Get the HTML response
+            .then(html => {
+                // Update only the product list section with the HTML received directly from the controller
+                productListDiv.innerHTML = html;
+
+                // Re-attach event listeners to newly loaded products
+                attachProductEventListeners();
+            })
+            .catch(error => {
+                console.error('Error fetching products:', error);
+                productListDiv.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading products. Please try again.</div>';
             });
         });
+        // --- End AJAX Search Implementation ---
+
 
         function showStockError(message) {
-        const errorDiv = document.getElementById('stock-error');
-        errorDiv.textContent = message;
-        errorDiv.classList.remove('d-none');
+            const errorDiv = document.getElementById('stock-error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('d-none');
 
-        // Auto-hide after 3 seconds
-        setTimeout(() => {
-            errorDiv.classList.add('d-none');
-        }, 3000);
-    }
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                errorDiv.classList.add('d-none');
+            }, 3000);
+        }
+
+        // Initial call to attach event listeners when the page first loads
+        attachProductEventListeners();
     });
 
+    // Calculator functions
     const toggleButton = document.getElementById('toggleCalculator');
     const dropdown = document.getElementById('calculatorContent');
 
@@ -1042,5 +885,138 @@
             icon.classList.add('fa-expand');
         }
     }
+
+    // Register details and close register functionality
+    document.addEventListener('DOMContentLoaded', () => { // Wrapped in DOMContentLoaded to ensure elements exist
+        document.getElementById('showRegisterDetailsBtn').addEventListener('click', async () => {
+            Swal.fire({
+                title: 'Fetching Register Details...',
+                html: '<div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full text-blue-500" role="status"><span class="visually-hidden">Loading...</span></div>',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            try {
+                const response = await fetch('/pos/register-details', { // Ensure this route is correct
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                Swal.close();
+
+                if (response.ok && data.details) {
+                    const { payment_type, total_sales, total_refund, total_payment, date } = data.details;
+                    const sanitized = (value) => {
+                        return value.replace(/^\s*\$\s*/, currencySymbol + ' ');
+                    };
+                    const popupHtml = `
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-700 text-sm md:text-base">
+                                <div class="col-span-1 font-semibold text-gray-800">Payment Type</div>
+                                <div class="col-span-1 font-semibold text-right text-gray-800">Amount</div>
+                                ${Object.entries(payment_type).map(([type, amount]) => `
+                                    <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">${type}:</div>
+                                    <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(amount)}</div>
+                                `).join('')}
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-700 text-sm md:text-base pt-4 border-t border-gray-200">
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Sales:</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_sales)}</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Refund:</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_refund)}</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm">Total Payment:</div>
+                                <div class="col-span-1 py-2 px-3 bg-gray-50 rounded-lg shadow-sm text-right font-medium">${sanitized(total_payment)}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    Swal.fire({
+                        title: `Register Details - (${date})`,
+                        html: popupHtml,
+                        width: '700px',
+                        showCancelButton: true,
+                        confirmButtonText: 'Print',
+                        cancelButtonText: 'Close',
+                        customClass: {
+                            container: 'swal2-container', popup: 'swal2-popup', title: 'swal2-title text-lg font-semibold text-gray-800 mb-3',
+                            htmlContainer: 'swal2-html-container text-sm text-gray-700', confirmButton: 'swal2-confirm-button text-black font-bold py-2 px-5 rounded-lg focus:outline-none transition',
+                            cancelButton: 'swal2-cancel-button text-black font-bold py-2 px-5 rounded-lg focus:outline-none ms-2 transition', actions: 'swal2-actions flex justify-end w-full mt-4 gap-2'
+                        },
+                        buttonsStyling: false,
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            console.log('Print button clicked!');
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            console.log('Popup closed');
+                        }
+                    });
+                } else {
+                     Swal.fire({
+                        icon: 'info', title: 'No Register Details', text: data.message || 'Could not retrieve register details.', confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'swal2-confirm-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline',
+                            popup: 'swal2-popup', title: 'swal2-title', htmlContainer: 'swal2-html-container'
+                        }, buttonsStyling: false,
+                    });
+                }
+            } catch (error) {
+                Swal.close();
+                console.error('Error fetching register details:', error);
+                Swal.fire({
+                    icon: 'error', title: 'Error', text: 'An error occurred while fetching register details. Please try again.', confirmButtonText: 'OK',
+                    customClass: {
+                        confirmButton: 'swal2-confirm-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline',
+                        popup: 'swal2-popup', title: 'swal2-title', htmlContainer: 'swal2-html-container'
+                    }, buttonsStyling: false,
+                });
+            }
+        });
+
+        const closeBtn = document.getElementById('closeRegisterBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: 'Close Register?', text: "This will finalize today's session.", icon: 'warning',
+                    showCancelButton: true, confirmButtonText: 'Yes, close it', cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch("{{ route('pos.closeRegister') }}", { // Ensure this route is correct
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success', title: 'Closed', text: data.message, showConfirmButton: false, timer: 1500, timerProgressBar: true,
+                                    didClose: () => { window.location.href = data.redirect; }
+                                });
+                            } else {
+                                Swal.fire('Error', data.message || 'Something went wrong while closing the register.', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire('Error', 'Something went wrong while closing the register.', 'error');
+                            console.error(error);
+                        });
+                    }
+                });
+            });
+        }
+    });
+
 </script>
 @endsection

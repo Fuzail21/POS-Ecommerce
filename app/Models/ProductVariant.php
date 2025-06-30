@@ -19,7 +19,7 @@ class ProductVariant extends Model
         'barcode',
         'sale_price',
         'product_img',
-
+        'low_stock',
     ];
 
     public function product()

@@ -368,22 +368,32 @@ class POSController extends Controller
         $stockAlertProducts = Product::with([
             'category',
             'baseUnit',
-            'variants.inventoryStock', // Ensure this relationship exists and `inventoryStock` on variant works
+            'variants.inventoryStock',
             'variants.displayUnit',
-            'inventoryStock', // Ensure this relationship exists and `inventoryStock` on product works
+            'inventoryStock',
             'branch'
         ])->where(function ($query) {
-            $query->whereHas('inventoryStock', function ($q) {
-                // Products with general inventory stock <= 5
-                $q->where('quantity_in_base_unit', '<=', 5);
-            })
-            ->orWhereDoesntHave('inventoryStock') // Products with no general inventory stock record
-            ->orWhereHas('variants', function($q) { // Check variants within the same product
-                $q->whereHas('inventoryStock', function ($q2) {
-                    // Variants with their own inventory stock <= 5
-                    $q2->where('quantity_in_base_unit', '<=', 5);
-                })
-                ->orWhereDoesntHave('inventoryStock'); // Variants with no inventory stock record
+            // Condition for products without variants
+            $query->where(function ($subQuery) {
+                $subQuery->whereDoesntHave('variants')
+                         ->where(function ($noVariantSubQuery) {
+                             $noVariantSubQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                         $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'products.low_stock');
+                             })
+                             ->orWhereDoesntHave('inventoryStock'); // Products with no inventory stock at all are considered low
+                         });
+            });
+        
+            // Condition for products with variants
+            $query->orWhere(function ($subQuery) {
+                $subQuery->whereHas('variants', function ($variantQuery) {
+                    $variantQuery->where(function ($variantHasQuery) {
+                        $variantHasQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                            $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'product_variants.low_stock');
+                        })
+                        ->orWhereDoesntHave('inventoryStock'); // Variants with no inventory stock are considered low
+                    });
+                });
             });
         })->paginate(5);
         

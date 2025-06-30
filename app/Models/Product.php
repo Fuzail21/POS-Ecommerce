@@ -23,6 +23,7 @@ class Product extends Model
         'track_expiry',
         'tax_rate',
         'sale_price',
+        'low_stock',
     ];
 
     public function category() {
@@ -66,6 +67,11 @@ class Product extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
+    }
+
+    public function suppliers()
+    {
+        return $this->belongsToMany(Supplier::class, 'product_supplier');
     }
 
 }

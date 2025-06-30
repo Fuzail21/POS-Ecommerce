@@ -1,5 +1,74 @@
 @extends('layouts.app')
 
+<style>
+    /* Custom styles for professional card look */
+    .dashboard-card {
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        min-height: 120px; /* Increased minimum height for the card */
+        /* d-flex align-items-center justify-content-between already applied in HTML */
+    }
+
+    .dashboard-card-icon-container {
+        width: 65px; /* Slightly increased size for the icon background */
+        height: 65px; /* Slightly increased size for the icon background */
+        flex-shrink: 0;
+        margin-right: 1.25rem; /* Increased space between icon and text */
+    }
+
+    .dashboard-card .fa-2x {
+        font-size: 2em; /* Ensure the icon is the standard 2x size */
+    }
+
+    .dashboard-card .card-value {
+        font-size: 1.55rem; /* Slightly larger font size for the value */
+        font-weight: 600;
+        line-height: 1.2; /* Adjusted line-height for value */
+    }
+
+    .dashboard-card .card-title {
+        font-size: 0.90rem; /* Slightly adjusted font size for the title */
+        opacity: 0.9;
+        color: white;
+        display: block;
+        line-height: 1.2; /* Adjusted line-height for title */
+        margin-top: 0.1rem; /* Reduced space between value and title for tighter look */
+    }
+
+    /* Hover effects for the whole card */
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+
+    .dashboard-card {
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    @media (max-width: 767.98px) {
+        .dashboard-card {
+            padding: 1rem;
+            min-height: 100px;
+        }
+        .dashboard-card-icon-container {
+            width: 50px;
+            height: 50px;
+            margin-right: 1rem;
+        }
+        .dashboard-card .fa-2x {
+            font-size: 1.8em;
+        }
+        .dashboard-card .card-value {
+            font-size: 1.5rem;
+        }
+        .dashboard-card .card-title {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+
 @section('content')
 
     @include('layouts.sidebar')
@@ -54,70 +123,72 @@
                         @php
                             $cards = [
                                 [
-                                    'title' => 'Total Sales',
+                                    'title' => 'Sales', // Changed to 'Sales' to match image
                                     'icon' => 'fas fa-shopping-cart',
                                     'value' => $sales,
-                                    'color' => '#6C63FF',
-                                    'route' => route('sales.list'), // Placeholder route
+                                    'color' => '#6C63FF', // Original purple
+                                    'route' => route('sales.list'),
                                 ],
                                 [
-                                    'title' => 'Total Purchases',
+                                    'title' => 'Purchases', // Changed to 'Purchases' to match image
                                     'icon' => 'fas fa-shopping-basket',
                                     'value' => $purchases,
-                                    'color' => '#28a745',
-                                    'route' => route('purchases.list'), // Placeholder route
+                                    'color' => '#28a745', // Green
+                                    'route' => route('purchases.list'),
                                 ],
                                 [
                                     'title' => 'Sales Returns',
-                                    'icon' => 'fas fa-undo-alt',
+                                    'icon' => 'fas fa-arrow-right', // Changed icon to match image
                                     'value' => $salesReturns,
-                                    'color' => '#007bff',
-                                    'route' => route('sale_return.list'), // Placeholder route
+                                    'color' => '#007bff', // Blue
+                                    'route' => route('sale_return.list'),
                                 ],
                                 [
-                                    'title' => "Today's Sales",
+                                    'title' => 'Today Total Sales', // Changed to match image
                                     'icon' => 'fas fa-dollar-sign',
                                     'value' => $todaySales,
-                                    'color' => '#6f42c1',
-                                    'route' => route('sales.list'), // Placeholder route
+                                    'color' => '#6f42c1', // Darker purple (from image, previously was sales returns)
+                                    'route' => route('sales.list'),
                                 ],
                                 [
-                                    'title' => 'Today Received (Sales)',
+                                    'title' => 'Today Total Received(Sales)', // Changed to match image
                                     'icon' => 'fas fa-money-bill-wave',
                                     'value' => $todayReceived,
-                                    'color' => '#e83e8c',
-                                    'route' => route('sales.list'), // Placeholder route, might be same as today's sales
+                                    'color' => '#e83e8c', // Pink
+                                    'route' => route('sales.list'),
                                 ],
                                 [
-                                    'title' => "Today's Purchases",
-                                    'icon' => 'fas fa-truck-loading',
+                                    'title' => 'Today Total Purchases', // Changed to match image
+                                    'icon' => 'fas fa-shopping-cart', // Changed icon to match image
                                     'value' => $todayPurchases,
-                                    'color' => '#17a2b8',
-                                    'route' => route('purchases.list'), // Placeholder route
+                                    'color' => '#17a2b8', // Teal
+                                    'route' => route('purchases.list'),
                                 ],
                                 [
-                                    'title' => "Today's Expense",
+                                    'title' => 'Today Total Expense', // Changed to match image
                                     'icon' => 'fas fa-minus-circle',
                                     'value' => $todayExpense,
-                                    'color' => '#dc3545',
-                                    'route' => route('expense.list'), // Placeholder route
+                                    'color' => '#dc3545', // Red
+                                    'route' => route('expense.list'),
                                 ],
                             ];
                         @endphp
 
                         @foreach ($cards as $card)
                             <div class="col-md-3 mb-4">
-                                {{-- Wrapped the card content in an <a> tag --}}
                                 <a href="{{ $card['route'] }}"
-                                   class="shadow-sm rounded text-white p-4 h-100 d-flex align-items-center text-decoration-none"
-                                   style="background-color: {{ $card['color'] }}; display: block;">
-                                    <div class="me-3" style="margin-right: 20px;">
-                                        <i class="{{ $card['icon'] }} fa-2x"></i>
+                                   class="dashboard-card shadow-sm rounded text-white p-4 d-flex align-items-center justify-content-between text-decoration-none"
+                                   style="background-color: {{ $card['color'] }};">
+                                    {{-- Icon section --}}
+                                    <div class="dashboard-card-icon-container d-flex align-items-center justify-content-center rounded-circle"
+                                         style="background-color: rgba(255, 255, 255, 0.3);">
+                                        <i class="{{ $card['icon'] }} text-white" style="font-size: 1.7em !important;"></i>
                                     </div>
-                                    <div>
-                                        <h4 class="mb-1">{{ $settings->currency_symbol }}
+                                    {{-- Text section (value and title) --}}
+                                    <div class="text-right d-flex flex-column justify-content-center"> {{-- Added flex-column and justify-content-center here --}}
+                                        <h4 class="mb-0 card-value">{{ $settings->currency_symbol }}
                                             {{ number_format($card['value'], 2) }}</h4>
-                                        <small class="text-white-50">{{ $card['title'] }}</small>
+                                        <small class="card-title">{{ $card['title'] }}</small>
                                     </div>
                                 </a>
                             </div>
@@ -263,51 +334,63 @@
                                         </thead>
                                         <tbody>
                                             @foreach ($stockAlertProducts as $product)
-                                                {{-- Display base product stock if applicable --}}
-                                                @if ($product->inventoryStock && $product->inventoryStock->quantity_in_base_unit <= 5)
+                                                @php
+                                                    $conversion = $product->baseUnit->conversion_factor ?? 1;
+                                                    $productLowStockThreshold = $product->low_stock ?? 0;
+                                                @endphp
+                
+                                                {{-- Display base product stock if applicable and it's low --}}
+                                                @if ($product->inventoryStock && ($product->inventoryStock->quantity_in_base_unit / $conversion) <= $productLowStockThreshold)
                                                     <tr>
                                                         <td>{{ $product->name ?? 'N/A' }} (Base Product)</td>
-                                                        <td>{{ number_format($product->inventoryStock->quantity_in_base_unit, 0) }}
-                                                            {{ $product->baseUnit->name ?? '' }}</td>
+                                                        <td>
+                                                            {{ number_format($product->inventoryStock->quantity_in_base_unit / $conversion, 0) }}
+                                                            {{ $product->baseUnit->name ?? '' }}
+                                                        </td>
                                                         <td>{{ $product->category->name ?? 'N/A' }}</td>
                                                     </tr>
-                                                @endif
-
-                                                {{-- Display variant stock alerts --}}
-                                                @foreach ($product->variants as $variant)
-                                                    @if ($variant->inventoryStock && $variant->inventoryStock->quantity_in_base_unit <= 5)
-                                                        <tr>
-                                                            <td>{{ $product->name ?? 'N/A' }}
-                                                                ({{ $variant->variant_name ?? 'N/A' }})</td>
-                                                            <td>{{ number_format($variant->inventoryStock->quantity_in_base_unit, 0) }}
-                                                                {{ $product->baseUnit->name ?? '' }}</td>
-                                                            {{-- Assuming variants share baseUnit with parent product --}}
-                                                            <td>{{ $product->category->name ?? 'N/A' }}</td>
-                                                        </tr>
-                                                    @elseif(!$variant->inventoryStock && $product->variants->isNotEmpty())
-                                                        {{-- If variant exists but has no stock record --}}
-                                                        <tr>
-                                                            <td>{{ $product->name ?? 'N/A' }}
-                                                                ({{ $variant->variant_name ?? 'N/A' }})</td>
-                                                            <td>0 {{ $product->baseUnit->name ?? '' }} (No Stock Record)
-                                                            </td>
-                                                            <td>{{ $product->category->name ?? 'N/A' }}</td>
-                                                        </tr>
-                                                    @endif
-                                                @endforeach
-                                                {{-- Handle products with no base inventory and no variants having inventory --}}
-                                                @if (!$product->inventoryStock && $product->variants->isEmpty())
+                                                @elseif (!$product->inventoryStock && !$product->has_variants)
+                                                    {{-- If no base inventory stock and no variants, treat as 0 and low --}}
                                                     <tr>
                                                         <td>{{ $product->name ?? 'N/A' }}</td>
                                                         <td>0 {{ $product->baseUnit->name ?? '' }} (No Stock Record)</td>
                                                         <td>{{ $product->category->name ?? 'N/A' }}</td>
                                                     </tr>
                                                 @endif
+                
+                                                {{-- Display variant stock alerts --}}
+                                                @foreach ($product->variants as $variant)
+                                                    @php
+                                                        $variantConversion = $product->baseUnit->conversion_factor ?? 1; // Assuming variant stock is in base unit
+                                                        $variantLowStockThreshold = $variant->low_stock ?? $productLowStockThreshold; // Use variant's threshold, fallback to product's
+                                                    @endphp
+                                                    @if ($variant->inventoryStock && ($variant->inventoryStock->quantity_in_base_unit / $variantConversion) <= $variantLowStockThreshold)
+                                                        <tr>
+                                                            <td>
+                                                                {{ $product->name ?? 'N/A' }} ({{ $variant->variant_name ?? 'N/A' }})
+                                                            </td>
+                                                            <td>
+                                                                {{ number_format($variant->inventoryStock->quantity_in_base_unit / $variantConversion, 0) }}
+                                                                {{ $product->baseUnit->name ?? '' }}
+                                                            </td>
+                                                            {{-- Assuming variants share baseUnit with parent product --}}
+                                                            <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @elseif(!$variant->inventoryStock)
+                                                        {{-- If variant exists but has no stock record --}}
+                                                        <tr>
+                                                            <td>
+                                                                {{ $product->name ?? 'N/A' }} ({{ $variant->variant_name ?? 'N/A' }})
+                                                            </td>
+                                                            <td>0 {{ $product->baseUnit->name ?? '' }} (No Stock Record)</td>
+                                                            <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                                        </tr>
+                                                    @endif
+                                                @endforeach
                                             @endforeach
                                             @if ($stockAlertProducts->isEmpty())
                                                 <tr>
-                                                    <td colspan="3">No products or variants are currently low in stock.
-                                                    </td>
+                                                    <td colspan="3">No products or variants are currently low in stock.</td>
                                                 </tr>
                                             @endif
                                         </tbody>
@@ -318,7 +401,7 @@
                                 <div class="d-flex justify-content-end mt-4">
                                     {{ $stockAlertProducts->links() }}
                                 </div>
-
+                
                             </div>
                         </div>
                     </div>
@@ -436,8 +519,8 @@
                 plotOptions: {
                     bar: {
                         horizontal: false,
-                        columnWidth: '55%',
-                        endingShape: 'rounded'
+                        columnWidth: '45%',
+                        endingShape: 'flat'
                     },
                 },
                 dataLabels: {

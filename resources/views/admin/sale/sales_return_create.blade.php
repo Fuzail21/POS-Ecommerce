@@ -50,7 +50,7 @@
                 </div>
             @endif
 
-            <div class="col-md-7">
+            <div class="col-md-12">
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="row align-items-end">
@@ -80,7 +80,7 @@
                     </div>
                 </div>
 
-                <div class="card">
+                {{-- <div class="card">
                     <div class="card-header">
                         <h4>Search Products</h4>
                         <form method="GET" action="{{ route('sale_return.create', $sale->id) }}" style="display: flex; gap: 10px; align-items: center;">
@@ -90,7 +90,7 @@
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                         <div class="row" id="product-list">
-                            {{-- Loop through the products passed from the controller --}}
+                
                             @foreach($products as $product)
                                 @php
                                     $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
@@ -105,18 +105,17 @@
 
                                         <h6 class="mt-2 mb-1">{{ $product->name }}</h6>
 
-                                        {{-- Conditional rendering for products with variants vs. simple products --}}
                                         @if($product->variants->count())
-                                            {{-- Product has variants: show a dropdown to select a variant --}}
+                                            
                                             <select class="form-control mb-2 variant-selector mt-auto" data-product-id="{{ $product->id }}">
                                                 <option disabled selected>Choose Variant</option>
                                                 @foreach($product->variants as $variant)
                                                     <option
-                                                        value="variant-{{ $variant->id }}" {{-- Unique ID for variant items --}}
-                                                        data-name="{{ $product->name }} - {{ $variant->variant_name }}" {{-- Combined name --}}
+                                                        value="variant-{{ $variant->id }}" 
+                                                        data-name="{{ $product->name }} - {{ $variant->variant_name }}" 
                                                         data-price="{{ $variant->sale_price }}"
                                                         data-stock="{{ $variant->stock_quantity }}"
-                                                        data-unit-id="{{ $product->default_display_unit_id }}" {{-- Assuming unit from parent product --}}
+                                                        data-unit-id="{{ $product->default_display_unit_id }}" 
                                                         {{ !$variant->in_stock ? 'disabled' : '' }}>
                                                         {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }}
                                                         {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
@@ -125,14 +124,14 @@
                                             </select>
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
-                                            {{-- Simple product (no variants): show direct price and add to cart button --}}
+                                            
                                             <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }}
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
                                             @if($product->in_stock)
                                                 <button
                                                     class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
-                                                    data-id="product-{{ $product->id }}" {{-- Unique ID for simple products --}}
+                                                    data-id="product-{{ $product->id }}" 
                                                     data-name="{{ $product->name }}"
                                                     data-price="{{ $product->sale_price }}"
                                                     data-stock="{{ $product->stock_quantity }}"
@@ -148,10 +147,10 @@
                             @endforeach
                         </div>
                     </div>
-                </div>
+                </div> --}}
             </div>
 
-            <div class="col-md-5">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="card-header">
                         <h4>Return Cart</h4>
@@ -273,8 +272,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Confirm Return</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Back</button>
+                        <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Confirm Return</button>
+                        <button type="button" class="btn text-white" style="background-color: {{ $secondaryColor }};" data-dismiss="modal">Back</button>
                     </div>
                 </div>
             </form>

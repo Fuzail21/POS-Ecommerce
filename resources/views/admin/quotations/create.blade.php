@@ -46,12 +46,17 @@
                 </div>
             @endif
 
-            <!-- Product Search Panel -->
             <div class="col-md-7">
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="row align-items-end">
-                            <div class="col-md-5 mb-3">
+                            
+                            <div class="col-md-4 mb-3">
+                                <label for="quotation_date">Date</label>
+                                <input type="date" name="quotation_date" id="quotation_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
                                 <label for="customer_id">Select Customer</label>
                                 <select name="customer_id" id="customer_id" class="form-control" required>
                                     <option value="">Select Customer</option>
@@ -61,7 +66,7 @@
                                 </select>
                             </div>
 
-                            <div class="col-md-5 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="branch_id">Select Branch</label>
                                 <select name="branch_id" id="branch_id" class="form-control" required>
                                     <option value="">Select Branch</option>
@@ -69,12 +74,6 @@
                                         <option value="{{ $branch->id }}">{{ $branch->name }}</option>
                                     @endforeach
                                 </select>
-                            </div>
-
-                            <div class="col-md-2 mb-3 text-right">
-                                <button type="button" class="btn text-white mt-4 w-100" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#addCustomerModal">
-                                    + Customer
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -149,11 +148,10 @@
                 </div>
             </div>
 
-            <!-- Cart Panel -->
             <div class="col-md-5">
                 <div class="card">
                     <div class="card-header">
-                        <h4>Shopping Cart</h4>
+                        <h4>Order Items</h4>
                     </div>
                     <div id="stock-error" class="alert alert-danger d-none" role="alert"></div>
                     <div class="card-body">
@@ -171,7 +169,6 @@
 
                     <div style="margin-top: 15px;">
 
-                        <!-- Tax -->
                         <div style="margin-bottom: 10px;">
                             <label for="tax">Tax</label><br>
                             <div style="display: flex; align-items: center;">
@@ -182,7 +179,6 @@
                         </div>
 
 
-                        <!-- Discount Type -->
                         <div style="margin-top: 8px;">
                             <label>Discount Type:</label><br>
                             <label>
@@ -193,7 +189,6 @@
                             </label>
                         </div>
 
-                        <!-- Discount -->
                         <div style="margin-bottom: 10px;">
                             <label for="discount">Discount</label><br>
                             <div style="display: flex; align-items: center;">
@@ -203,7 +198,6 @@
                             </div>
                         </div>
 
-                        <!-- Shipping -->
                         <div style="margin-bottom: 10px;">
                             <label for="shipping">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
@@ -227,7 +221,7 @@
 
                         <div class="mt-3 d-flex justify-content-between">
                             <button class="btn text-white" style="background-color: {{ $secondaryColor }};" id="reset-cart">Cancel</button>
-                            <button class="btn text-white" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#checkoutModal" id="open-checkout" disabled>Charge</button>
+                            <button class="btn text-white" style="background-color: {{ $primaryColor }};" data-toggle="modal" data-target="#checkoutModal" id="open-checkout" disabled>Next</button>
                         </div>
                     </div>
                 </div>
@@ -236,10 +230,9 @@
         </div>
     </div>
 
-    <!-- Checkout Modal -->
     <div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form id="checkout-form" method="POST" action="{{ route('sales.checkout.process') }}">
+            <form id="checkout-form" method="POST" action="{{ route('quotations.store') }}">
                 @csrf
                 <input type="hidden" name="cart_data" id="cart_data">
                 <input type="hidden" name="total_payable" id="total_payable">
@@ -247,37 +240,63 @@
                 <input type="hidden" id="tax_hidden" name="tax">
                 <input type="hidden" id="discount_hidden" name="discount">
                 <input type="hidden" id="shipping_hidden" name="shipping">
-                <input type="hidden" name="balance_due" id="balance_due_raw">
+                {{-- <input type="hidden" name="balance_due" id="balance_due_raw"> --}} {{-- REMOVED/COMMENTED OUT --}}
                 <input type="hidden" name="customer_id" id="selected_customer_id">
                 <input type="hidden" name="branch_id" id="selected_branch_id">
+                <input type="hidden" name="quotation_date" id="selected_quotation_date">
 
 
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Complete Payment</h5>
+                        <h5 class="modal-title">Status</h5>
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
+                        {{-- REMOVED/COMMENTED OUT PAYMENT METHOD FIELD --}}
+                        {{--
                         <div class="form-group">
                             <label>Payment Method</label>
                             <select name="payment_method" class="form-control" required>
                                 <option value="cash">Cash</option>
-                                {{-- <option value="card">Card</option>
-                                <option value="bank">Bank</option> --}}
+                                <option value="card">Card</option>
+                                <option value="bank">Bank</option>
                             </select>
                         </div>
+                        --}}
+
+                        {{-- REMOVED/COMMENTED OUT AMOUNT PAID FIELD --}}
+                        {{--
                         <div class="form-group">
                             <label>Amount Paid</label>
                             <input type="number" step="0.01" name="amount_paid" id="amount_paid" class="form-control" required>
                         </div>
+                        --}}
+
+                        {{-- REMOVED/COMMENTED OUT BALANCE / CHANGE FIELD --}}
+                        {{--
                         <div class="form-group">
                             <label>Balance / Change</label>
                             <input type="text" id="balance_display" class="form-control" readonly>
                         </div>
+                        --}}
+
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status" class="form-control" required>
+                                <option value="sent">Sent</option> {{-- Changed value from 'cash' to 'sent' --}}
+                                <option value="pending">Pending</option> {{-- Changed value from 'cash' to 'pending' --}}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Note</label>
+                            <textarea name="note" class="form-control" placeholder="Enter Note"></textarea>
+                        </div>
+
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Confirm Payment</button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Back</button>
+                        <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Save</button>
+                        <button type="button" class="btn text-white" style="background-color: {{ $secondaryColor }};" data-dismiss="modal">Back</button>
                     </div>
                 </div>
             </form>
@@ -285,45 +304,6 @@
     </div>
 </div>
 
-<!-- Add Customer Modal -->
-<div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <form method="POST" action="{{ route('customers.store') }}">
-        @csrf
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add New Customer</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Name <span class="text-danger">*</span></label>
-                    <input type="text" name="name" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Phone <span class="text-danger">*</span></label>
-                    <input type="text" name="phone" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Email (optional)</label>
-                    <input type="email" name="email" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Address (optional)</label>
-                    <textarea name="address" class="form-control" rows="2"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="submit" class="btn text-white" style="background-color: {{ $primaryColor }};">Save Customer</button>
-                <button type="button" class="btn text-white" style="background-color: {{ $secondaryColor }};" data-dismiss="modal">Cancel</button>
-            </div>
-        </div>
-    </form>
-  </div>
-</div>
-
-
-<!-- JavaScript -->
 <script>
     const currencySymbol = @json($setting->currency_symbol);
 
@@ -375,17 +355,20 @@
         const totalEl = document.getElementById('total');
         const chargeBtn = document.getElementById('open-checkout');
         const resetBtn = document.getElementById('reset-cart');
-        const amountPaidInput = document.getElementById('amount_paid');
-        const balanceDisplay = document.getElementById('balance_display');
+        // const amountPaidInput = document.getElementById('amount_paid'); // REMOVED/COMMENTED OUT
+        // const balanceDisplay = document.getElementById('balance_display'); // REMOVED/COMMENTED OUT
         const cartDataInput = document.getElementById('cart_data');
         const totalPayableInput = document.getElementById('total_payable');
         const customerSelect = document.getElementById('customer_id');
         const selectedCustomerInput = document.getElementById('selected_customer_id');
         const branchSelect = document.getElementById('branch_id');
         const selectedBranchInput = document.getElementById('selected_branch_id');
+        const dateSelect = document.getElementById('quotation_date');
+        const selectedDateInput = document.getElementById('selected_quotation_date');
 
         selectedCustomerInput.value = customerSelect.value;
         selectedBranchInput.value = branchSelect.value;
+        selectedDateInput.value = dateSelect.value;
 
         customerSelect.addEventListener('change', () => {
             selectedCustomerInput.value = customerSelect.value;
@@ -393,6 +376,10 @@
 
         branchSelect.addEventListener('change', () => {
             selectedBranchInput.value = branchSelect.value;
+        });
+
+        dateSelect.addEventListener('change', () => {
+            selectedDateInput.value = dateSelect.value;
         });
 
         function updateCartUI() {
@@ -587,6 +574,8 @@
             updateCartUI();
         });
 
+        // REMOVED/COMMENTED OUT: amountPaidInput and balanceDisplay logic
+        /*
         amountPaidInput.addEventListener('input', () => {
             const total = parseFloat(totalEl.textContent) || 0;
             const paid = parseFloat(amountPaidInput.value) || 0;
@@ -594,11 +583,13 @@
             balanceDisplay.value = (due >= 0 ? 'Due: ' : 'Change: ') + currencySymbol + ' ' + Math.abs(due).toFixed(2);
             document.getElementById('balance_due_raw').value = due.toFixed(2);
         });
+        */
 
         // Use jQuery's on() for Bootstrap modal events, as they're jQuery-based
         $('#checkoutModal').on('show.bs.modal', () => {
-            amountPaidInput.value = '';
-            balanceDisplay.value = '';
+            // REMOVED/COMMENTED OUT: Clear amountPaidInput and balanceDisplay on modal open
+            // amountPaidInput.value = '';
+            // balanceDisplay.value = '';
         });
 
         // --- AJAX Search Implementation ---
@@ -614,7 +605,7 @@
             // Show a loading indicator (optional)
             productListDiv.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
 
-            fetch(`{{ route('sales.create') }}?search=${encodeURIComponent(searchQuery)}`, {
+            fetch(`{{ route('quotations.create') }}?search=${encodeURIComponent(searchQuery)}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest' // Identify as an AJAX request
                 }
@@ -647,6 +638,12 @@
 
         // Initial call to attach event listeners when the page first loads
         attachProductEventListeners();
+
+        // **IMPORTANT:** If you are no longer handling "cash" or "card" as distinct payment methods
+        // and you're always considering it as a "sale" without an explicit payment step
+        // then you might want to review what 'status' values are appropriate for your backend.
+        // I've changed the status options in the modal to 'sent' and 'pending' as examples,
+        // assuming a "charge" implies a completed transaction unless explicitly stated otherwise.
     });
 </script>
 @endsection
