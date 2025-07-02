@@ -50,10 +50,10 @@
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="row align-items-end">
-                            
+
                             <div class="col-md-4 mb-3">
                                 <label for="quotation_date">Date</label>
-                                <input type="date" name="quotation_date" id="quotation_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                                <input type="date" name="quotation_date" id="quotation_date" class="form-control" value="{{ old('quotation_date', $quotation->quotation_date ?? now()->toDateString()) }}" required>
                             </div>
 
                             <div class="col-md-4 mb-3">
@@ -61,7 +61,7 @@
                                 <select name="customer_id" id="customer_id" class="form-control" required>
                                     <option value="">Select Customer</option>
                                     @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}">{{ $customer->name }}</option>
+                                        <option value="{{ $customer->id }}" {{ old('customer_id', $quotation->customer_id ?? '') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -71,7 +71,7 @@
                                 <select name="branch_id" id="branch_id" class="form-control" required>
                                     <option value="">Select Branch</option>
                                     @foreach($branches as $branch)
-                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                        <option value="{{ $branch->id }}" {{ old('branch_id', $quotation->branch_id ?? '') == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -170,11 +170,12 @@
                     <div style="margin-top: 15px;">
 
                         <div style="margin-bottom: 10px;">
-                            <label for="tax">Tax</label><br>
+                            <label for="taxrate">Tax</label><br>
                             <div style="display: flex; align-items: center;">
                                 <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">%</span>
                                 <input type="number" name="taxrate" id="taxrate" placeholder="Tax" autocomplete="off"
-                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;"
+                                       value="{{ old('taxrate', $quotation->tax_amount ?? 0) }}">
                             </div>
                         </div>
 
@@ -182,28 +183,30 @@
                         <div style="margin-top: 8px;">
                             <label>Discount Type:</label><br>
                             <label>
-                                <input type="radio" name="discount_type" value="fixed" checked onclick="updateDiscountSymbol()"> Fixed
+                                <input type="radio" name="discount_type" value="fixed" {{ (old('discount_type', $quotation->discount_type ?? 'fixed') == 'fixed') ? 'checked' : '' }} onclick="updateDiscountSymbol()"> Fixed
                             </label>
                             <label style="margin-left: 15px;">
-                                <input type="radio" name="discount_type" value="percentage" onclick="updateDiscountSymbol()"> Percentage
+                                <input type="radio" name="discount_type" value="percentage" {{ (old('discount_type', $quotation->discount_type ?? 'fixed') == 'percentage') ? 'checked' : '' }} onclick="updateDiscountSymbol()"> Percentage
                             </label>
                         </div>
 
                         <div style="margin-bottom: 10px;">
-                            <label for="discount">Discount</label><br>
+                            <label for="discountRate">Discount</label><br>
                             <div style="display: flex; align-items: center;">
                                 <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
                                 <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
-                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;"
+                                       value="{{ old('discountRate', $quotation->discount_amount ?? 0) }}">
                             </div>
                         </div>
 
                         <div style="margin-bottom: 10px;">
-                            <label for="shipping">Shipping</label><br>
+                            <label for="shippingRate">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
                                 <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">{{ $setting->currency_symbol }} </span>
                                 <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
-                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+                                       style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;"
+                                       value="{{ old('shippingRate', $quotation->shipping_cost ?? 0) }}">
                             </div>
                         </div>
 
@@ -232,15 +235,18 @@
 
     <div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form id="checkout-form" method="POST" action="{{ route('quotations.store') }}">
+            {{-- Form action changes based on whether it's create or edit --}}
+            <form id="checkout-form" method="POST" action="{{ isset($quotation) ? route('quotations.update', $quotation->id) : route('quotations.store') }}">
                 @csrf
+                @if(isset($quotation))
+                    @method('PUT') {{-- Use PUT method for updates --}}
+                @endif
                 <input type="hidden" name="cart_data" id="cart_data">
                 <input type="hidden" name="total_payable" id="total_payable">
                 <input type="hidden" id="subtotal_hidden" name="subtotal">
                 <input type="hidden" id="tax_hidden" name="tax">
                 <input type="hidden" id="discount_hidden" name="discount">
                 <input type="hidden" id="shipping_hidden" name="shipping">
-                {{-- <input type="hidden" name="balance_due" id="balance_due_raw"> --}} {{-- REMOVED/COMMENTED OUT --}}
                 <input type="hidden" name="customer_id" id="selected_customer_id">
                 <input type="hidden" name="branch_id" id="selected_branch_id">
                 <input type="hidden" name="quotation_date" id="selected_quotation_date">
@@ -252,45 +258,17 @@
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
                     <div class="modal-body">
-                        {{-- REMOVED/COMMENTED OUT PAYMENT METHOD FIELD --}}
-                        {{--
-                        <div class="form-group">
-                            <label>Payment Method</label>
-                            <select name="payment_method" class="form-control" required>
-                                <option value="cash">Cash</option>
-                                <option value="card">Card</option>
-                                <option value="bank">Bank</option>
-                            </select>
-                        </div>
-                        --}}
-
-                        {{-- REMOVED/COMMENTED OUT AMOUNT PAID FIELD --}}
-                        {{--
-                        <div class="form-group">
-                            <label>Amount Paid</label>
-                            <input type="number" step="0.01" name="amount_paid" id="amount_paid" class="form-control" required>
-                        </div>
-                        --}}
-
-                        {{-- REMOVED/COMMENTED OUT BALANCE / CHANGE FIELD --}}
-                        {{--
-                        <div class="form-group">
-                            <label>Balance / Change</label>
-                            <input type="text" id="balance_display" class="form-control" readonly>
-                        </div>
-                        --}}
-
                         <div class="form-group">
                             <label>Status</label>
                             <select name="status" class="form-control" required>
-                                <option value="sent">Sent</option> {{-- Changed value from 'cash' to 'sent' --}}
-                                <option value="pending">Pending</option> {{-- Changed value from 'cash' to 'pending' --}}
+                                <option value="sent" {{ old('status', $quotation->status ?? '') == 'sent' ? 'selected' : '' }}>Sent</option>
+                                <option value="pending" {{ old('status', $quotation->status ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label>Note</label>
-                            <textarea name="note" class="form-control" placeholder="Enter Note"></textarea>
+                            <textarea name="note" class="form-control" placeholder="Enter Note">{{ old('note', $quotation->note ?? '') }}</textarea>
                         </div>
 
                     </div>
@@ -306,6 +284,7 @@
 
 <script>
     const currencySymbol = @json($setting->currency_symbol);
+    const initialCartData = @json($initialCart ?? []); // Pass initial cart data for edit mode
 
     function updateDiscountSymbol() {
         const symbol = document.getElementById('discount-symbol');
@@ -314,13 +293,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const cart = {};
+        const cart = initialCartData; // Initialize cart with provided data for edit, or empty for create
 
         // Declare variables to hold real-time values
-        let taxValue = 0;
-        let discountValue = 0;
-        let discountType = 'fixed';
-        let shipping =  0;
+        let taxValue = parseFloat(document.getElementById('taxrate').value) || 0;
+        let discountValue = parseFloat(document.getElementById('discountRate').value) || 0;
+        let discountType = document.querySelector('input[name="discount_type"]:checked').value || 'fixed';
+        let shipping =  parseFloat(document.getElementById('shippingRate').value) || 0;
 
         // Input listeners to update variables
         document.getElementById('taxrate').addEventListener('input', function () {
@@ -355,8 +334,6 @@
         const totalEl = document.getElementById('total');
         const chargeBtn = document.getElementById('open-checkout');
         const resetBtn = document.getElementById('reset-cart');
-        // const amountPaidInput = document.getElementById('amount_paid'); // REMOVED/COMMENTED OUT
-        // const balanceDisplay = document.getElementById('balance_display'); // REMOVED/COMMENTED OUT
         const cartDataInput = document.getElementById('cart_data');
         const totalPayableInput = document.getElementById('total_payable');
         const customerSelect = document.getElementById('customer_id');
@@ -366,6 +343,8 @@
         const dateSelect = document.getElementById('quotation_date');
         const selectedDateInput = document.getElementById('selected_quotation_date');
 
+
+        // Set initial hidden input values based on selected dropdowns
         selectedCustomerInput.value = customerSelect.value;
         selectedBranchInput.value = branchSelect.value;
         selectedDateInput.value = dateSelect.value;
@@ -571,25 +550,27 @@
 
         resetBtn.addEventListener('click', () => {
             Object.keys(cart).forEach(key => delete cart[key]);
+            // Also reset form fields to initial state (for create mode, this is default, for edit, it's the original quotation data)
+            document.getElementById('quotation_date').value = "{{ isset($quotation) ? $quotation->quotation_date : now()->toDateString() }}";
+            document.getElementById('customer_id').value = "{{ isset($quotation) ? $quotation->customer_id : '' }}";
+            document.getElementById('branch_id').value = "{{ isset($quotation) ? $quotation->branch_id : '' }}";
+            document.getElementById('taxrate').value = "{{ isset($quotation) ? $quotation->tax_amount : 0 }}";
+            document.getElementById('discountRate').value = "{{ isset($quotation) ? $quotation->discount_amount : 0 }}";
+            document.getElementById('shippingRate').value = "{{ isset($quotation) ? $quotation->shipping_cost : 0 }}";
+            document.querySelector('input[name="discount_type"][value="{{ isset($quotation) ? $quotation->discount_type : 'fixed' }}"]').checked = true;
+
+            // Re-initialize values after reset for calculation
+            taxValue = parseFloat(document.getElementById('taxrate').value) || 0;
+            discountValue = parseFloat(document.getElementById('discountRate').value) || 0;
+            discountType = document.querySelector('input[name="discount_type"]:checked').value || 'fixed';
+            shipping =  parseFloat(document.getElementById('shippingRate').value) || 0;
+
+            updateDiscountSymbol(); // Update symbol for discount
             updateCartUI();
         });
 
-        // REMOVED/COMMENTED OUT: amountPaidInput and balanceDisplay logic
-        /*
-        amountPaidInput.addEventListener('input', () => {
-            const total = parseFloat(totalEl.textContent) || 0;
-            const paid = parseFloat(amountPaidInput.value) || 0;
-            const due = total - paid;
-            balanceDisplay.value = (due >= 0 ? 'Due: ' : 'Change: ') + currencySymbol + ' ' + Math.abs(due).toFixed(2);
-            document.getElementById('balance_due_raw').value = due.toFixed(2);
-        });
-        */
-
-        // Use jQuery's on() for Bootstrap modal events, as they're jQuery-based
         $('#checkoutModal').on('show.bs.modal', () => {
-            // REMOVED/COMMENTED OUT: Clear amountPaidInput and balanceDisplay on modal open
-            // amountPaidInput.value = '';
-            // balanceDisplay.value = '';
+            // Any specific logic for modal on show
         });
 
         // --- AJAX Search Implementation ---
@@ -605,7 +586,7 @@
             // Show a loading indicator (optional)
             productListDiv.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
 
-            fetch(`{{ route('quotations.create') }}?search=${encodeURIComponent(searchQuery)}`, {
+            fetch(`{{ route('quotations.create') }}?search=${encodeURIComponent(searchQuery)}`, { // Still use create route for AJAX
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest' // Identify as an AJAX request
                 }
@@ -638,12 +619,9 @@
 
         // Initial call to attach event listeners when the page first loads
         attachProductEventListeners();
-
-        // **IMPORTANT:** If you are no longer handling "cash" or "card" as distinct payment methods
-        // and you're always considering it as a "sale" without an explicit payment step
-        // then you might want to review what 'status' values are appropriate for your backend.
-        // I've changed the status options in the modal to 'sent' and 'pending' as examples,
-        // assuming a "charge" implies a completed transaction unless explicitly stated otherwise.
+        // Initial call to update cart UI to display pre-filled items if in edit mode
+        updateCartUI();
+        updateDiscountSymbol(); // Set the correct discount symbol on load
     });
 </script>
 @endsection

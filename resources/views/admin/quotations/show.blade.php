@@ -81,6 +81,13 @@
         font-size: 13px;
     }
 
+    /* Custom styles for button layout */
+    .button-group {
+        display: flex;
+        gap: 15px; /* Space between buttons */
+        flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    }
+
     @media (max-width: 767px) {
         .summary-section {
             font-size: 14px;
@@ -93,6 +100,11 @@
         .summary-total {
             font-size: 1.15rem;
         }
+
+        .button-group {
+            flex-direction: column; /* Stack buttons vertically on small screens */
+            gap: 10px;
+        }
     }
 </style>
 @endsection
@@ -103,135 +115,159 @@
 <div class="content-page">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-lg-12">
-                <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-                    <h4 class="mb-3">Quotation Details - #{{ $quotation?->id }}</h4>
-                    <a href="{{ route('quotations.index') }}" class="btn btn-secondary add-list">
-                        <i class="las la-arrow-left mr-2"></i>Back to Quotations
-                    </a>
-                </div>
-            </div>
-
             @php
                 use App\Models\Setting;
                 $setting = Setting::first();
+                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
+                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
                 $currencySymbol = $setting->currency_symbol ?? '$';
             @endphp
-
-            <div class="col-md-12">
-                <div class="detail-card">
-                    <h5>Quotation Information</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <strong>Date:</strong> {{ \Carbon\Carbon::parse($quotation?->quotation_date)->format('M d, Y') ?? 'N/A' }}
-                            </div>
-                            <div class="detail-item">
-                                <strong>Customer:</strong> {{ $quotation?->customer?->name ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-item">
-                                <strong>Branch:</strong> {{ $quotation?->branch?->name ?? 'N/A' }}
-                            </div>
-                            <div class="detail-item">
-                                <strong>Status:</strong> 
-                                <span class="badge badge-primary">{{ ucfirst($quotation?->status ?? 'N/A') }}</span>
-                            </div>
-                        </div>
+            <div class="col-lg-12">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                    <h4 class="mb-3">Quotation Details - #{{ $quotation?->id }}</h4>
+                    <div class="button-group">
+                        <a href="{{ route('quotations.index') }}" class="btn btn-secondary add-list">
+                            <i class="las la-arrow-left mr-2"></i>Back
+                        </a>
+                        <button onclick="printTable()" class="btn text-white" style="background-color: {{ $primaryColor }};">
+                            <i class="fas fa-print"></i> Print
+                        </button>
                     </div>
-                    @if($quotation?->note)
-                    <div class="detail-item mt-3">
-                        <strong>Note:</strong> {{ $quotation->note }}
-                    </div>
-                    @endif
                 </div>
             </div>
-
-            <div class="col-md-12 mt-4">
-                <div class="detail-card">
-                    <h5>Quotation Items</h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Product</th>
-                                    <th class="text-center">Quantity</th>
-                                    <th class="text-right">Unit Price</th>
-                                    <th class="text-right">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($quotation?->items ?? [] as $item)
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>
-                                        @if($item->product_display_name && $item->variant_display_name)
-                                            {{ $item->product_display_name }} - {{ $item->variant_display_name }}
-                                        @elseif($item->product_display_name)
-                                            {{ $item->product_display_name }}
-                                        @else
-                                            N/A
-                                        @endif
-                                    </td>
-                                    <td class="text-center">{{ $item->quantity }}</td>
-                                    <td class="text-right">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
-                                    <td class="text-right">{{ $currencySymbol }} {{ number_format($item->unit_price * $item->quantity, 2) }}</td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">No items in this quotation.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="row justify-content-end">
-                        <div class="col-md-6">
-                            <div class="summary-section">
-                                <table class="table table-borderless mb-0">
-                                    <tbody>
-                                        <tr>
-                                            <th class="text-left">Subtotal:</th>
-                                            <td class="text-right">
-                                                @php
-                                                    $calculatedSubtotal = 0;
-                                                    foreach ($quotation?->items ?? [] as $item) {
-                                                        $calculatedSubtotal += ($item->unit_price * $item->quantity);
-                                                    }
-                                                @endphp
-                                                {{ $currencySymbol }} {{ number_format($calculatedSubtotal, 2) }}
-                                            </td>
-                                        </tr>
-
-                                        <tr>
-                                            <th class="text-left">Discount:
-                                            </th>
-                                            <td class="text-right text-danger">- {{ $currencySymbol }} {{ number_format($quotation?->discount_percentage ?? 0, 2) }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="text-left">Tax:</th>
-                                            <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->order_tax_percentage ?? 0, 2) }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="text-left">Shipping:</th>
-                                            <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->shipping_cost ?? 0, 2) }}</td>
-                                        </tr>
-                                        <tr class="border-top">
-                                            <th class="text-left pt-3"><strong>Grand Total:</strong></th>
-                                            <td class="text-right pt-3"><strong>{{ $currencySymbol }} {{ number_format($quotation?->grand_total ?? 0, 2) }}</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+            <div class="content" style="min-width: 100%;">
+            
+                <div class="col-md-12">
+                    <div class="detail-card">
+                        <h5>Quotation Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <strong>Date:</strong> {{ \Carbon\Carbon::parse($quotation?->quotation_date)->format('M d, Y') ?? 'N/A' }}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Customer:</strong> {{ $quotation?->customer?->name ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <strong>Branch:</strong> {{ $quotation?->branch?->name ?? 'N/A' }}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Status:</strong>
+                                    <span class="badge {{ ($quotation?->status == 'pending') ? 'badge-warning' : (($quotation?->status == 'sent') ? 'badge-success' : 'badge-secondary') }}">
+                                        {{ ucfirst($quotation?->status ?? 'N/A') }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
+                        @if($quotation?->note)
+                        <div class="detail-item mt-3">
+                            <strong>Note:</strong> {{ $quotation->note }}
+                        </div>
+                        @endif
                     </div>
+                </div>
 
+                <div class="col-md-12 mt-4">
+                    <div class="detail-card">
+                        <h5>Quotation Items</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Product</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-right">Unit Price</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($quotation?->items ?? [] as $item)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>
+                                            @if($item->product_display_name && $item->variant_display_name)
+                                                {{ $item->product_display_name }} - {{ $item->variant_display_name }}
+                                            @elseif($item->product_display_name)
+                                                {{ $item->product_display_name }}
+                                            @else
+                                                N/A
+                                            @endif
+                                        </td>
+                                        <td class="text-center">{{ $item->quantity }}</td>
+                                        <td class="text-right">{{ $currencySymbol }} {{ number_format($item->unit_price, 2) }}</td>
+                                        <td class="text-right">{{ $currencySymbol }} {{ number_format($item->unit_price * $item->quantity, 2) }}</td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">No items in this quotation.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row justify-content-end">
+                            <div class="col-md-6">
+                                <div class="summary-section">
+                                    <table class="table table-borderless mb-0">
+                                        <tbody>
+                                            <tr>
+                                                <th class="text-left">Subtotal:</th>
+                                                <td class="text-right">
+                                                    @php
+                                                        $calculatedSubtotal = 0;
+                                                        foreach ($quotation?->items ?? [] as $item) {
+                                                            $calculatedSubtotal += ($item->unit_price * $item->quantity);
+                                                        }
+                                                    @endphp
+                                                    {{ $currencySymbol }} {{ number_format($calculatedSubtotal, 2) }}
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <th class="text-left">Discount:
+                                                </th>
+                                                <td class="text-right text-danger">- {{ $currencySymbol }} {{ number_format($quotation?->discount_percentage ?? 0, 2) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-left">Tax:</th>
+                                                <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->order_tax_percentage ?? 0, 2) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="text-left">Shipping:</th>
+                                                <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->shipping_cost ?? 0, 2) }}</td>
+                                            </tr>
+                                            <tr class="border-top">
+                                                <th class="text-left pt-3"><strong>Grand Total:</strong></th>
+                                                <td class="text-right pt-3"><strong>{{ $currencySymbol }} {{ number_format($quotation?->grand_total ?? 0, 2) }}</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function printTable() {
+        const printContents = document.querySelector('.content').outerHTML;
+        const printWindow = window.open('', '', 'height=600,width=1000');
+        printWindow.document.write('<html><head><title>Quotation</title>');
+        printWindow.document.write('<style>table{width:100%;border-collapse:collapse} th, td{border:1px solid #ccc;padding:8px;text-align:left} th{background:#f2f2f2}</style>');
+        printWindow.document.write('</head><body>');
+        printWindow.document.write(printContents);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+        printWindow.print();
+    }
+</script>
 @endsection

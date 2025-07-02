@@ -53,14 +53,14 @@
                 </select>
               </div>
         
-              <div class="col-md-3">
+              {{-- <div class="col-md-3">
                 <label for="search_status" class="form-label">Status</label>
                 <select name="search_status" id="search_status" class="form-control">
                   <option value="">-- All Status --</option>
                   <option value="low_stock" {{ request('search_status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
                   <option value="ok" {{ request('search_status') == 'ok' ? 'selected' : '' }}>OK</option>
                 </select>
-              </div>
+              </div> --}}
         
               <div class="col-md-1 d-grid">
                 <button type="submit" class="btn text-white mt-4" style="background-color: {{ $primaryColor }};">Filter</button>

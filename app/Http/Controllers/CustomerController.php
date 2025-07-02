@@ -10,8 +10,7 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
+    public function index(){
         $customers = Customer::paginate(20);
         $title = 'Customers List';
         return view('admin.customer.list', compact('customers', 'title'));
@@ -20,8 +19,7 @@ class CustomerController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
+    public function create(){
         $title = 'Add New Customer';
         return view('admin.customer.form', compact('title'));
     }
@@ -29,8 +27,7 @@ class CustomerController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
+    public function store(Request $request){
        $request->validate([
             'name' => 'required|string',
             'phone' => 'required|string',
@@ -45,6 +42,7 @@ class CustomerController extends Controller
         $customer->email = $request->email;
         $customer->address = $request->address;
         $customer->balance = $request->balance ?? 0;
+        $customer->card_id = 'CUST-' . strtoupper(uniqid());
         $customer->save();
 
         return redirect()->route('customers.list')->with('success', 'Customer added successfully.');
@@ -53,8 +51,7 @@ class CustomerController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
+    public function edit(string $id){
         $title = 'Edit Customer';
         $customer = Customer::find($id);
         return view('admin.customer.form', compact('customer', 'title'));
@@ -63,8 +60,7 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id){
         $request->validate([
             'name' => 'required|string',
             'phone' => 'required|string',
@@ -87,9 +83,14 @@ class CustomerController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
-    {
+    public function destroy($id){
         Customer::findOrFail($id)->delete();
         return redirect()->route('customers.list')->with('success', 'Customer deleted successfully.');
     }
+
+    public function showCard($id){
+        $customer = Customer::findOrFail($id);
+        return view('admin.customer.card', compact('customer'));
+    }
+
 }

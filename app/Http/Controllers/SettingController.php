@@ -6,12 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Storage;
 use App\Models\MailSetting;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\QuotationSentMail;
+
 
 class SettingController extends Controller
 {
     public function index(){
         $title = 'Setting';
-        return view('profile.setting', compact('title'));
+        $mailSetting = MailSetting::first();
+        return view('profile.setting', compact('title', 'mailSetting'));
     }
 
     public function saveSettings(Request $request){
@@ -68,7 +72,7 @@ class SettingController extends Controller
 
     public function saveMailSettings(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'mail_mailer'     => 'required|string|max:50',
             'mail_host'       => 'required|string|max:255',
             'mail_port'       => 'required|integer',
@@ -77,10 +81,12 @@ class SettingController extends Controller
             'mail_encryption' => 'nullable|string|max:10',
             'sender_name'     => 'required|string|max:255',
         ]);
-    
+
         $setting = MailSetting::first() ?? new MailSetting();
-        $setting->fill($request->all())->save();
-    
+        $setting->fill($validated);
+        $setting->save();
+
         return redirect()->back()->with('success', 'Mail settings updated successfully.');
     }
+
 }

@@ -420,7 +420,7 @@
     <!-- Checkout Modal -->
     <div class="modal fade" id="checkoutModal" tabindex="-1" role="dialog" aria-labelledby="checkoutModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form id="checkout-form" method="POST" action="{{ route('sales.checkout.process') }}">
+            <form id="checkout-form" method="POST" action="{{ route('checkout.pos') }}">
                 @csrf
                 <input type="hidden" name="cart_data" id="cart_data">
                 <input type="hidden" name="total_payable" id="total_payable">

@@ -70,36 +70,40 @@
                              </tr>
                           </thead>
                           <tbody>
-                             @forelse($quotations as $quotation) {{-- Iterating over $quotations --}}
-                               <tr>
-                                 <td>{{ $quotation->id }}</td>
-                                 <td>{{ \Carbon\Carbon::parse($quotation->quotation_date)->format('Y-m-d') }}</td> {{-- Format date --}}
-                                 <td>{{ $quotation->customer->name ?? 'N/A' }}</td> {{-- Access customer name --}}
-                                 <td>{{ $quotation->branch->name ?? 'N/A' }}</td>
-                                 <td>{{ $setting->currency_symbol ?? 'PKR' }} {{ number_format($quotation->grand_total, 2) }}</td> {{-- Display grand total --}}
-                                 <td>{{ $quotation->status }}</td> {{-- Display status --}}
-                                 <td>
-                                    <div class="d-flex align-items-center list-action">
-                                        <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('quotations.edit', $quotation->id) }}">
-                                            <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
-                                        </a>
-                         
-                                        <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('quotations.destroy', $quotation->id) }}">
-                                            <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                        </a>
+                            @forelse($quotations as $quotation) {{-- Iterating over $quotations --}}
+                                <tr>
+                                    <td>{{ $quotation->id }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($quotation->quotation_date)->format('Y-m-d') }}</td> {{-- Format date --}}
+                                    <td>{{ $quotation->customer->name ?? 'N/A' }}</td> {{-- Access customer name --}}
+                                    <td>{{ $quotation->branch->name ?? 'N/A' }}</td>
+                                    <td>{{ $setting->currency_symbol ?? 'PKR' }} {{ number_format($quotation->grand_total, 2) }}</td> {{-- Display grand total --}}
+                                    <td>
+                                        <span class="badge {{ ($quotation->status == 'pending') ? 'badge-warning' : (($quotation->status == 'sent') ? 'badge-success' : 'badge-secondary') }}">
+                                            {{ ucfirst($quotation->status) }}
+                                        </span>
+                                    </td>{{-- Display status --}}
+                                    <td>
+                                        <div class="d-flex align-items-center list-action">
+                                            <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('quotations.edit', $quotation->id) }}">
+                                                <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
+                                            </a>
 
-                                        <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Quotation" href="{{ route('quotations.show', $quotation->id) }}">
-                                            <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
-                                        </a>
-                          
-                                    </div>
-                                 </td>
-                               </tr>
-                             @empty
-                               <tr>
-                                 <td colspan="7" class="text-center">No quotations found.</td> {{-- Adjusted colspan --}}
-                               </tr>
-                             @endforelse
+                                            <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('quotations.destroy', $quotation->id) }}">
+                                                <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                            </a>
+
+                                            <a class="badge bg-info p-1" data-toggle="tooltip" data-placement="top" title="View Quotation" href="{{ route('quotations.show', $quotation->id) }}">
+                                                <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
+                                            </a>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                  <td colspan="7" class="text-center">No quotations found.</td> {{-- Adjusted colspan --}}
+                                </tr>
+                            @endforelse
                           </tbody>
                        </table>
                     </div>

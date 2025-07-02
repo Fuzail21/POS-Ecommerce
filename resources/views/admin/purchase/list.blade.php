@@ -80,13 +80,13 @@
                                                         <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                                     </a> --}}
                                                     
-                                                    <form action="{{ route('purchases.destroy', $purchase->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="d-inline">
+                                                    {{-- <form action="{{ route('purchases.destroy', $purchase->id) }}" method="POST" onsubmit="return confirm('Are you sure?')" class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button class="badge text-white mr-2 p-1 border-0" style="background-color: #FF723D;" data-toggle="tooltip" title="Delete">
                                                             <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
                                                         </button>
-                                                    </form>
+                                                    </form> --}}
 
 
 

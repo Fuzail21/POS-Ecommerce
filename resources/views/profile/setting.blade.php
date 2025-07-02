@@ -115,13 +115,22 @@
             
                     <!-- Logo -->
                     <div class="form-group col-md-6">
-                        <label>Upload Logo</label>
-                        <input type="file" name="logo" class="form-control">
-                        @if(posSetting('logo'))
-                            <img src="{{ asset(posSetting('logo')) }}" alt="Logo"
-                                 class="mt-2" style="max-height: 80px;">
+                        <label>Upload Logo <span class="text-muted" style="font-size: 12px;">(Only PNG, JPG, JPEG, WEBP – 50x50 px)</span></label>
+                        <input type="file" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.webp">
+                        
+                        @error('logo')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    
+                        @if($setting->logo_path)
+                            <div class="mt-2">
+                                <img src="{{ asset('storage/' . $setting->logo_path) }}" alt="Logo"
+                                     style="width: 50px; height: 50px; border-radius: 50%; border: 1px solid black;">
+                                <p class="text-muted mb-0" style="font-size: 12px;">Current Logo (50x50)</p>
+                            </div>
                         @endif
                     </div>
+
             
                     <!-- Primary Color -->
                     <div class="form-group col-md-6">

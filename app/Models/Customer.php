@@ -9,7 +9,7 @@ class Customer extends Model
     protected $table = 'customers';
 
     protected $fillable = [
-        'name', 'phone', 'email', 'address', 'balance'
+        'name', 'phone', 'email', 'address', 'balance', 'card_id'
     ];
 
     public function payments()

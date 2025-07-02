@@ -148,6 +148,9 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/{id}/edit', [CustomerController::class, 'edit'])->name('edit');
         Route::post('/{id}', [CustomerController::class, 'update'])->name('update');
         Route::get('/{id}', [CustomerController::class, 'destroy'])->name('destroy');
+
+        Route::get('/card/{id}', [CustomerController::class, 'showCard'])->name('card');
+
     });
 
 
@@ -247,6 +250,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
 
+    // Mail Setting
     Route::post('/mail-settings/save', [SettingController::class, 'saveMailSettings'])->name('mail-settings.save');
 
     // Supplier Product

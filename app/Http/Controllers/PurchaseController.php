@@ -10,11 +10,12 @@ use App\Models\PurchaseItem;
 use App\Models\StockLedger;
 use App\Models\InventoryStock;
 use App\Models\Warehouse;
-
 use App\Models\Payment;
 use App\Models\Supplier;
 use App\Models\SupplierLedger;
 use App\Models\Unit;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PurchaseInvoiceSentMail;
 
 class PurchaseController extends Controller
 {
@@ -167,6 +168,9 @@ class PurchaseController extends Controller
 
             DB::commit();
 
+            $purchase = Purchase::with(['supplier', 'branch', 'items.product', 'items.variant', 'items.unit'])->latest()->first();
+            Mail::to($purchase->supplier->email)->send(new PurchaseInvoiceSentMail($purchase));
+            
             return redirect()->route('purchases.list')->with('success', 'Purchase created successfully.');
 
         } catch (\Exception $e) {

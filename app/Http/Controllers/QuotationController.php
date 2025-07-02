@@ -11,11 +11,12 @@ use App\Models\ProductVariant; // Assuming ProductVariant model exists
 use App\Models\Category;
 use App\Models\Branch;
 use App\Models\Unit;
-
 use Illuminate\Http\Request;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\QuotationSentMail;
 
 class QuotationController extends Controller
 {
@@ -24,12 +25,13 @@ class QuotationController extends Controller
      */
     public function index()
     {
+        $title = "Quotation List";
         // Fetch all quotations with their customer and items, ordered by creation date
         $quotations = Quotation::with(['customer', 'warehouse', 'items.product', 'items.productVariant'])
                               ->latest()
                               ->paginate(10); // Paginate results for better performance
 
-        return view('admin.quotations.list', compact('quotations'));
+        return view('admin.quotations.list', compact('quotations', 'title'));
     }
 
     /**
@@ -37,25 +39,24 @@ class QuotationController extends Controller
      */
     public function create(Request $request)
     {
-        $title = "Sale Quotation";
+        $title = "Create Sale Quotation"; // Changed title for clarity
         $categories = Category::all();
-        $branches = Branch::all(); // Used for display in the view, if needed
+        $branches = Branch::all();
         $customers = Customer::all();
-        $warehouses = Warehouse::all(); // Used for the quotation
+        $warehouses = Warehouse::all();
         $units = Unit::all();
-        $setting = Setting::first(); // Retrieve the setting for currency symbol, etc.
+        $setting = Setting::first();
 
         $search = $request->input('search');
 
         $products = collect(); // Initialize as an empty collection
 
         if ($search) {
-            // Logic for when a search query is present
             $products = Product::whereNull('deleted_at')
                 ->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
-                          ->orWhere('sku', 'like', "%{$search}%")
-                          ->orWhere('barcode', 'like', "%{$search}%");
+                        ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('barcode', 'like', "%{$search}%");
                 })
                 ->with([
                     'baseUnit',
@@ -79,10 +80,9 @@ class QuotationController extends Controller
                     return $product;
                 });
         } else {
-            // Logic for initial page load (no search query)
             $products = Product::whereNull('deleted_at')
                 ->latest()
-                ->take(10) // Display the 10 latest products by default
+                ->take(10)
                 ->with([
                     'baseUnit',
                     'variants.inventoryStocks',
@@ -106,19 +106,15 @@ class QuotationController extends Controller
                 });
         }
 
-        // Check if the request is an AJAX request
         if ($request->ajax()) {
-            // If it's an AJAX request, build the HTML string for the product list directly.
-            // This replaces the need for a separate partial view file.
             $html = '';
             foreach ($products as $product) {
                 $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A'; // Placeholder if no image
+                $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
 
                 $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
                 $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
 
-                // Product Image or Placeholder
                 if (!empty($product->product_img)) {
                     $html .= '<img src="' . asset('storage/' . $product->product_img) . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
                 } else {
@@ -163,10 +159,9 @@ class QuotationController extends Controller
                 $html .= '</div>';
                 $html .= '</div>';
             }
-            return $html; // Return the generated HTML string
+            return $html;
         }
 
-        // If it's a regular (non-AJAX) request, return the full create sale view.
         return view('admin.quotations.create', compact(
             'categories',
             'units',
@@ -175,7 +170,7 @@ class QuotationController extends Controller
             'customers',
             'branches',
             'warehouses',
-            'setting' // Ensure the setting variable is passed to the main view
+            'setting'
         ));
     }
 
@@ -289,6 +284,10 @@ class QuotationController extends Controller
             }
 
             DB::commit();
+            if ($quotation->status === 'sent') {
+                $quotation->load(['items.product', 'items.productVariant']);
+                Mail::to($quotation->customer->email)->send(new QuotationSentMail($quotation));
+            }
             return redirect()->route('quotations.index')->with('success', 'Quotation created successfully!');
 
         } catch (ValidationException $e) {
@@ -333,9 +332,9 @@ class QuotationController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Quotation $quotation, Request $request)
+    public function edit(Request $request, Quotation $quotation)
     {
-        $title = "Edit Sale Quotation";
+        $title = "Edit Sale Quotation"; // Changed title for clarity
         $categories = Category::all();
         $branches = Branch::all();
         $customers = Customer::all();
@@ -343,23 +342,16 @@ class QuotationController extends Controller
         $units = Unit::all();
         $setting = Setting::first();
 
-        // Load existing quotation items with their product and product variant details
-        $quotation->load(['items.product', 'items.productVariant']);
-
         $search = $request->input('search');
-        $products = collect(); // Initialize as an empty collection
+
+        $products = collect();
 
         if ($search) {
-            // Same product search logic as in the create method
             $products = Product::whereNull('deleted_at')
                 ->where(function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")
-                          ->orWhere('sku', 'like', "%{$search}%")
-                          ->orWhere('barcode', 'like', "%{$search}%")
-                          ->orWhereHas('variants', function($q) use ($search) {
-                                $q->where('variant_name', 'like', "%{$search}%")
-                                  ->orWhere('sku', 'like', "%{$search}%");
-                          });
+                        ->orWhere('sku', 'like', "%{$search}%")
+                        ->orWhere('barcode', 'like', "%{$search}%");
                 })
                 ->with([
                     'baseUnit',
@@ -380,21 +372,9 @@ class QuotationController extends Controller
                         $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
                         $variant->in_stock = $variant->stock_quantity > 0;
                     }
-
-                    if ($product->variants->isEmpty()) {
-                        $product->variants->push((object)[
-                            'id' => $product->id,
-                            'variant_name' => null,
-                            'sale_price' => $product->sale_price,
-                            'stock_quantity' => $product->stock_quantity,
-                            'in_stock' => $product->in_stock,
-                            'sku' => $product->sku
-                        ]);
-                    }
                     return $product;
                 });
         } else {
-            // Logic for initial page load (no search query) - fetch latest 10 products
             $products = Product::whereNull('deleted_at')
                 ->latest()
                 ->take(10)
@@ -417,32 +397,101 @@ class QuotationController extends Controller
                         $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
                         $variant->in_stock = $variant->stock_quantity > 0;
                     }
-
-                    if ($product->variants->isEmpty()) {
-                        $product->variants->push((object)[
-                            'id' => $product->id,
-                            'variant_name' => null,
-                            'sale_price' => $product->sale_price,
-                            'stock_quantity' => $product->stock_quantity,
-                            'in_stock' => $product->in_stock,
-                            'sku' => $product->sku
-                        ]);
-                    }
                     return $product;
                 });
         }
 
-        // Handle AJAX requests for product list when editing
         if ($request->ajax()) {
-            return response()->json([
-                'products' => $products,
-                'setting' => $setting // Pass setting for currency symbol
-            ]);
+            $html = '';
+            foreach ($products as $product) {
+                $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
+                $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
+
+                $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
+                $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
+
+                if (!empty($product->product_img)) {
+                    $html .= '<img src="' . asset('storage/' . $product->product_img) . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
+                } else {
+                    $html .= '<div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
+                }
+
+                $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+
+                if ($product->variants->count()) {
+                    $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
+                    $html .= '<option disabled selected>Choose Variant</option>';
+                    foreach ($product->variants as $variant) {
+                        $disabled = !$variant->in_stock ? 'disabled' : '';
+                        $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
+                        $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
+                                 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
+                                 'data-price="' . $variant->sale_price . '" ' .
+                                 'data-stock="' . $variant->stock_quantity . '" ' .
+                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
+                                 htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->sale_price, 2) . ' ' . $stockText .
+                                 '</option>';
+                    }
+                    $html .= '</select>';
+                    $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
+                } else {
+                    $html .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->sale_price, 2) .
+                             '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+                    if ($product->in_stock) {
+                        $html .= '<button ' .
+                                 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
+                                 'data-id="product-' . $product->id . '" ' .
+                                 'data-name="' . htmlspecialchars($product->name) . '" ' .
+                                 'data-price="' . $product->sale_price . '" ' .
+                                 'data-stock="' . $product->stock_quantity . '" ' .
+                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
+                                 'Add to Cart' .
+                                 '</button>';
+                    } else {
+                        $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+                    }
+                }
+                $html .= '</div>';
+                $html .= '</div>';
+            }
+            return $html;
         }
 
-        // For a regular (non-AJAX) request, return the full create view with quotation data
+        // Prepare initial cart data from the existing quotation
+        $initialCart = [];
+        foreach ($quotation->items as $item) {
+            $productId = $item->product_id;
+            $variantId = $item->product_variant_id;
+            $type = $variantId ? 'variant' : 'product';
+            $id = $type . '-' . ($variantId ?? $productId);
+
+            $product = Product::find($productId);
+            $stock = 0;
+            $name = '';
+            $salePrice = $item->unit_price; // Use the unit price from the quotation item
+
+            if ($variantId) {
+                $variant = $product->variants->where('id', $variantId)->first();
+                if ($variant) {
+                    $stock = $variant->stock_quantity; // Assuming stock is calculated on variant model
+                    $name = $product->name . ' - ' . $variant->variant_name;
+                }
+            } else {
+                $stock = $product->stock_quantity; // Assuming stock is calculated on product model
+                $name = $product->name;
+            }
+
+            $initialCart[$id] = [
+                'name' => $name,
+                'sale_price' => $salePrice,
+                'unit_id' => $item->unit_id,
+                'qty' => $item->quantity,
+                'stock' => $stock,
+            ];
+        }
+
+        // Pass the quotation object and initial cart data to the view
         return view('admin.quotations.create', compact(
-            'quotation', // Pass the quotation object for editing
             'categories',
             'units',
             'products',
@@ -450,28 +499,71 @@ class QuotationController extends Controller
             'customers',
             'branches',
             'warehouses',
-            'setting'
+            'setting',
+            'quotation', // Pass the existing quotation object
+            'initialCart' // Pass the prepared cart data for edit
         ));
     }
+
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Quotation $quotation)
     {
+        // Decode the cart_data JSON string into an array
+        $cartData = json_decode($request->input('cart_data'), true);
+
+        // Map cartData to an 'items' structure that aligns with your validation rules
+        $mappedItems = [];
+        if (is_array($cartData)) {
+            foreach ($cartData as $id => $item) {
+                // Determine if it's a simple product or a variant
+                $isVariant = str_starts_with($id, 'variant-');
+                $productId = null;
+                $productVariantId = null;
+
+                if ($isVariant) {
+                    $productVariantId = $item['id']; // This is the variant ID
+                    // You might need to fetch the product_id from the variant
+                    $variant = ProductVariant::find($productVariantId);
+                    if ($variant) {
+                        $productId = $variant->product_id;
+                    }
+                } else {
+                    $productId = $item['id']; // This is the simple product ID
+                    $productVariantId = null; // No variant for simple products
+                }
+
+                $mappedItems[] = [
+                    'product_id' => $productId,
+                    'product_variant_id' => $productVariantId, // Can be null for simple products
+                    'unit_price' => $item['sale_price'],
+                    'quantity' => $item['qty'],
+                    'discount_amount' => 0, // Or retrieve if you add per-item discount logic
+                    'tax_amount' => 0,      // Or retrieve if you add per-item tax logic
+                ];
+            }
+        }
+
+        // Add the mapped items back to the request for validation
+        $request->merge(['items' => $mappedItems]);
+
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'quotation_date' => 'required|date',
-            'order_tax_percentage' => 'nullable|numeric|min:0|max:100',
-            'discount_percentage' => 'nullable|numeric|min:0|max:100',
-            'shipping_cost' => 'nullable|numeric|min:0',
-            'status' => 'required|string|in:Pending,Sent,Accepted,Rejected,Draft',
+            'subtotal' => 'required|numeric|min:0',
+            'discount' => 'nullable|numeric|min:0',
+            'tax' => 'nullable|numeric|min:0',
+            'shipping' => 'nullable|numeric|min:0',
+            'total_payable' => 'required|numeric|min:0',
+            'status' => 'required|string|in:pending,sent',
             'note' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'nullable|exists:quotation_items,id', // For existing items
+            'cart_data' => 'required|json', // Validate the raw JSON string
+            'items' => 'required|array|min:1', // Validate the processed items array
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.product_variant_id' => 'required|exists:product_variants,id',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
@@ -480,79 +572,51 @@ class QuotationController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update quotation main details
-            // Recalculate grand total from items
-            $grandTotal = 0;
-            foreach ($request->items as $item) {
-                $itemSubtotal = ($item['unit_price'] * $item['quantity']) - ($item['discount_amount'] ?? 0) + ($item['tax_amount'] ?? 0);
-                $grandTotal += $itemSubtotal;
-            }
+            // Use the calculated totals directly from the view
+            $subtotal = $request->input('subtotal');
+            $discount = $request->input('discount') ?? 0;
+            $tax = $request->input('tax') ?? 0;
+            $shipping = $request->input('shipping') ?? 0;
+            $finalGrandTotal = $request->input('total_payable');
 
-            // Apply global discount and tax if present
-            $totalAfterItemCalculations = $grandTotal;
-            if ($request->filled('discount_percentage') && $request->discount_percentage > 0) {
-                $totalAfterItemCalculations -= ($totalAfterItemCalculations * ($request->discount_percentage / 100));
-            }
-
-            if ($request->filled('order_tax_percentage') && $request->order_tax_percentage > 0) {
-                $totalAfterItemCalculations += ($totalAfterItemCalculations * ($request->order_tax_percentage / 100));
-            }
-
-            $finalGrandTotal = $totalAfterItemCalculations + ($request->shipping_cost ?? 0);
-
+            // Update the existing quotation
             $quotation->update([
                 'customer_id' => $request->customer_id,
-                'warehouse_id' => $request->warehouse_id,
+                'branch_id' => $request->branch_id,
                 'quotation_date' => $request->quotation_date,
-                'order_tax_percentage' => $request->order_tax_percentage ?? 0,
-                'discount_percentage' => $request->discount_percentage ?? 0,
-                'shipping_cost' => $request->shipping_cost ?? 0,
-                'grand_total' => $finalGrandTotal, // Update the calculated grand total
+                'order_tax_percentage' => $tax,
+                'discount_percentage' => $discount,
+                'shipping_cost' => $shipping,
+                'grand_total' => $finalGrandTotal,
                 'status' => $request->status,
                 'note' => $request->note,
             ]);
 
-            // Sync quotation items: Delete old, create new, or update existing
-            $existingItemIds = $quotation->items->pluck('id')->toArray();
-            $updatedItemIds = [];
+            // Delete existing quotation items to replace them with the new ones
+            // Assuming the relationship method on Quotation model is 'quotationItems()'
+            $quotation->items()->delete();
 
-            foreach ($request->items as $itemData) {
-                $itemSubtotal = ($itemData['unit_price'] * $itemData['quantity']) - ($itemData['discount_amount'] ?? 0) + ($itemData['tax_amount'] ?? 0);
+            // Create new quotation items
+            foreach ($mappedItems as $itemData) {
+                $itemSubtotal = $itemData['unit_price'] * $itemData['quantity'];
 
-                if (isset($itemData['id']) && in_array($itemData['id'], $existingItemIds)) {
-                    // Update existing item
-                    $item = QuotationItem::find($itemData['id']);
-                    $item->update([
-                        'product_id' => $itemData['product_id'],
-                        'product_variant_id' => $itemData['product_variant_id'],
-                        'unit_price' => $itemData['unit_price'],
-                        'quantity' => $itemData['quantity'],
-                        'discount_amount' => $itemData['discount_amount'] ?? 0,
-                        'tax_amount' => $itemData['tax_amount'] ?? 0,
-                        'subtotal' => $itemSubtotal,
-                    ]);
-                    $updatedItemIds[] = $item->id;
-                } else {
-                    // Create new item
-                    $newItem = $quotation->items()->create([
-                        'product_id' => $itemData['product_id'],
-                        'product_variant_id' => $itemData['product_variant_id'],
-                        'unit_price' => $itemData['unit_price'],
-                        'quantity' => $itemData['quantity'],
-                        'discount_amount' => $itemData['discount_amount'] ?? 0,
-                        'tax_amount' => $itemData['tax_amount'] ?? 0,
-                        'subtotal' => $itemSubtotal,
-                    ]);
-                    $updatedItemIds[] = $newItem->id;
-                }
+                $quotation->items()->create([ // Use the correct relationship name
+                    'quotation_id' => $quotation->id, // Ensure it's explicitly linked
+                    'product_id' => $itemData['product_id'],
+                    'product_variant_id' => $itemData['product_variant_id'],
+                    'unit_price' => $itemData['unit_price'],
+                    'quantity' => $itemData['quantity'],
+                    'discount_amount' => $itemData['discount_amount'] ?? 0,
+                    'tax_amount' => $itemData['tax_amount'] ?? 0,
+                    'subtotal' => $itemSubtotal,
+                ]);
             }
 
-            // Delete items that were removed from the request
-            QuotationItem::where('quotation_id', $quotation->id)
-                          ->whereNotIn('id', $updatedItemIds)
-                          ->delete(); // Soft delete old items
-
             DB::commit();
+            if ($quotation->status === 'sent') {
+                $quotation->load(['items.product', 'items.productVariant']);
+                Mail::to($quotation->customer->email)->send(new QuotationSentMail($quotation));
+            }
             return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully!');
 
         } catch (ValidationException $e) {

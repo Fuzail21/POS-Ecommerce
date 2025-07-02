@@ -32,18 +32,15 @@ class ProductController extends Controller
         return view('admin.product.form', compact('title', 'categories', 'units', 'suppliers'));
     }
 
-    public function store(Request $request){    
+    public function store(Request $request){
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'base_unit_id' => 'required|exists:units,id',
             'has_variants' => 'required|boolean',
             'sku' => 'required|unique:products,sku',
-            'barcode' => 'nullable|unique:products,barcode',
             'brand' => 'nullable|string|max:255',
             'low_stock' => 'nullable|numeric',
-            // 'track_expiry' => 'required|boolean',
-            // 'tax_rate' => 'required|numeric|between:0,100.00',
             'sale_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
             'supplier_ids' => 'nullable|array',
@@ -62,31 +59,37 @@ class ProductController extends Controller
 
         $product->save();
 
+        // Auto-generate product barcode
+        $product->barcode = 'PRD-' . str_pad($product->id, 5, '0', STR_PAD_LEFT); // e.g. PRD-00001
+        $product->save();
+
+        // Sync suppliers
         if ($request->filled('supplier_ids')) {
             $product->suppliers()->sync($request->supplier_ids);
         }
-
 
         // Save product variants
         if ($request->has('variants')) {
             foreach ($request->variants as $index => $variantData) {
                 $variantImagePath = null;
-                        
+
                 if ($request->hasFile("variants.$index.product_img")) {
                     $variantImagePath = $request->file("variants.$index.product_img")
-                                                ->store('products/variants', 'public');
+                        ->store('products/variants', 'public');
                 }
-            
-                $product->variants()->create([
+
+                $variant = $product->variants()->create([
                     'variant_name' => $variantData['variant_name'],
                     'sku' => $variantData['sku'],
-                    'barcode' => $variantData['barcode'] ?? null,
                     'sale_price' => $variantData['sale_price'] ?? 0,
                     'low_stock' => $variantData['low_stock'] ?? 0,
                     'product_img' => $variantImagePath,
                 ]);
-            }
 
+                // Auto-generate variant barcode
+                $variant->barcode = 'VAR-' . str_pad($product->id, 5, '0', STR_PAD_LEFT) . '-' . str_pad($variant->id, 3, '0', STR_PAD_LEFT);
+                $variant->save();
+            }
         }
 
         return redirect()->route('products.list')->with('success', 'Product created successfully.');
@@ -122,34 +125,33 @@ class ProductController extends Controller
             ],
             'brand' => 'nullable|string|max:255',
             'low_stock' => 'nullable|numeric',
-            // 'track_expiry' => 'required|boolean',
-            // 'tax_rate' => 'required|numeric|between:0,100.00',
             'sale_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
             'supplier_ids' => 'nullable|array',
             'supplier_ids.*' => 'exists:suppliers,id',
-
         ]);
 
-         $product->fill($validatedData);
+        $product->fill($validatedData);
 
-        // Handle main product image upload with error handling
+        // Upload product image
         if ($request->hasFile('product_img')) {
             try {
                 $imagePath = $request->file('product_img')->store('products', 'public');
-                if (!$imagePath) {
-                    // Storage failed, add error message
-                    return back()->withInput()->withErrors(['product_img' => 'Failed to upload product image. Please try again.']);
-                }
                 $product->product_img = $imagePath;
             } catch (\Exception $e) {
-                // Exception during upload, add error message
                 return back()->withInput()->withErrors(['product_img' => 'Error uploading image: ' . $e->getMessage()]);
             }
         }
 
         $product->save();
 
+        // Generate barcode if missing
+        if (empty($product->barcode)) {
+            $product->barcode = 'PRD-' . str_pad($product->id, 5, '0', STR_PAD_LEFT);
+            $product->save();
+        }
+
+        // Sync suppliers
         if ($request->filled('supplier_ids')) {
             $product->suppliers()->sync($request->supplier_ids);
         }
@@ -157,40 +159,36 @@ class ProductController extends Controller
         // Handle variants
         if ($request->has_variants && $request->has('variants')) {
             $incomingVariants = collect($request->input('variants'));
-            $existingVariants = $product->variants()->get()->keyBy('sku'); // Assuming SKU is unique
+            $existingVariants = $product->variants()->get()->keyBy('sku');
 
             $existingSkus = $existingVariants->keys();
             $incomingSkus = $incomingVariants->pluck('sku');
 
             foreach ($incomingVariants as $index => $variantData) {
                 $sku = $variantData['sku'];
-
-                // Skip if SKU is missing
                 if (!$sku) continue;
 
                 $variant = $existingVariants->get($sku);
 
                 if ($variant) {
-                    // Update only if something changed
+                    // Update
                     $needsUpdate = (
                         $variant->variant_name !== $variantData['variant_name'] ||
                         $variant->barcode !== ($variantData['barcode'] ?? null) ||
                         $variant->sale_price != ($variantData['sale_price'] ?? 0) ||
                         $variant->low_stock != ($variantData['low_stock'] ?? 0)
-
                     );
 
                     if ($needsUpdate) {
                         $variant->update([
                             'variant_name' => $variantData['variant_name'],
-                            'barcode' => $variantData['barcode'] ?? null,
+                            'barcode' => $variantData['barcode'] ?? $variant->barcode,
                             'sale_price' => $variantData['sale_price'] ?? 0,
                             'low_stock' => $variantData['low_stock'] ?? 0,
-
                         ]);
                     }
 
-                    // Handle image update
+                    // Image
                     if ($request->hasFile("variants.{$index}.product_img")) {
                         $image = $request->file("variants.{$index}.product_img");
                         $path = $image->store('products/variants', 'public');
@@ -198,17 +196,16 @@ class ProductController extends Controller
                     }
 
                 } else {
-                    // New variant – check for unique SKU
+                    // New variant
                     if (!ProductVariant::where('sku', $sku)->exists()) {
                         $newVariant = new ProductVariant([
                             'variant_name' => $variantData['variant_name'],
                             'sku' => $sku,
-                            'barcode' => $variantData['barcode'] ?? null,
                             'sale_price' => $variantData['sale_price'] ?? 0,
                             'low_stock' => $variantData['low_stock'] ?? 0,
                         ]);
 
-                        // Handle image
+                        // Image
                         if ($request->hasFile("variants.{$index}.product_img")) {
                             $image = $request->file("variants.{$index}.product_img");
                             $path = $image->store('products/variants', 'public');
@@ -216,13 +213,16 @@ class ProductController extends Controller
                         }
 
                         $product->variants()->save($newVariant);
+
+                        // Auto-generate barcode
+                        $newVariant->barcode = 'VAR-' . str_pad($product->id, 5, '0', STR_PAD_LEFT) . '-' . str_pad($newVariant->id, 3, '0', STR_PAD_LEFT);
+                        $newVariant->save();
                     }
                 }
             }
 
-            // Optional: Delete variants no longer in the request
-            $skusToKeep = $incomingSkus->toArray();
-            $product->variants()->whereNotIn('sku', $skusToKeep)->delete();
+            // Optional: Remove variants not in the request
+            $product->variants()->whereNotIn('sku', $incomingSkus->toArray())->delete();
         }
 
         return redirect()->route('products.list')->with('success', 'Product updated successfully.');

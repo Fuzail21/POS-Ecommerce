@@ -94,13 +94,13 @@
 
                                 <div class="row">
                                     {{-- Barcode --}}
-                                    <div class="form-group col-md-6" id="main-barcode">
+                                    {{-- <div class="form-group col-md-6" id="main-barcode">
                                         <label>Barcode</label>
                                         <input type="text" name="barcode" class="form-control" value="{{ old('barcode', $product->barcode ?? '') }}">
-                                    </div>
+                                    </div> --}}
 
                                     {{-- Low Stock --}}
-                                    <div class="form-group col-md-6" id="main-lowStock">
+                                    <div class="form-group col-md-12" id="main-lowStock">
                                         <label>Low Stock</label>
                                         <input type="number" step="1" name="low_stock" class="form-control" value="{{ old('low_stock', $product->low_stock ?? '') }}">
                                     </div>
@@ -124,7 +124,7 @@
                                             <tr>
                                                 <th>Variant Name</th>
                                                 <th>SKU</th>
-                                                <th>Barcode</th>
+                                                {{-- <th>Barcode</th> --}}
                                                 <th>Sale Price</th>
                                                 <th>Low Stock</th>
                                                 <th>Image</th>
@@ -139,7 +139,7 @@
                                                     <tr>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][variant_name]" value="{{ $variant->variant_name }}" class="form-control" required></td>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][sku]" value="{{ $variant->sku }}" class="form-control" required></td>
-                                                        <td><input type="text" name="variants[{{ $loop->index }}][barcode]" value="{{ $variant->barcode }}" class="form-control"></td>
+                                                        {{-- <td><input type="text" name="variants[{{ $loop->index }}][barcode]" value="{{ $variant->barcode }}" class="form-control"></td> --}}
                                                         <td><input type="number" step="0.01" name="variants[{{ $loop->index }}][sale_price]" value="{{ $variant->sale_price }}" class="form-control"></td>
                                                         <td>
                                                             <input type="number" step="1" name="variants[{{ $loop->index }}][low_stock]" value="{{ $variant->low_stock ?? '' }}" class="form-control">
@@ -253,7 +253,7 @@
             row.innerHTML = `
                 <td><input type="text" name="variants[${variantIndex}][variant_name]" class="form-control" required></td>
                 <td><input type="text" name="variants[${variantIndex}][sku]" class="form-control" required></td>
-                <td><input type="text" name="variants[${variantIndex}][barcode]" class="form-control"></td>
+                {{-- <td><input type="text" name="variants[${variantIndex}][barcode]" class="form-control"></td> --}}
                 <td><input type="number" step="0.01" name="variants[${variantIndex}][sale_price]" class="form-control"></td>
                 <td><input type="number" step="1" name="variants[${variantIndex}][low_stock]" class="form-control" placeholder="e.g. 5"></td>
                 <td>

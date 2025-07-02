@@ -79,14 +79,28 @@
                                     <td>{{ $customer->email }}</td>
                                     <td>{{ $setting->currency_symbol }} {{ number_format($customer->balance, 2) }}</td>
                                     <td>
-                                     <div class="d-flex align-items-center list-action">
-                                         <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('customers.edit', $customer->id) }}">
-                                             <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
-                                         </a>
-                                         <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('customers.destroy', $customer->id) }}">
-                                             <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                         </a>
-                                     </div>
+                                        <div class="d-flex align-items-center list-action">
+                                            {{-- Edit --}}
+                                            <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit"
+                                               href="{{ route('customers.edit', $customer->id) }}">
+                                                <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
+                                            </a>
+                                    
+                                            {{-- Delete --}}
+                                            <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete"
+                                               href="{{ route('customers.destroy', $customer->id) }}">
+                                                <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                            </a>
+                                    
+                                            {{-- Show Card --}}
+                                            <a class="badge text-white p-1" style="background-color: {{ $secondaryColor }};" data-toggle="tooltip" data-placement="top" title="Show Card"
+                                               href="{{ route('customers.card', $customer->id) }}" target="_blank">
+                                                <i class="ri-profile-line" style="font-size: 1.1rem;"></i>
+                                            </a>
+
+                                        </div>
+                                    </td>
+
                                   </td>
                                 </tr>
                                 @endforeach

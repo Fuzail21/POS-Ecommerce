@@ -47,7 +47,7 @@ body.sidebar-collapsed .iq-sidebar-logo img {
             <img src="{{ $setting && $setting->logo_path ? asset('storage/' . $setting->logo_path) : asset('build/assets/images/logo.png') }}"
                  alt="logo"
                  class="img-fluid rounded"
-                 style="height: 40px; width: 40px; object-fit: cover;">
+                 style="height: 50px; width: 50px; object-fit: cover;">
             <h5 class="ml-3 mb-0" style="color: {{ $primaryColor }};">
                 {{ posSetting('business_name', 'POSDash') }}
             </h5>

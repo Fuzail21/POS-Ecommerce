@@ -19,6 +19,8 @@ use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InvoiceSentMail;
 use Auth;
 
 class SaleController extends Controller
@@ -303,6 +305,10 @@ class SaleController extends Controller
             }
 
             DB::commit();
+
+            $sale = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->latest()->first();
+            $sale->currency_symbol = Setting::first()?->currency_symbol ?? 'PKR';
+            Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
 
             return redirect()->route('sales.list')->with('success', 'Sale recorded successfully!');
         } catch (\Exception $e) {
@@ -667,8 +673,11 @@ class SaleController extends Controller
                 'sale_id' => $sale->id,
             ]);
 
+            $sale = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->latest()->first();
+            $sale->currency_symbol = Setting::first()?->currency_symbol ?? 'PKR';
+            Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
+
             return redirect()->route('pos.index');
-            // return redirect()->route('sales.list')->with('success', 'Sale recorded successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Something went wrong. Please try again.');
