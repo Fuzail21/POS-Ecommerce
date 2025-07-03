@@ -503,6 +503,38 @@
   </div>
 </div>
 
+@if(session('show_invoice') && session('sale_id'))
+    @php
+        $sale = \App\Models\Sale::with(['items.product', 'customer'])->find(session('sale_id'));
+        $invoiceHtml = view('partials.invoice', compact('sale'))->render();
+        session()->forget(['show_invoice', 'sale_id']);
+    @endphp
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            Swal.fire({
+                title: 'Invoice Preview',
+                html: {!! json_encode($invoiceHtml) !!},
+                width: 600,
+                showCancelButton: true,
+                confirmButtonText: 'Print',
+                cancelButtonText: 'Close',
+                didOpen: () => {
+                    // Optional styling tweaks or JS initialization
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const content = document.getElementById('invoice-content').innerHTML;
+                    const printWindow = window.open('', '', 'width=800,height=600');
+                    printWindow.document.write('<html><head><title>Invoice</title></head><body>' + content + '</body></html>');
+                    printWindow.document.close();
+                    printWindow.print();
+                }
+            });
+        });
+    </script>
+@endif
+
 
 <!-- JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

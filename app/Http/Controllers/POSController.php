@@ -360,7 +360,7 @@ class POSController extends Controller
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             })
             ->orderByDesc('created_at')
-            ->limit(10)
+            ->limit(5)
             ->get();
 
         // 5. Low Stock Products Alert

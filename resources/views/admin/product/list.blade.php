@@ -167,9 +167,12 @@
                         <div class="mt-2 text-lg font-semibold">{{ $product->barcode }}</div>
 
                         {{-- Print Button --}}
-                        <button type="button" class="btn text-white mt-4 py-2 px-4 rounded"
+                        <button type="button" class="btn text-white mt-4 py-2 px-4 rounded print-barcode-btn"
                                 style="background-color: {{ $secondaryColor }};"
-                                onclick="printProductBarcode('{{ $product->barcode }}', '{{ $product->name }}', '{{ $productBarcodeImage }}')">
+                                data-barcode="{{ $product->barcode }}"
+                                data-product-name="{{ $product->name }}"
+                                data-barcode-image="{{ $productBarcodeImage }}"
+                                data-primary-color="{{ $primaryColor }}">
                             Print Barcode
                         </button>
                     </div>
@@ -181,7 +184,7 @@
 
 @endsection
 
-@push('scripts')
+@section('js')
 <!-- Ensure Bootstrap JS (if not already loaded in layout) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -194,16 +197,16 @@
      * @param {string} barcodeImageBase64 - The base64 encoded PNG image data of the barcode.
      * @param {string} primaryColor - The primary color for the card header.
      */
-    function printProductBarcode(barcodeValue, productName, barcodeImageBase64) {
+    function printProductBarcode(barcodeValue, productName, barcodeImageBase64, primaryColor) {
         const printContents = `
             <div class="card-print">
-                <div class="card-header-print">
+                <div class="card-header-print" style="background-color: ${primaryColor};">
                     <div class="card-title-print">Product Barcode</div>
                 </div>
                 <div class="card-body-print">
-                    <p><strong>Product:</strong> ${productName}</p>
-                    <p><strong>Barcode ID:</strong> <span class="uppercase">${barcodeValue}</span></p>
-                    <div class="barcode-img-container-print">
+                    <p class="product-name-print" style="padding-left: 20px;"><strong>Product:</strong> ${productName}</p>
+                    <p class="barcode-id-print" style="padding-left: 20px;"><strong>Barcode ID:</strong> <span class="uppercase">${barcodeValue}</span></p>
+                    <div class="barcode-img-container-print" style="margin-bottom: 20px;">
                         <img src="${barcodeImageBase64}" alt="Product Barcode">
                     </div>
                 </div>
@@ -239,9 +242,6 @@
                 }
                 .card-title-print {
                     margin-bottom: 5px;
-                }
-                .card-body-print {
-                    padding: 20px;
                 }
                 .card-body-print p {
                     margin: 10px 0;
@@ -280,5 +280,15 @@
         win.print();
         // win.close(); // Optionally close the window after print dialog is shown
     }
+
+    // Use event delegation to handle clicks on dynamically loaded modal buttons
+    $(document).on('click', '.print-barcode-btn', function() {
+        const barcodeValue = $(this).data('barcode');
+        const productName = $(this).data('product-name');
+        const barcodeImageBase64 = $(this).data('barcode-image');
+        const primaryColor = $(this).data('primary-color');
+
+        printProductBarcode(barcodeValue, productName, barcodeImageBase64, primaryColor);
+    });
 </script>
-@endpush
+@endsection

@@ -11,8 +11,7 @@ use App\Models\Category;
 
 class StockAdjustmentController extends Controller
 {
-    public function stockIndex(Request $request)
-    {
+    public function stockIndex(Request $request){
         $title = 'Stock Inventory';
         $categories = Category::all();
 

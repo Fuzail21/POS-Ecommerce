@@ -40,11 +40,13 @@ use App\Http\Controllers\QuotationController;
 //     return view('dashboard', compact('title'));
 // })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/dashboard', [POSController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', [POSController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 
 
 Route::middleware('auth', 'verified')->group(function () {
-   
+    
+    Route::get('/dashboard', [POSController::class, 'dashboard'])->name('dashboard');
+
     // Users
     Route::get('/user/list', [UserController::class, 'index'])->name('user.list');
     Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
@@ -137,7 +139,8 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/{id}', [SupplierController::class, 'update'])->name('update');
         Route::get('/{id}', [SupplierController::class, 'destroy'])->name('destroy');
     });
-
+    // Supplier Product
+    Route::get('/reports/supplier-products', [StockAdjustmentController::class, 'supplierProductReport'])->name('reports.supplier_products');
 
 
     //Customers
@@ -205,7 +208,6 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [FinanceController::class, 'store'])->name('store');
         Route::get('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
 
-
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
     });
 
@@ -213,6 +215,7 @@ Route::middleware('auth', 'verified')->group(function () {
     // Stocks
     Route::get('/stock/list', [StockAdjustmentController::class, 'stockIndex'])->name('stock.list');
     Route::get('/stock-ledger', [StockAdjustmentController::class, 'stockLedger'])->name('stock.ledger');
+
 
     // POS
     Route::middleware(['auth', CheckOpenRegister::class])->group(function () {
@@ -246,15 +249,13 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/pos/check-register', [POSController::class, 'checkRegister'])->name('pos.checkRegister');
     Route::get('/pos/register-details', [POSController::class, 'getRegisterDetails'])->name('pos.getRegisterDetails');
 
-
+    // POS Settings
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
 
     // Mail Setting
     Route::post('/mail-settings/save', [SettingController::class, 'saveMailSettings'])->name('mail-settings.save');
 
-    // Supplier Product
-    Route::get('/reports/supplier-products', [StockAdjustmentController::class, 'supplierProductReport'])->name('reports.supplier_products');
 
 
     // Quotation 
