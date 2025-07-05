@@ -22,7 +22,7 @@ class Product extends Model
         'brand',
         'track_expiry',
         'tax_rate',
-        'sale_price',
+        'actual_price',
         'low_stock',
     ];
 
@@ -72,6 +72,36 @@ class Product extends Model
     public function suppliers()
     {
         return $this->belongsToMany(Supplier::class, 'product_supplier');
+    }
+
+
+    public function getDiscountedPriceAttribute()
+    {
+        $price = $this->actual_price;
+        $today = now()->toDateString();
+    
+        $rules = \App\Models\DiscountRule::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->get();
+    
+        foreach ($rules as $rule) {
+            $ids = json_decode($rule->target_ids, true);
+        
+            if ($rule->type == 'category' && in_array($this->category_id, $ids)) {
+                return $this->applyPercentageDiscount($price, $rule->discount);
+            }
+        
+            if ($rule->type == 'product' && in_array($this->id, $ids)) {
+                return $this->applyPercentageDiscount($price, $rule->discount);
+            }
+        }
+    
+        return $price;
+    }
+    
+    private function applyPercentageDiscount($price, $discount)
+    {
+        return round($price - ($price * $discount / 100), 2);
     }
 
 }

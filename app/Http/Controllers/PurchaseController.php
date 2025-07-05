@@ -34,7 +34,7 @@ class PurchaseController extends Controller
             return [
                 'id' => $product->id,
                 'name' => $product->name,
-                'price' => $product->sale_price,
+                'price' => $product->actual_price,
                 'unit' => $product->baseUnit->name,
                 'unit_id' => $product->baseUnit->id,
                 'variants' => $product->variants->map(function ($variant) {
@@ -43,7 +43,8 @@ class PurchaseController extends Controller
                         'name' => $variant->variant_name,
                         'barcode' => $variant->barcode,
                         'sku' => $variant->sku,
-                        'price' => $variant->sale_price,
+                        'price' => $variant->actual_price,
+
                     ];
                 }),
             ];
@@ -178,45 +179,6 @@ class PurchaseController extends Controller
             return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
         }
     }
-
-    // public function edit($id){
-    //     $title = "Edit Purchase";
-    //     $suppliers = Supplier::all();
-    //     $products = Product::with('baseUnit')->get(); 
-    //     $productsMapped = $products->map(function ($product) {
-    //         return [
-    //             'id' => $product->id,
-    //             'name' => $product->name,
-    //             'price' => $product->sale_price,
-    //             'unit' => $product->baseUnit->name,
-    //             'unit_id' => $product->baseUnit->id, // <-- Add this line
-    //         ];
-    //     });
-    //     $purchase = Purchase::with('items')->findOrFail($id);
-    //     return view('admin.purchase.create', compact('purchase', 'title', 'suppliers', 'products', 'productsMapped'));
-    // }
-
-    // public function update(Request $request, $id){
-    //     $purchase = Purchase::findOrFail($id);
-    //     $purchase->vendor_id = $request->vendor_id;
-    //     $purchase->total_amount = $request->total_amount;
-    //     $purchase->save();
-
-    //     // Remove old items
-    //     $purchase->items()->delete();
-
-    //     // Add updated items
-    //     foreach ($request->items as $item) {
-    //         $purchaseItem = new PurchaseItem();
-    //         $purchaseItem->purchase_id = $purchase->id;
-    //         $purchaseItem->product_id = $item['product_id'];
-    //         $purchaseItem->quantity = $item['quantity'];
-    //         $purchaseItem->cost = $item['cost'];
-    //         $purchaseItem->save();
-    //     }
-
-    //     return redirect()->route('purchase.list')->with('success', 'Purchase updated successfully.');
-    // }
 
     public function destroy($id){
         DB::beginTransaction();

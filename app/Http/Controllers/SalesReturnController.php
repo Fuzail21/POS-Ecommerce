@@ -173,9 +173,9 @@ class SalesReturnController extends Controller
             // 3. Calculate total return amount (gross value of items returned)
             $totalReturnAmount = 0;
             foreach ($returnedItems as $item) {
-                // Use the sale_price sent from the frontend cart data,
+                // Use the actual_price sent from the frontend cart data,
                 // which represents the price the item was sold for or its current sale price.
-                $itemPrice = $item['sale_price'] ?? 0;
+                $itemPrice = $item['actual_price'] ?? 0;
                 $itemQuantity = $item['qty'] ?? 0;
                 $totalReturnAmount += ($itemPrice * $itemQuantity);
             }
@@ -218,10 +218,10 @@ class SalesReturnController extends Controller
                     'quantity'              => $item['qty'],
                     'unit_id'               => $item['unit_id'] ?? null,
                     'quantity_in_base_unit' => $quantityInBaseUnit,
-                    'unit_price'            => $item['sale_price'], // Use the sale_price from the cart_data
+                    'unit_price'            => $item['actual_price'], // Use the actual_price from the cart_data
                     'discount'              => $item['discount'] ?? 0.00, // Assuming these might be in cart_data if granular
                     'tax'                   => $item['tax'] ?? 0.00,
-                    'total_price'           => ($item['sale_price'] ?? 0) * ($item['qty'] ?? 0),
+                    'total_price'           => ($item['actual_price'] ?? 0) * ($item['qty'] ?? 0),
                 ]);
 
                 // Update Inventory Stock (increment quantity for returned items)
@@ -246,7 +246,7 @@ class SalesReturnController extends Controller
                     'ref_type'                  => 'return', // Reference type for the ledger
                     'ref_id'                    => $salesReturn->id, // ID of the sales return record
                     'quantity_change_in_base_unit' => $quantityInBaseUnit,
-                    'unit_cost'                 => $item['sale_price'], // Use the original sale price as a cost basis for return
+                    'unit_cost'                 => $item['actual_price'], // Use the original sale price as a cost basis for return
                     'direction'                 => 'in', // Stock is coming back into inventory
                     'created_by'                => auth()->id(),
                 ]);

@@ -17,7 +17,7 @@ class ProductVariant extends Model
         'variant_name',
         'sku',
         'barcode',
-        'sale_price',
+        'actual_price',
         'product_img',
         'low_stock',
     ];
@@ -44,5 +44,41 @@ class ProductVariant extends Model
         // Corrected line: Use a comma (,) to separate the arguments
         return $this->hasMany(InventoryStock::class, 'variant_id');
     }
+
+    public function getDiscountedPriceAttribute()
+    {
+        $price = $this->actual_price;
+        $today = now()->toDateString();
+    
+        $rules = \App\Models\DiscountRule::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->get();
+    
+        foreach ($rules as $rule) {
+            $ids = json_decode($rule->target_ids, true);
+        
+            // Match by product
+            if ($rule->type === 'product' && in_array($this->product_id, $ids)) {
+                return $this->applyPercentageDiscount($price, $rule->discount);
+            }
+        
+            // Match by category (via parent product)
+            if (
+                $rule->type === 'category' &&
+                $this->product && // check relation exists
+                in_array($this->product->category_id, $ids)
+            ) {
+                return $this->applyPercentageDiscount($price, $rule->discount);
+            }
+        }
+    
+        return $price;
+    }
+    
+    private function applyPercentageDiscount($price, $discount)
+    {
+        return round($price - ($price * $discount / 100), 2);
+    }
+
 }
 

@@ -113,11 +113,11 @@
                                                     <option
                                                         value="variant-{{ $variant->id }}" 
                                                         data-name="{{ $product->name }} - {{ $variant->variant_name }}" 
-                                                        data-price="{{ $variant->sale_price }}"
+                                                        data-price="{{ $variant->actual_price }}"
                                                         data-stock="{{ $variant->stock_quantity }}"
                                                         data-unit-id="{{ $product->default_display_unit_id }}" 
                                                         {{ !$variant->in_stock ? 'disabled' : '' }}>
-                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }}
+                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }}
                                                         {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
                                                     </option>
                                                 @endforeach
@@ -125,7 +125,7 @@
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
                                             
-                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }}
+                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
                                             @if($product->in_stock)
@@ -133,7 +133,7 @@
                                                     class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
                                                     data-id="product-{{ $product->id }}" 
                                                     data-name="{{ $product->name }}"
-                                                    data-price="{{ $product->sale_price }}"
+                                                    data-price="{{ $product->actual_price }}"
                                                     data-stock="{{ $product->stock_quantity }}"
                                                     data-unit-id="{{ $product->default_display_unit_id }}">
                                                     Add to Cart
@@ -387,7 +387,7 @@
                 if (item.product_id && !item.variant_id) { // Simple Product (product_id exists, but no variant_id)
                     id = `product-${item.product_id}`;
                     name = item.product.name;
-                    price = item.product.sale_price;
+                    price = item.product.actual_price;
                     unit_id = item.product.default_display_unit_id;
                     purchased_qty = item.quantity;
                     console.log(`Debugging: Processing Simple Product - ID: ${id}, Name: ${name}, Qty: ${purchased_qty}`); // Debugging line
@@ -395,7 +395,7 @@
                     id = `variant-${item.variant_id}`;
                     // Ensure item.variant.product and item.variant are available
                     name = `${item.variant?.product?.name || 'N/A Product'} - ${item.variant?.variant_name || 'N/A Variant'}`;
-                    price = item.variant?.sale_price;
+                    price = item.variant?.actual_price;
                     unit_id = item.variant?.product?.default_display_unit_id;
                     purchased_qty = item.quantity;
                     console.log(`Debugging: Processing Variant Product - ID: ${id}, Name: ${name}, Qty: ${purchased_qty}`); // Debugging line
@@ -411,7 +411,7 @@
                     }
                     cart[id] = {
                         name,
-                        sale_price: price,
+                        actual_price: price,
                         unit_id,
                         qty: 0, // Initialize quantity to 0 for return
                         purchased_qty: purchased_qty // Store original purchased quantity
@@ -438,7 +438,7 @@
                     continue; // Skip items not properly initialized for returns
                 }
 
-                const lineTotal = item.sale_price * item.qty; // Calculate based on return quantity
+                const lineTotal = item.actual_price * item.qty; // Calculate based on return quantity
                 subtotal += lineTotal;
 
                 const tr = document.createElement('tr');
@@ -491,7 +491,7 @@
                         type: type,
                         id: parseInt(numericId),
                         name: cart[id].name,
-                        sale_price: cart[id].sale_price,
+                        actual_price: cart[id].actual_price,
                         unit_id: cart[id].unit_id,
                         qty: cart[id].qty,
                         purchased_qty: cart[id].purchased_qty
@@ -525,7 +525,7 @@
                 }
                 cart[id] = {
                     name,
-                    sale_price: price,
+                    actual_price: price,
                     unit_id,
                     qty: 1,
                     stock: stock, // This 'stock' is the current inventory stock, not the return limit

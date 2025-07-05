@@ -95,24 +95,24 @@
                                                     @endphp
                                                     <option {{ $disabled }} value="variant-{{ $variant->id }}"
                                                             data-name="{{ htmlspecialchars($product->name . ' - ' . $variant->variant_name) }}"
-                                                            data-price="{{ $variant->sale_price }}"
+                                                            data-price="{{ $variant->actual_price }}"
                                                             data-stock="{{ $variant->stock_quantity }}"
                                                             data-unit-id="{{ $product->default_display_unit_id }}"
                                                             class="{{ $opacityClass }}">
-                                                        {{ htmlspecialchars($variant->variant_name) }} - {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }} {{ $stockText }}
+                                                        {{ htmlspecialchars($variant->variant_name) }} - {{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }} {{ $stockText }}
                                                     </option>
                                                 @endforeach
                                             </select>
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
                                             {{-- Display directly for simple products without actual variants --}}
-                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }}
+                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small></p>
                                             @if ($product->in_stock)
                                                 <button class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
                                                         data-id="product-{{ $product->id }}"
                                                         data-name="{{ htmlspecialchars($product->name) }}"
-                                                        data-price="{{ $product->sale_price }}"
+                                                        data-price="{{ $product->actual_price }}"
                                                         data-stock="{{ $product->stock_quantity }}"
                                                         data-unit-id="{{ $product->default_display_unit_id }}">
                                                     Add to Cart
@@ -511,23 +511,23 @@
                                     const opacityClass = !variant.in_stock ? 'opacity-50' : '';
                                     productCardHtml += `<option ${disabled} value="variant-${variant.id}"
                                                                 data-name="${product.name} - ${variant.variant_name}"
-                                                                data-price="${variant.sale_price}"
+                                                                data-price="${variant.actual_price}"
                                                                 data-stock="${variant.stock_quantity}"
                                                                 data-unit-id="${product.default_display_unit_id}"
                                                                 class="${opacityClass}">
-                                                                ${variant.variant_name} - ${currencySymbol} ${variant.sale_price.toFixed(2)} ${stockText}
+                                                                ${variant.variant_name} - ${currencySymbol} ${variant.actual_price.toFixed(2)} ${stockText}
                                                             </option>`;
                                 });
                                 productCardHtml += `</select>
                                                     <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>`;
                             } else {
-                                productCardHtml += `<p class="mb-1">${currencySymbol} ${product.sale_price.toFixed(2)}
+                                productCardHtml += `<p class="mb-1">${currencySymbol} ${product.actual_price.toFixed(2)}
                                                     <br><small>(Stock: ${product.stock_quantity})</small></p>`;
                                 if (product.in_stock) {
                                     productCardHtml += `<button class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
                                                                 data-id="product-${product.id}"
                                                                 data-name="${product.name}"
-                                                                data-price="${product.sale_price}"
+                                                                data-price="${product.actual_price}"
                                                                 data-stock="${product.stock_quantity}"
                                                                 data-unit-id="${product.default_display_unit_id}">
                                                                 Add to Cart

@@ -44,7 +44,7 @@
                         <div class="col-lg-6">
                             <ul class="list-inline mb-0">
                                 {{-- <li class="list-inline-item">{{ $setting->footer }}</li> --}}
-                                <li class="list-inline-item">Developed by <a href="https://www.linkedin.com/in/fuzail-siddiqui-294238267/" target="_blank">{{ $setting->developed_by }}</a></li>
+                                <li class="list-inline-item">Developed by <a href="https://thetechio.com/" target="_blank">{{ $setting->developed_by }}</a></li>
                             </ul>
                         </div>
                         <div class="col-lg-6 text-right">

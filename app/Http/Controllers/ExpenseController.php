@@ -11,15 +11,13 @@ use App\Models\User;
 
 class ExpenseController extends Controller
 {
-    public function index()
-    {
+    public function index(){
         $expenseCategories = ExpenseCategory::paginate(20);
         $title = 'Expense Category List';
         return view('admin.expense.expense_categories_list', compact('expenseCategories', 'title'));
     }
 
-    public function store(Request $request)
-    {
+    public function store(Request $request){
        $request->validate([
             'name' => 'required|string',
         ]);
@@ -31,8 +29,7 @@ class ExpenseController extends Controller
         return redirect()->route('expense_categories.list')->with('success', 'Expense Category added successfully.');
     }
 
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id){
         $request->validate([
             'name' => 'required|string',
         ]);
@@ -44,8 +41,7 @@ class ExpenseController extends Controller
         return redirect()->route('expense_categories.list')->with('success', 'Expense Category updated successfully.');
     }
 
-    public function destroy($id)
-    {
+    public function destroy($id){
         $category = ExpenseCategory::findOrFail($id);
 
         // Check if any expense is using this category
@@ -61,16 +57,13 @@ class ExpenseController extends Controller
     }
 
     //Expense
-    public function list()
-    {
+    public function list(){
         $expenses = Expense::with(['category', 'branch', 'creator'])->paginate(20);
         $title = 'Expense List';
         return view('admin.expense.list', compact('expenses', 'title'));
     }
 
-
-    public function expenseCreate()
-    {
+    public function expenseCreate(){
         $title = 'Add Expense';
         $branches = Branch::all();
         $categories = ExpenseCategory::all();
@@ -79,9 +72,7 @@ class ExpenseController extends Controller
         return view('admin.expense.create', compact('title', 'branches', 'categories', 'users'));
     }
 
-
-    public function expenseStore(Request $request)
-    {
+    public function expenseStore(Request $request){
         $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'category_id' => 'required|exists:expense_categories,id',
@@ -101,8 +92,7 @@ class ExpenseController extends Controller
         return redirect()->route('expense.list')->with('success', 'Expense added successfully.');
     }
 
-    public function expenseEdit($id)
-    {
+    public function expenseEdit($id){
         $expense = Expense::findOrFail($id);
         $branches = Branch::all();
         $categories = ExpenseCategory::all();
@@ -111,8 +101,7 @@ class ExpenseController extends Controller
         return view('admin.expense.create', compact('expense', 'branches', 'categories', 'title'));
     }
 
-    public function expenseUpdate(Request $request, $id)
-    {
+    public function expenseUpdate(Request $request, $id){
         $request->validate([
             'branch_id' => 'required|exists:branches,id',
             'category_id' => 'required|exists:expense_categories,id',
@@ -132,13 +121,10 @@ class ExpenseController extends Controller
         return redirect()->route('expense.list')->with('success', 'Expense updated successfully.');
     }
 
-    public function expenseDestroy($id)
-    {
+    public function expenseDestroy($id){
         $expense = Expense::findOrFail($id);
         $expense->delete();
 
         return redirect()->route('expense.list')->with('success', 'Expense deleted successfully.');
     }
-
-
 }

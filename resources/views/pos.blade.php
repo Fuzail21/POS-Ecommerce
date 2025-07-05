@@ -265,52 +265,69 @@
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                         <div class="row" id="product-list">
-                            {{-- Product list loop is now directly embedded here --}}
                             @php
-                                // This section will only run on the initial page load.
-                                // For AJAX requests, the controller will directly return HTML.
                                 $productsHtml = '';
                                 if (!empty($products)) {
-                                    foreach($products as $product) {
+                                    foreach ($products as $product) {
                                         $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
                                         $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/70x70/f0f0f0/808080?text=N/A';
-
+                        
                                         $productsHtml .= '<div class="col-md-3 mb-2 product-item d-flex">';
                                         $productsHtml .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
-
+                        
+                                        // Product image
                                         if (!empty($product->product_img)) {
-                                            $productsHtml .= '<img src="' . asset('storage/' . $product->product_img) . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
+                                            $productsHtml .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
                                         } else {
                                             $productsHtml .= '<div style="width: 70px; height: 70px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
                                         }
-
+                        
                                         $productsHtml .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
-
+                        
                                         if ($product->variants->count()) {
                                             $productsHtml .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
                                             $productsHtml .= '<option disabled selected>Choose Variant</option>';
+                                            
                                             foreach ($product->variants as $variant) {
+                                                $finalPrice = $variant->final_price ?? $variant->actual_price;
+                                                $hasDiscount = $finalPrice < $variant->actual_price;
                                                 $disabled = !$variant->in_stock ? 'disabled' : '';
                                                 $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
+                        
+                                                $priceDisplay = $hasDiscount
+                                                    ? '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> <span style="color: #FF2700; font-weight: bold;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</span>'
+                                                    : $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
+                        
                                                 $productsHtml .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
                                                                  'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                                                                 'data-price="' . $variant->sale_price . '" ' .
+                                                                 'data-price="' . $finalPrice . '" ' .
                                                                  'data-stock="' . $variant->stock_quantity . '" ' .
                                                                  'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                                                 htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->sale_price, 2) . ' ' . $stockText .
+                                                                 htmlspecialchars($variant->variant_name) . ' - ' . $priceDisplay . ' ' . $stockText .
                                                                  '</option>';
                                             }
+                        
                                             $productsHtml .= '</select>';
                                             $productsHtml .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
                                         } else {
-                                            $productsHtml .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->sale_price, 2) .
-                                                             '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+                                            $finalPrice = $product->final_price ?? $product->actual_price;
+                                            $hasDiscount = $finalPrice < $product->actual_price;
+                        
+                                            $productsHtml .= '<p class="mb-1">';
+                                            if ($hasDiscount) {
+                                                $productsHtml .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
+                                                $productsHtml .= '<span style="color: #FF2700; font-weight: bold;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</span>';
+                                            } else {
+                                                $productsHtml .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
+                                            }
+                                            $productsHtml .= '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+                        
                                             if ($product->in_stock) {
                                                 $productsHtml .= '<button ' .
                                                                  'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
                                                                  'data-id="product-' . $product->id . '" ' .
                                                                  'data-name="' . htmlspecialchars($product->name) . '" ' .
-                                                                 'data-price="' . $product->sale_price . '" ' .
+                                                                 'data-price="' . $finalPrice . '" ' .
                                                                  'data-stock="' . $product->stock_quantity . '" ' .
                                                                  'data-unit-id="' . $product->default_display_unit_id . '">' .
                                                                  'Add to Cart' .
@@ -319,10 +336,12 @@
                                                 $productsHtml .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
                                             }
                                         }
+                        
                                         $productsHtml .= '</div>';
                                         $productsHtml .= '</div>';
                                     }
                                 }
+                        
                                 echo $productsHtml;
                             @endphp
                         </div>
@@ -617,7 +636,7 @@
 
             for (const id in cart) {
                 const item = cart[id];
-                const lineTotal = item.sale_price * item.qty;
+                const lineTotal = item.actual_price * item.qty;
                 subtotal += lineTotal;
 
                 const tr = document.createElement('tr');
@@ -695,7 +714,7 @@
                 // Add for first time
                 cart[id] = {
                     name,
-                    sale_price: price,
+                    actual_price: price,
                     unit_id,
                     qty: 1,
                     stock: stock

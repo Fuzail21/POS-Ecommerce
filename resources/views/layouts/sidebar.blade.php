@@ -525,6 +525,20 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                         </li>
                     </ul>
                 </li>
+                
+                <li class="{{ Route::is('discount_rules.*') ? 'active' : '' }}">
+                    <a href="{{ route('discount_rules.index') }}" class="svg-icon">
+                        <svg class="svg-icon" id="discount-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
+                            <path d="M15 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
+                            <path d="M6 6l12 12"></path>
+                            <path d="M21 15V9a2 2 0 0 0-.59-1.41l-5-5A2 2 0 0 0 14 2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 .59 1.41l5 5A2 2 0 0 0 10 19h8a2 2 0 0 0 2-2z"></path>
+                        </svg>
+                        <span class="ml-4">Discount Rules</span>
+                    </a>
+                </li>
 
                 <li class="{{ Route::is('stock.list') ? 'active' : '' }}">
                     <a href="{{ route('stock.list') }}" class="svg-icon">

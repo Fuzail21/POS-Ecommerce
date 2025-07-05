@@ -37,141 +37,307 @@ class QuotationController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request)
-    {
+
+    // public function create(Request $request)
+    // {
+    //     $title = "Create Sale Quotation"; // Changed title for clarity
+    //     $categories = Category::all();
+    //     $branches = Branch::all();
+    //     $customers = Customer::all();
+    //     $warehouses = Warehouse::all();
+    //     $units = Unit::all();
+    //     $setting = Setting::first();
+
+    //     $search = $request->input('search');
+
+    //     $products = collect(); // Initialize as an empty collection
+
+    //     if ($search) {
+    //         $products = Product::whereNull('deleted_at')
+    //             ->where(function ($query) use ($search) {
+    //                 $query->where('name', 'like', "%{$search}%")
+    //                     ->orWhere('sku', 'like', "%{$search}%")
+    //                     ->orWhere('barcode', 'like', "%{$search}%");
+    //             })
+    //             ->with([
+    //                 'baseUnit',
+    //                 'variants.inventoryStocks',
+    //                 'variants.product.baseUnit',
+    //                 'inventoryStocks',
+    //             ])
+    //             ->get()
+    //             ->map(function ($product) {
+    //                 $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
+    //                 $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+    //                 $product->stock_quantity = $baseQuantity / $conversionFactor;
+    //                 $product->in_stock = $product->stock_quantity > 0;
+
+    //                 foreach ($product->variants as $variant) {
+    //                     $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+    //                     $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+    //                     $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+    //                     $variant->in_stock = $variant->stock_quantity > 0;
+    //                 }
+    //                 return $product;
+    //             });
+    //     } else {
+    //         $products = Product::whereNull('deleted_at')
+    //             ->latest()
+    //             ->take(10)
+    //             ->with([
+    //                 'baseUnit',
+    //                 'variants.inventoryStocks',
+    //                 'variants.product.baseUnit',
+    //                 'inventoryStocks',
+    //             ])
+    //             ->get()
+    //             ->map(function ($product) {
+    //                 $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
+    //                 $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+    //                 $product->stock_quantity = $baseQuantity / $conversionFactor;
+    //                 $product->in_stock = $product->stock_quantity > 0;
+
+    //                 foreach ($product->variants as $variant) {
+    //                     $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+    //                     $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+    //                     $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+    //                     $variant->in_stock = $variant->stock_quantity > 0;
+    //                 }
+    //                 return $product;
+    //             });
+    //     }
+
+    //     if ($request->ajax()) {
+    //         $html = '';
+    //         foreach ($products as $product) {
+    //             $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
+    //             $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
+
+    //             $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
+    //             $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
+
+    //             if (!empty($product->product_img)) {
+    //                 $html .= '<img src="' . asset('storage/' . $product->product_img) . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
+    //             } else {
+    //                 $html .= '<div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
+    //             }
+
+    //             $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+
+    //             if ($product->variants->count()) {
+    //                 $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
+    //                 $html .= '<option disabled selected>Choose Variant</option>';
+    //                 foreach ($product->variants as $variant) {
+    //                     $disabled = !$variant->in_stock ? 'disabled' : '';
+    //                     $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
+    //                     $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
+    //                              'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
+    //                              'data-price="' . $variant->actual_price . '" ' .
+    //                              'data-stock="' . $variant->stock_quantity . '" ' .
+    //                              'data-unit-id="' . $product->default_display_unit_id . '">' .
+    //                              htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . ' ' . $stockText .
+    //                              '</option>';
+    //                 }
+    //                 $html .= '</select>';
+    //                 $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
+    //             } else {
+    //                 $html .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) .
+    //                          '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+    //                 if ($product->in_stock) {
+    //                     $html .= '<button ' .
+    //                              'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
+    //                              'data-id="product-' . $product->id . '" ' .
+    //                              'data-name="' . htmlspecialchars($product->name) . '" ' .
+    //                              'data-price="' . $product->actual_price . '" ' .
+    //                              'data-stock="' . $product->stock_quantity . '" ' .
+    //                              'data-unit-id="' . $product->default_display_unit_id . '">' .
+    //                              'Add to Cart' .
+    //                              '</button>';
+    //                 } else {
+    //                     $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+    //                 }
+    //             }
+    //             $html .= '</div>';
+    //             $html .= '</div>';
+    //         }
+    //         return $html;
+    //     }
+
+    //     return view('admin.quotations.create', compact(
+    //         'categories',
+    //         'units',
+    //         'products',
+    //         'title',
+    //         'customers',
+    //         'branches',
+    //         'warehouses',
+    //         'setting'
+    //     ));
+    // }
+
+    public function create(Request $request){
         $title = "Create Sale Quotation"; // Changed title for clarity
         $categories = Category::all();
         $branches = Branch::all();
         $customers = Customer::all();
-        $warehouses = Warehouse::all();
         $units = Unit::all();
         $setting = Setting::first();
 
         $search = $request->input('search');
+        $products = collect();
 
-        $products = collect(); // Initialize as an empty collection
+        // ✅ Load active discount rules
+        $now = now();
+        $activeDiscounts = \App\Models\DiscountRule::where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now)
+            ->get();
+
+        $query = Product::whereNull('deleted_at')
+            ->with([
+                'baseUnit',
+                'variants.inventoryStocks',
+                'variants.product.baseUnit',
+                'inventoryStocks',
+            ]);
 
         if ($search) {
-            $products = Product::whereNull('deleted_at')
-                ->where(function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('sku', 'like', "%{$search}%")
-                        ->orWhere('barcode', 'like', "%{$search}%");
-                })
-                ->with([
-                    'baseUnit',
-                    'variants.inventoryStocks',
-                    'variants.product.baseUnit',
-                    'inventoryStocks',
-                ])
-                ->get()
-                ->map(function ($product) {
-                    $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                    $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                    $product->stock_quantity = $baseQuantity / $conversionFactor;
-                    $product->in_stock = $product->stock_quantity > 0;
-
-                    foreach ($product->variants as $variant) {
-                        $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                        $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                        $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                        $variant->in_stock = $variant->stock_quantity > 0;
-                    }
-                    return $product;
-                });
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%");
+            });
         } else {
-            $products = Product::whereNull('deleted_at')
-                ->latest()
-                ->take(10)
-                ->with([
-                    'baseUnit',
-                    'variants.inventoryStocks',
-                    'variants.product.baseUnit',
-                    'inventoryStocks',
-                ])
-                ->get()
-                ->map(function ($product) {
-                    $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                    $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                    $product->stock_quantity = $baseQuantity / $conversionFactor;
-                    $product->in_stock = $product->stock_quantity > 0;
-
-                    foreach ($product->variants as $variant) {
-                        $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                        $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                        $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                        $variant->in_stock = $variant->stock_quantity > 0;
-                    }
-                    return $product;
-                });
+            $query->latest()->take(12);
         }
 
-        if ($request->ajax()) {
-            $html = '';
-            foreach ($products as $product) {
-                $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
+            $products = $query->get()->map(function ($product) use ($activeDiscounts) {
+                $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
+                $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                $product->stock_quantity = $baseQuantity / $conversionFactor;
+                $product->in_stock = $product->stock_quantity > 0;
 
-                $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
-                $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
+                $product->discounted_price = $product->actual_price;
 
-                if (!empty($product->product_img)) {
-                    $html .= '<img src="' . asset('storage/' . $product->product_img) . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
-                } else {
-                    $html .= '<div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
+                // ✅ Check if this product or its category has a discount
+                foreach ($activeDiscounts as $rule) {
+                    $targets = collect(json_decode($rule->target_ids));
+                    if (
+                        ($rule->type === 'product' && $targets->contains($product->id)) ||
+                        ($rule->type === 'category' && $targets->contains($product->category_id))
+                    ) {
+                        $product->discounted_price = $product->actual_price - ($product->actual_price * ($rule->discount / 100));
+                        break;
+                    }
                 }
 
-                $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+                foreach ($product->variants as $variant) {
+                    $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+                    $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                    $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+                    $variant->in_stock = $variant->stock_quantity > 0;
 
-                if ($product->variants->count()) {
-                    $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
-                    $html .= '<option disabled selected>Choose Variant</option>';
-                    foreach ($product->variants as $variant) {
-                        $disabled = !$variant->in_stock ? 'disabled' : '';
-                        $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
-                        $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
-                                 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                                 'data-price="' . $variant->sale_price . '" ' .
-                                 'data-stock="' . $variant->stock_quantity . '" ' .
-                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                 htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->sale_price, 2) . ' ' . $stockText .
-                                 '</option>';
+                    $variant->discounted_price = $variant->actual_price;
+
+                    foreach ($activeDiscounts as $rule) {
+                        $targets = collect(json_decode($rule->target_ids));
+                        if (
+                            ($rule->type === 'product' && $targets->contains($product->id)) ||
+                            ($rule->type === 'category' && $targets->contains($product->category_id))
+                        ) {
+                            $variant->discounted_price = $variant->actual_price - ($variant->actual_price * ($rule->discount / 100));
+                            break;
+                        }
                     }
-                    $html .= '</select>';
-                    $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
-                } else {
-                    $html .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->sale_price, 2) .
-                             '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
-                    if ($product->in_stock) {
-                        $html .= '<button ' .
-                                 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
-                                 'data-id="product-' . $product->id . '" ' .
-                                 'data-name="' . htmlspecialchars($product->name) . '" ' .
-                                 'data-price="' . $product->sale_price . '" ' .
-                                 'data-stock="' . $product->stock_quantity . '" ' .
-                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                 'Add to Cart' .
-                                 '</button>';
+                }
+
+                return $product;
+            });
+
+            // ✅ AJAX: Return product cards with discounted prices
+            if ($request->ajax()) {
+                $html = '';
+
+                foreach ($products as $product) {
+                    $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
+                    $productImgSrc = !empty($product->product_img)
+                    ? asset('storage/' . $product->product_img)
+                    : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
+                    $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
+                    $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
+                    // Product image
+                    if (!empty($product->product_img)) {
+                        $html .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
                     } else {
-                        $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+                        $html .= '<div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
                     }
-                }
-                $html .= '</div>';
-                $html .= '</div>';
-            }
-            return $html;
-        }
+                    $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+                    if ($product->variants->count()) {
+                        $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
+                        $html .= '<option disabled selected>Choose Variant</option>';
+                        foreach ($product->variants as $variant) {
+                            $disabled = !$variant->in_stock ? 'disabled' : '';
+                            $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
+                            $finalVariantPrice = $variant->discounted_price;
+                            $hasVariantDiscount = $finalVariantPrice < $variant->actual_price;
+                            $label = htmlspecialchars($variant->variant_name) . ' - ';
+                            if ($hasVariantDiscount) {
+                                $label .= '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> ';
+                                $label .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalVariantPrice, 2) . '</strong>';
+                            } else {
+                                $label .= $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
+                            }
+                            $label .= ' ' . $stockText;
+                            $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
+                                'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
+                                'data-price="' . $finalVariantPrice . '" ' .
+                                'data-stock="' . $variant->stock_quantity . '" ' .
+                                'data-unit-id="' . $product->default_display_unit_id . '">' .
+                                $label .
+                                '</option>';
+                        }
+                        $html .= '</select>';
+                        $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
+                    } else {
+                        $finalPrice = $product->discounted_price;
+                        $hasDiscount = $finalPrice < $product->actual_price;
+                        $html .= '<p class="mb-1">';
+                        if ($hasDiscount) {
+                            $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
+                            $html .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                        } else {
+                            $html .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
+                        }
+                        $html .= '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+                        if ($product->in_stock) {
+                            $html .= '<button ' .
+                                'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
+                                'data-id="product-' . $product->id . '" ' .
+                                'data-name="' . htmlspecialchars($product->name) . '" ' .
+                                'data-price="' . $finalPrice . '" ' .
+                                'data-stock="' . $product->stock_quantity . '" ' .
+                                'data-unit-id="' . $product->default_display_unit_id . '">' .
+                                'Add to Cart' .
+                                '</button>';
+                        } else {
+                            $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+                        }
+                    }
 
-        return view('admin.quotations.create', compact(
-            'categories',
-            'units',
-            'products',
-            'title',
-            'customers',
-            'branches',
-            'warehouses',
-            'setting'
-        ));
+                    $html .= '</div></div>';
+                }
+
+                return $html;
+            }
+
+            return view('admin.quotations.create', compact(
+                'categories',
+                'units',
+                'products',
+                'title',
+                'customers',
+                'branches',
+                'setting'
+            ));
     }
 
     /**
@@ -206,7 +372,7 @@ class QuotationController extends Controller
                 $mappedItems[] = [
                     'product_id' => $productId,
                     'product_variant_id' => $productVariantId, // Can be null for simple products
-                    'unit_price' => $item['sale_price'],
+                    'unit_price' => $item['actual_price'],
                     'quantity' => $item['qty'],
                     // These fields are not directly provided per item in your current JS cart structure,
                     // so ensure they are handled if needed, or adjust validation/db.
@@ -426,23 +592,23 @@ class QuotationController extends Controller
                         $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
                         $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
                                  'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                                 'data-price="' . $variant->sale_price . '" ' .
+                                 'data-price="' . $variant->actual_price . '" ' .
                                  'data-stock="' . $variant->stock_quantity . '" ' .
                                  'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                 htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->sale_price, 2) . ' ' . $stockText .
+                                 htmlspecialchars($variant->variant_name) . ' - ' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . ' ' . $stockText .
                                  '</option>';
                     }
                     $html .= '</select>';
                     $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
                 } else {
-                    $html .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->sale_price, 2) .
+                    $html .= '<p class="mb-1">' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) .
                              '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
                     if ($product->in_stock) {
                         $html .= '<button ' .
                                  'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
                                  'data-id="product-' . $product->id . '" ' .
                                  'data-name="' . htmlspecialchars($product->name) . '" ' .
-                                 'data-price="' . $product->sale_price . '" ' .
+                                 'data-price="' . $product->actual_price . '" ' .
                                  'data-stock="' . $product->stock_quantity . '" ' .
                                  'data-unit-id="' . $product->default_display_unit_id . '">' .
                                  'Add to Cart' .
@@ -483,7 +649,7 @@ class QuotationController extends Controller
 
             $initialCart[$id] = [
                 'name' => $name,
-                'sale_price' => $salePrice,
+                'actual_price' => $salePrice,
                 'unit_id' => $item->unit_id,
                 'qty' => $item->quantity,
                 'stock' => $stock,
@@ -538,7 +704,7 @@ class QuotationController extends Controller
                 $mappedItems[] = [
                     'product_id' => $productId,
                     'product_variant_id' => $productVariantId, // Can be null for simple products
-                    'unit_price' => $item['sale_price'],
+                    'unit_price' => $item['actual_price'],
                     'quantity' => $item['qty'],
                     'discount_amount' => 0, // Or retrieve if you add per-item discount logic
                     'tax_amount' => 0,      // Or retrieve if you add per-item tax logic

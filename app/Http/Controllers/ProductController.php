@@ -41,7 +41,7 @@ class ProductController extends Controller
             'sku' => 'required|unique:products,sku',
             'brand' => 'nullable|string|max:255',
             'low_stock' => 'nullable|numeric',
-            'sale_price' => 'required|numeric|min:0',
+            'actual_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
             'supplier_ids' => 'nullable|array',
             'supplier_ids.*' => 'exists:suppliers,id',
@@ -81,7 +81,7 @@ class ProductController extends Controller
                 $variant = $product->variants()->create([
                     'variant_name' => $variantData['variant_name'],
                     'sku' => $variantData['sku'],
-                    'sale_price' => $variantData['sale_price'] ?? 0,
+                    'actual_price' => $variantData['actual_price'] ?? 0,
                     'low_stock' => $variantData['low_stock'] ?? 0,
                     'product_img' => $variantImagePath,
                 ]);
@@ -125,7 +125,7 @@ class ProductController extends Controller
             ],
             'brand' => 'nullable|string|max:255',
             'low_stock' => 'nullable|numeric',
-            'sale_price' => 'required|numeric|min:0',
+            'actual_price' => 'required|numeric|min:0',
             'product_img' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,svg|max:2048',
             'supplier_ids' => 'nullable|array',
             'supplier_ids.*' => 'exists:suppliers,id',
@@ -175,7 +175,7 @@ class ProductController extends Controller
                     $needsUpdate = (
                         $variant->variant_name !== $variantData['variant_name'] ||
                         $variant->barcode !== ($variantData['barcode'] ?? null) ||
-                        $variant->sale_price != ($variantData['sale_price'] ?? 0) ||
+                        $variant->actual_price != ($variantData['actual_price'] ?? 0) ||
                         $variant->low_stock != ($variantData['low_stock'] ?? 0)
                     );
 
@@ -183,7 +183,7 @@ class ProductController extends Controller
                         $variant->update([
                             'variant_name' => $variantData['variant_name'],
                             'barcode' => $variantData['barcode'] ?? $variant->barcode,
-                            'sale_price' => $variantData['sale_price'] ?? 0,
+                            'actual_price' => $variantData['actual_price'] ?? 0,
                             'low_stock' => $variantData['low_stock'] ?? 0,
                         ]);
                     }
@@ -201,7 +201,7 @@ class ProductController extends Controller
                         $newVariant = new ProductVariant([
                             'variant_name' => $variantData['variant_name'],
                             'sku' => $sku,
-                            'sale_price' => $variantData['sale_price'] ?? 0,
+                            'actual_price' => $variantData['actual_price'] ?? 0,
                             'low_stock' => $variantData['low_stock'] ?? 0,
                         ]);
 

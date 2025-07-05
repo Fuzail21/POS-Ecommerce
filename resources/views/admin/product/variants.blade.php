@@ -67,7 +67,7 @@
                                                     <em>No Barcode</em>
                                                 @endif
                                             </td>
-                                            <td>{{ $variant->sale_price }}</td>
+                                            <td>{{ $variant->actual_price }}</td>
                                         </tr>
                                     @empty
                                         <tr>

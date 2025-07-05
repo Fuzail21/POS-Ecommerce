@@ -295,7 +295,7 @@ class POSController extends Controller
 
         $topSellingProductsWithTotal = SaleItem::select('sale_items.product_id', 'sale_items.variant_id')
             ->selectRaw('SUM(sale_items.quantity) as total_quantity')
-            ->selectRaw('SUM(sale_items.quantity * products.sale_price) as grand_total_amount') // Using product sale price, adjust if variant price_adjustment affects this
+            ->selectRaw('SUM(sale_items.quantity * products.actual_price) as grand_total_amount') // Using product sale price, adjust if variant price_adjustment affects this
             ->join('products', 'sale_items.product_id', '=', 'products.id')
             // Conditionally join product_variants if product_variant_id is not null
             ->leftJoin('product_variants', 'sale_items.variant_id', '=', 'product_variants.id')

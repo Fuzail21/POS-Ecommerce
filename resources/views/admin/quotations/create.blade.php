@@ -109,29 +109,49 @@
                                             <select class="form-control mb-2 variant-selector mt-auto" data-product-id="{{ $product->id }}">
                                                 <option disabled selected>Choose Variant</option>
                                                 @foreach($product->variants as $variant)
+                                                    @php
+                                                        $hasDiscount = $variant->discounted_price < $variant->actual_price;
+                                                    @endphp
                                                     <option
                                                         value="variant-{{ $variant->id }}"
                                                         data-name="{{ $product->name }} - {{ $variant->variant_name }}"
-                                                        data-price="{{ $variant->sale_price }}"
+                                                        data-price="{{ $variant->discounted_price }}"
                                                         data-stock="{{ $variant->stock_quantity }}"
                                                         data-unit-id="{{ $product->default_display_unit_id }}"
                                                         {{ !$variant->in_stock ? 'disabled' : '' }}>
-                                                        {{ $variant->variant_name }} -  {{ $setting->currency_symbol }} {{ number_format($variant->sale_price, 2) }}
-                                                        {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
+
+                                                        {{ $variant->variant_name }} -
+                                                        @if($hasDiscount)
+                                                            <del>{{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }}</del>
+                                                            <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol }} {{ number_format($variant->discounted_price, 2) }}</strong>
+                                                        @else
+                                                            {{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }}
+                                                        @endif
+                                                        ({{ $variant->in_stock ? 'Stock: ' . $variant->stock_quantity : 'Out of Stock' }})
                                                     </option>
                                                 @endforeach
                                             </select>
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
-                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->sale_price, 2) }}
+                                            @php
+                                                $hasDiscount = $product->discounted_price < $product->actual_price;
+                                            @endphp
+                                            <p class="mb-1">
+                                                @if($hasDiscount)
+                                                    <del>{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}</del>
+                                                    <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol }} {{ number_format($product->discounted_price, 2) }}</strong>
+                                                @else
+                                                    {{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}
+                                                @endif
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
+
                                             @if($product->in_stock)
                                                 <button
                                                     class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
                                                     data-id="product-{{ $product->id }}"
                                                     data-name="{{ $product->name }}"
-                                                    data-price="{{ $product->sale_price }}"
+                                                    data-price="{{ $product->discounted_price }}"
                                                     data-stock="{{ $product->stock_quantity }}"
                                                     data-unit-id="{{ $product->default_display_unit_id }}">
                                                     Add to Cart
@@ -367,7 +387,7 @@
 
             for (const id in cart) {
                 const item = cart[id];
-                const lineTotal = item.sale_price * item.qty;
+                const lineTotal = item.actual_price * item.qty;
                 subtotal += lineTotal;
 
                 const tr = document.createElement('tr');
@@ -445,7 +465,7 @@
                 // Add for first time
                 cart[id] = {
                     name,
-                    sale_price: price,
+                    actual_price: price,
                     unit_id,
                     qty: 1,
                     stock: stock

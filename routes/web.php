@@ -26,6 +26,8 @@ use App\Http\Controllers\POSController;
 use App\Http\Middleware\CheckOpenRegister;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\DiscountRuleController;
+
 // Store
 use App\Http\Controllers\Frontend\StoreController;
 use App\Http\Controllers\Frontend\CartController;
@@ -288,8 +290,18 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/product/{id}', [StoreController::class, 'product'])->name('store.product');
         Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
         Route::get('/cart', [CartController::class, 'view'])->name('cart.view');
-        Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
-});
+        Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
+        Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
+    });
+
+
+    // Discount Rules
+    Route::get('discount-rules', [DiscountRuleController::class, 'index'])->name('discount_rules.index');
+    Route::get('discount-rules/create', [DiscountRuleController::class, 'create'])->name('discount_rules.create');
+    Route::post('discount-rules', [DiscountRuleController::class, 'store'])->name('discount_rules.store');
+    Route::get('discount-rules/{id}/edit', [DiscountRuleController::class, 'edit'])->name('discount_rules.edit');
+    Route::put('discount-rules/{id}', [DiscountRuleController::class, 'update'])->name('discount_rules.update');
+    Route::delete('discount-rules/{id}', [DiscountRuleController::class, 'destroy'])->name('discount_rules.destroy');
 });
 
 

@@ -36,9 +36,7 @@ class CategoryController extends Controller
         return view('admin.category.form', compact('category', 'parents', 'title'));
     }
 
-
-    public function update(Request $request, $id)
-    {
+    public function update(Request $request, $id){
         $request->validate([
             'name' => 'required|string',
             'parent_id' => 'nullable|exists:categories,id',
@@ -60,10 +58,7 @@ class CategoryController extends Controller
         return redirect()->route('categories.list')->with('success', 'Category updated.');
     }
 
-
-
-    public function destroy($id)
-    {
+    public function destroy($id){
         $category = Category::findOrFail($id);
 
         // Check if this category has child categories

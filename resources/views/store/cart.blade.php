@@ -1,0 +1,160 @@
+@extends('layouts.frontend.app')
+
+@section('frontend_content')
+
+@php
+    use App\Models\Setting;
+    $setting = Setting::first();
+    $primaryColor = $setting->primary_color ?? '#0d6efd';
+    $secondaryColor = $setting->secondary_color ?? '#6c757d';
+@endphp
+
+<div class="container-fluid page-header py-5">
+    <h1 class="text-center text-white display-6">Cart</h1>
+    <ol class="breadcrumb justify-content-center mb-0">
+        <li class="breadcrumb-item"><a href="{{ route('store.landing') }}">Home</a></li>
+        <li class="breadcrumb-item active text-white">Cart</li>
+    </ol>
+</div>
+
+<div class="container-fluid py-5">
+    <div class="container py-5">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Products</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Stock</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $subtotal = 0;
+                        $totalItems = 0;
+                    @endphp
+
+                    @forelse($cart as $id => $details)
+                        @php
+                            $actualPrice = $details['actual_price'] ?? $details['price'];
+                            $finalPrice = $details['price'];
+                            $itemPrice = $finalPrice * $details['quantity'];
+                            $originalTotal = $actualPrice * $details['quantity'];
+                            $subtotal += $itemPrice;
+                            $totalItems += $details['quantity'];
+                        @endphp
+                        <tr id="cart-item-row-{{ $id }}" class="cart-item-row">
+                            <th scope="row">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ asset('storage/' . $details['image']) }}" class="img-fluid me-5 rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="{{ $details['name'] }}">
+                                </div>
+                            </th>
+                            <td><p class="mb-0 mt-4">{{ $details['name'] }}</p></td>
+                            <td>
+                                <div class="mb-0 mt-4 price-per-item text-start" id="price-{{ $id }}">
+                                    @if ($actualPrice != $finalPrice)
+                                        <small class="text-muted text-decoration-line-through me-1">{{ number_format($actualPrice, 2) }} {{ $setting->currency_symbol ?? '$' }}</small>
+                                    @endif
+                                    <span class="fw-bold text-dark">{{ number_format($finalPrice, 2) }} {{ $setting->currency_symbol ?? '$' }}</span>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="input-group quantity mt-4" style="width: 100px;">
+                                    <input type="text" class="form-control form-control-sm text-center border-0 quantity-input"
+                                           value="{{ $details['quantity'] }}"
+                                           id="quantity-{{ $id }}"
+                                           data-max-stock="{{ $details['stock'] }}">
+                                </div>
+                                <div id="stock-error-{{ $id }}" class="text-danger mt-1" style="font-size: 0.85em; display: none;"></div>
+                            </td>
+                            <td><p class="mb-0 mt-4 stock-display" id="stock-display-{{ $id }}">{{ number_format($details['stock'], 0) }}</p></td>
+                            <td>
+                                <div class="mb-0 mt-4 item-total text-start" id="item-total-{{ $id }}">
+                                    @if ($actualPrice != $finalPrice)
+                                        <small class="text-muted text-decoration-line-through me-1">{{ number_format($originalTotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</small>
+                                    @endif
+                                    <span class="fw-bold text-dark">{{ number_format($itemPrice, 2) }} {{ $setting->currency_symbol ?? '$' }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <form action="{{ route('cart.remove') }}" method="POST" class="remove-from-cart-form">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="product_id" value="{{ $id }}">
+                                    <button type="submit" class="btn btn-md rounded-circle bg-light border mt-4">
+                                        <i class="fa fa-times text-danger"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr id="empty-cart-row">
+                            <td colspan="7" class="text-center py-5">Your cart is empty!</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row g-4 justify-content-end">
+            <div class="col-8"></div>
+            <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
+                <div class="bg-light rounded">
+                    <div class="p-4">
+                        <h1 class="display-6 mb-4">Cart <span class="fw-normal">Total</span></h1>
+                        <div class="d-flex justify-content-between mb-4">
+                            <h5 class="mb-0 me-4">Subtotal:</h5>
+                            <p class="mb-0" id="cart-subtotal">{{ number_format($subtotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-0 me-4">Shipping</h5>
+                            @php $shippingCost = 0.00; @endphp
+                            <p class="mb-0">Flat rate: <span id="shipping-cost">{{ number_format($shippingCost, 2) }}</span> {{ $setting->currency_symbol ?? '$' }}</p>
+                        </div>
+                        <p class="mb-0 text-end">Shipping to your address.</p>
+                    </div>
+                    @php $grandTotal = $subtotal + $shippingCost; @endphp
+                    <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
+                        <h5 class="mb-0 ps-4 me-4">Total</h5>
+                        <p class="mb-0 pe-4" id="cart-grand-total">{{ number_format($grandTotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
+                    </div>
+                    <a href="" class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4" type="button">Proceed Checkout</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('frontend_js')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const currencySymbol = "{{ $setting->currency_symbol ?? '$' }}";
+
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.setAttribute('readonly', true);
+        });
+
+        function recalculateCartTotal() {
+            let subtotal = 0;
+            document.querySelectorAll('.item-total').forEach(el => {
+                const priceText = el.querySelector('.fw-bold')?.textContent || '0';
+                subtotal += parseFloat(priceText.replace(/[^\d.]/g, '')) || 0;
+            });
+
+            const shipping = parseFloat(document.getElementById('shipping-cost').textContent) || 0;
+            const grandTotal = (subtotal + shipping).toFixed(2);
+
+            document.getElementById('cart-subtotal').textContent = `${subtotal.toFixed(2)} ${currencySymbol}`;
+            document.getElementById('cart-grand-total').textContent = `${grandTotal} ${currencySymbol}`;
+        }
+
+        recalculateCartTotal(); // Call initially on page load
+    });
+</script>
+@endsection
