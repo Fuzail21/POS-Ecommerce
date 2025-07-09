@@ -121,8 +121,7 @@ class StoreController extends Controller
     //     return view('store.shop', compact('products', 'categories'));
     // }
 
-    public function shop(Request $request)
-    {
+    public function shop(Request $request){
         $categoryId = $request->query('category');
     
         // 🟡 Load active discount rules once
@@ -199,9 +198,74 @@ class StoreController extends Controller
         return view('store.shop', compact('products', 'categories'));
     }
 
-    public function product($id) {
-        $product = Product::find($id)->firstOrFail();
-        return view('store.product', compact('product'));
+    public function product($id)
+    {
+        // Fetch active discount rules
+        $now = now();
+        $discountRules = DiscountRule::where('start_date', '<=', $now)
+            ->where('end_date', '>=', $now)
+            ->get();
+
+        $product = Product::with([
+                'inventoryStocks',
+                'baseUnit',
+                'displayUnit', // Ensure this is loaded if you use it for base product
+                'category',    // Ensure this is loaded for category discounts
+                'variants.inventoryStocks',
+                'variants.product.baseUnit'
+            ])->find($id);
+
+        if (!$product) {
+            abort(404, 'Product not found');
+        }
+
+        // Apply calculations to the single product as done in the landing method
+        $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
+        $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+        $product->stock_quantity = $baseQuantity / $conversionFactor;
+        $product->in_stock = $product->stock_quantity > 0;
+
+        // Default price
+        $product->final_price = $product->actual_price;
+        $product->has_discount = false;
+
+        // Find applicable discount rule for the product
+        $applicableRule = $discountRules->first(function ($rule) use ($product) {
+            $targetIds = json_decode($rule->target_ids ?? '[]');
+            if ($rule->type === 'product') {
+                return in_array($product->id, $targetIds);
+            } elseif ($rule->type === 'category') {
+                return in_array($product->category_id, $targetIds);
+            }
+            return false;
+        });
+
+        // Apply discount if found
+        if ($applicableRule) {
+            $product->final_price = $product->actual_price - ($product->actual_price * ($applicableRule->discount / 100));
+            $product->has_discount = true;
+        }
+
+        // Variants
+        foreach ($product->variants as $variant) {
+            $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+            $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+            $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+            $variant->in_stock = $variant->stock_quantity > 0;
+
+            // Variants price logic should be based on their own actual_price, not product's base price
+            // Assuming ProductVariant model has an actual_price field
+            $variant->final_price = $variant->actual_price;
+            $variant->has_discount = false;
+
+            if ($applicableRule) {
+                // Apply same discount percentage to variant's actual_price
+                $variant->final_price = $variant->actual_price - ($variant->actual_price * ($applicableRule->discount / 100));
+                $variant->has_discount = true;
+            }
+        }
+
+        return view('store.product', compact('product')); // Make sure this path is correct
     }
 
 }

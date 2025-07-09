@@ -169,28 +169,34 @@
                                             @forelse($products as $product)
                                                 <div class="col-md-6 col-lg-4 col-xl-3 d-flex">
                                                     <div class="rounded position-relative fruite-item w-100 border border-secondary">
+                                                        {{-- Product Detail Link Overlay --}}
+                                                        {{-- This link will cover the entire card area, but will be underneath interactive elements --}}
+                                                        <a href="{{ route('store.product', $product->id) }}" class="d-block text-decoration-none text-dark position-absolute w-100 h-100 top-0 start-0" style="z-index: 1;">
+                                                            {{-- This empty link makes the whole card clickable for details --}}
+                                                        </a>
+                                            
                                                         <div class="fruite-img product-card-img-container rounded-top" style="height: 250px; overflow: hidden;">
                                                             @if (!empty($product->product_img))
                                                                 <img src="{{ asset('storage/' . $product->product_img) }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="{{ $product->name }}">
                                                             @else
-                                                                <!-- Placeholder image for products without an image -->
                                                                 <img src="{{ $placeholderProductImg ?? asset('build/assets/frontend/img/default-product.jpg') }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="No Image">
                                                             @endif
-
+                                            
                                                             {{-- SALE Badge --}}
                                                             @if ($product->has_discount && $product->actual_price > 0)
                                                                 @php
                                                                     $discountPercent = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100);
                                                                 @endphp
-                                                                <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-danger text-white fw-bold rounded">
+                                                                <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-danger text-white fw-bold rounded" style="z-index: 2;">
                                                                     -{{ $discountPercent }}%
                                                                 </div>
                                                             @endif
                                                         </div>
-                                                        <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">
+                                                        <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px; z-index: 2;">
                                                             {{ $product->category->name ?? 'Uncategorized' }}
                                                         </div>
-                                                        <div class="p-4 d-flex flex-column">
+                                            
+                                                        <div class="p-4 d-flex flex-column" style="position: relative; z-index: 2;">
                                                             <h4 class="mb-2" style="font-size: 1.25rem; line-height: 1.4;">{{ Str::words($product->name, 5, '...') }}</h4>
                                                             <p class="text-muted flex-grow-1 mb-3" style="font-size: 0.9rem;">{{ Str::limit($product->description ?? 'No description available.', 70) }}</p>
                                                             <div class="d-flex flex-column align-items-center text-center mt-auto">
@@ -204,30 +210,35 @@
                                                                         @endif
                                                                         / {{ $product->displayUnit->name ?? 'unit' }}
                                                                     </p>
-
-
+                                            
                                                                     @if ($product->in_stock)
                                                                         <small class="text-success fw-bold">In Stock: {{ number_format($product->stock_quantity, 0) }}</small>
                                                                     @else
                                                                         <small class="text-danger fw-bold">Out of Stock</small>
                                                                     @endif
                                                                 </div>
-
-                                                                @if ($product->in_stock)
-                                                                    <form action="{{ route('cart.add') }}" method="POST">
-                                                                        @csrf
-                                                                        <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                                                        <input type="hidden" name="quantity" value="1">
-                                                                        <input type="hidden" name="stock" value="{{ $product->stock_quantity }}">
-                                                                        <input id="final_price_{{ $product->id }}" type="hidden" name="price" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
-
-                                                                        <button type="submit" class="btn border border-secondary rounded-pill px-3 text-primary">
-                                                                            <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
-                                                                        </button>
-                                                                    </form>
+                                            
+                                                                {{-- Add to cart form/button (this needs to be clickable) --}}
+                                                                @if($product->in_stock)
+                                                                    @if($product->has_variants)
+                                                                        <a href="{{ route('store.product', $product->id) }}" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                                                            <i class="fa fa-eye me-2 text-primary"></i> View Product
+                                                                        </a>
+                                                                    @else
+                                                                        <form action="{{ route('cart.add') }}" method="POST">
+                                                                            @csrf
+                                                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                                                            <input type="hidden" name="quantity" value="1">
+                                                                            <input type="hidden" name="stock" value="{{ $product->stock_quantity }}">
+                                                                            <input id="final_price_{{ $product->id }}" type="hidden" name="price" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
+                                                                            <button type="submit" class="btn border border-secondary rounded-pill px-3 text-primary">
+                                                                                <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
+                                                                            </button>
+                                                                        </form>
+                                                                    @endif
                                                                 @else
-                                                                    <button type="button" class="btn border border-secondary rounded-pill px-3 text-muted" disabled>
-                                                                        <i class="fa fa-ban me-2"></i> Out of Stock
+                                                                    <button type="button" class="btn border border-secondary rounded-pill px-3 text-danger" disabled>
+                                                                        Out of Stock ({{ number_format($product->stock_quantity, 0) }} Left)
                                                                     </button>
                                                                 @endif
                                                             </div>

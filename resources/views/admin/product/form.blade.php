@@ -89,7 +89,7 @@
                                 {{-- Sale Price --}}
                                 <div class="form-group">
                                     <label>Sale Price</label>
-                                    <input type="number" name="sale_price" step="0.01" class="form-control" value="{{ old('sale_price', $product->sale_price ?? '') }}">
+                                    <input type="number" name="actual_price" step="0.01" class="form-control" value="{{ old('actual_price', $product->actual_price ?? '') }}">
                                 </div>
 
                                 <div class="row">
@@ -126,7 +126,6 @@
                                                 <th>SKU</th>
                                                 {{-- <th>Barcode</th> --}}
                                                 <th>Actual Price</th>
-                                                <th>Sale Price</th>
                                                 <th>Low Stock</th>
                                                 <th>Image</th>
                                                 <th>
@@ -142,7 +141,6 @@
                                                         <td><input type="text" name="variants[{{ $loop->index }}][sku]" value="{{ $variant->sku }}" class="form-control" required></td>
                                                         {{-- <td><input type="text" name="variants[{{ $loop->index }}][barcode]" value="{{ $variant->barcode }}" class="form-control"></td> --}}
                                                         <td><input type="number" step="0.01" name="variants[{{ $loop->index }}][actual_price]" value="{{ $variant->actual_price }}" class="form-control"></td>
-                                                        <td><input type="number" step="0.01" name="variants[{{ $loop->index }}][sale_price]" value="{{ $variant->sale_price }}" class="form-control"></td>
                                                         <td>
                                                             <input type="number" step="1" name="variants[{{ $loop->index }}][low_stock]" value="{{ $variant->low_stock ?? '' }}" class="form-control">
                                                         </td>
@@ -257,7 +255,6 @@
                 <td><input type="text" name="variants[${variantIndex}][sku]" class="form-control" required></td>
                 {{-- <td><input type="text" name="variants[${variantIndex}][barcode]" class="form-control"></td> --}}
                 <td><input type="number" step="0.01" name="variants[${variantIndex}][actual_price]" class="form-control"></td>
-                <td><input type="number" step="0.01" name="variants[${variantIndex}][sale_price]" class="form-control"></td>
                 <td><input type="number" step="1" name="variants[${variantIndex}][low_stock]" class="form-control" placeholder="e.g. 5"></td>
                 <td>
                     <input type="file" name="variants[${variantIndex}][product_img]" class="form-control-file">

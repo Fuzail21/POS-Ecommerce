@@ -18,8 +18,12 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('customer.login') }}">
             @csrf
+            
+            <div class="mb-2">
+                <h3 style="font-size: 30px; text-align: center;">Login</h3>
+            </div>
 
             <!-- Email Address -->
             <div class="mb-6">
@@ -49,23 +53,23 @@
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center justify-between mb-6">
-                @if (Route::has('password.request'))
+            <div class="flex items-center justify-start mb-6">
+                {{-- @if (Route::has('password.request'))
                     <a class="text-sm text-indigo-600 hover:underline dark:text-indigo-400" href="{{ route('password.request') }}">
                         Forgot your password?
                     </a>
-                @endif
+                @endif --}}
                 <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-md transition duration-150">
                     Login
                 </button>
             </div>
 
             <!-- Create Account Link -->
-            <div class="mt-4 text-center">
+            {{-- <div class="mt-4 text-center">
                 <a href="{{ route('register') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 hover:underline">
                     Don't have an account? Create one
                 </a>
-            </div>
+            </div> --}}
 
         </form>
     </div>

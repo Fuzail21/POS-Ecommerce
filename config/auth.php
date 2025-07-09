@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'customer' => [ // New customer guard
+            'driver' => 'session',
+            'provider' => 'customers', // Points to the new provider
+        ],
     ],
 
     /*
@@ -65,10 +69,10 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'customers' => [ // New customer provider
+            'driver' => 'eloquent',
+            'model' => App\Models\Customer::class, // Assuming your customer model is App\Models\Customer
+        ],
     ],
 
     /*

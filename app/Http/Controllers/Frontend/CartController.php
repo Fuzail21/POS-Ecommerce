@@ -5,12 +5,48 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Setting;
 use Session;
 
 class CartController extends Controller
 {
-    public function add(Request $request){   
+    // public function add(Request $request){   
+    //     $cart = session()->get('cart', []);
+    //     dd($request->all());
+    //     $id = $request->product_id;
+    //     $qty = $request->quantity ?? 1;
+
+    //     $product = Product::findOrFail($id);
+    //     $availableStock = $request->stock;
+
+    //     // Use hidden input price if sent, fallback to actual_price
+    //     $price = $request->input('price', $product->actual_price);
+
+    //     $currentCartQuantity = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
+    //     $newDesiredQuantity = $currentCartQuantity + $qty;
+
+    //     if ($newDesiredQuantity > $availableStock) {
+    //         return redirect()->back()->with('error', "Cannot add {$qty} units. Only {$availableStock} of {$product->name} in stock. You already have {$currentCartQuantity} in your cart. You can add " . ($availableStock - $currentCartQuantity) . " more.");
+    //     }
+
+    //     $cart[$id] = [
+    //         'id' => $id,
+    //         'name' => $product->name,
+    //         'stock' => $availableStock,
+    //         'price' => $price, // ✅ Discounted or final price
+    //         'actual_price' => $product->actual_price, // ✅ Store original price
+    //         'quantity' => $newDesiredQuantity,
+    //         'image' => $product->product_img,
+    //     ];
+
+    //     session()->put('cart', $cart);
+
+    //     return redirect()->back()->with('success', 'Product added to cart!');
+    // }
+
+    public function add(Request $request)
+    {
         $cart = session()->get('cart', []);
         $id = $request->product_id;
         $qty = $request->quantity ?? 1;
@@ -21,6 +57,20 @@ class CartController extends Controller
         // Use hidden input price if sent, fallback to actual_price
         $price = $request->input('price', $product->actual_price);
 
+        // --- New: Get Variant Information ---
+        $variantId = $request->variant_id;
+        $variantName = null; // Initialize variant name
+        $variantImg = null;
+
+        if ($variantId) {
+
+            $variant = $product->variants()->find($variantId);
+            if ($variant) {
+                $variantName = $variant->variant_name;
+                $variantImg = $variant->product_img;
+            }
+        }
+
         $currentCartQuantity = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
         $newDesiredQuantity = $currentCartQuantity + $qty;
 
@@ -28,14 +78,32 @@ class CartController extends Controller
             return redirect()->back()->with('error', "Cannot add {$qty} units. Only {$availableStock} of {$product->name} in stock. You already have {$currentCartQuantity} in your cart. You can add " . ($availableStock - $currentCartQuantity) . " more.");
         }
 
-        $cart[$id] = [
+        $cartKey = $id; // Default to product ID
+        if ($variantId) {
+            $cartKey = "{$id}-{$variantId}";
+            $currentCartQuantity = isset($cart[$cartKey]) ? $cart[$cartKey]['quantity'] : 0;
+            $newDesiredQuantity = $currentCartQuantity + $qty;
+
+            // Re-check stock for the specific variant
+            if ($newDesiredQuantity > $availableStock) {
+                return redirect()->back()->with('error', "Cannot add {$qty} units. Only {$availableStock} of {$product->name} " . ($variantName ? "({$variantName})" : "") . " in stock. You already have {$currentCartQuantity} in your cart. You can add " . ($availableStock - $currentCartQuantity) . " more.");
+            }
+        }
+
+
+        $cart[$cartKey] = [ // Use the potentially new $cartKey
             'id' => $id,
             'name' => $product->name,
             'stock' => $availableStock,
             'price' => $price, // ✅ Discounted or final price
             'actual_price' => $product->actual_price, // ✅ Store original price
             'quantity' => $newDesiredQuantity,
-            'image' => $product->product_img,
+            'image' => $product->product_img, // ✅ Product's main image
+            // --- New: Add variant information ---
+            'variant_id' => $variantId,
+            'variant_name' => $variantName,
+            'variant_img' => $variantImg,
+           
         ];
 
         session()->put('cart', $cart);

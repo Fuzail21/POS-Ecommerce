@@ -79,8 +79,8 @@
                             <a href="{{ route('store.shop') }}" 
                                class="nav-item nav-link {{ Route::is('store.shop') ? 'active' : '' }}">Shop</a>
 
-                            <a href="{{ url('contact.html') }}" 
-                               class="nav-item nav-link {{ request()->is('contact*') ? 'active' : '' }}">Contact</a>
+                            {{-- <a href="{{ url('contact.html') }}" 
+                               class="nav-item nav-link {{ request()->is('contact*') ? 'active' : '' }}">Contact</a> --}}
                         </div>
 
                         <div class="d-flex m-3 me-0">
@@ -97,9 +97,29 @@
                                         {{ $itemCount }}
                                     </span>
                             </a>
-                            <a href="#" class="my-auto">
-                                <i class="fas fa-user fa-2x"></i>
-                            </a>
+                            @if(Auth::guard('customer')->check())
+                                {{-- If customer is logged in, show user icon with dropdown --}}
+                                <div class="nav-item dropdown my-auto">
+                                    <a href="#" class="nav-link dropdown-toggle" id="customerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-user fa-2x"></i>
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="customerDropdown">
+                                        <li><a class="dropdown-item" href="{{ route('customer.profile.edit') }}">Profile</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="POST" action="{{ route('customer.logout') }}">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item">Logout</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            @else
+                                {{-- If customer is not logged in, show login icon --}}
+                                <a href="{{ route('customer.login') }}" class="my-auto">
+                                    <i class="fas fa-sign-in-alt fa-2x"></i> {{-- Changed to sign-in icon for clarity --}}
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </nav>

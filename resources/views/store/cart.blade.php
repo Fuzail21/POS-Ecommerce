@@ -50,10 +50,20 @@
                         <tr id="cart-item-row-{{ $id }}" class="cart-item-row">
                             <th scope="row">
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ asset('storage/' . $details['image']) }}" class="img-fluid me-5 rounded-circle" style="width: 80px; height: 80px; object-fit: cover;" alt="{{ $details['name'] }}">
+                                    <img src="{{ asset('storage/' . ($details['variant_img'] ?? $details['image'])) }}"
+                                         class="img-fluid me-5 rounded-circle"
+                                         style="width: 80px; height: 80px; object-fit: cover;"
+                                         alt="{{ $details['name'] }}">
                                 </div>
                             </th>
-                            <td><p class="mb-0 mt-4">{{ $details['name'] }}</p></td>
+                                <td>
+                                    <p class="mb-0 mt-4">
+                                        {{ $details['name'] }}
+                                        @if (!empty($details['variant_name']))
+                                            - {{ $details['variant_name'] }}
+                                        @endif
+                                    </p>
+                                </td>                            
                             <td>
                                 <div class="mb-0 mt-4 price-per-item text-start" id="price-{{ $id }}">
                                     @if ($actualPrice != $finalPrice)
@@ -123,7 +133,13 @@
                         <h5 class="mb-0 ps-4 me-4">Total</h5>
                         <p class="mb-0 pe-4" id="cart-grand-total">{{ number_format($grandTotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
                     </div>
-                    <a href="" class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4" type="button">Proceed Checkout</a>
+                    @if(Auth::guard('customer')->check())
+                        <a href="{{ route('store.checkout') }}" class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4" type="button">Proceed Checkout</a>
+                    @else
+                        <a href="{{ route('customer.login', ['redirect' => route('store.checkout')]) }}" class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4" type="button">Login to Checkout</a>
+                        {{-- You can also add a registration link here if desired --}}
+                        {{-- <a href="{{ route('customer.register', ['redirect' => route('store.checkout')]) }}" class="btn border-secondary rounded-pill px-4 py-3 text-primary text-uppercase mb-4 ms-4" type="button">Register and Checkout</a> --}}
+                    @endif
                 </div>
             </div>
         </div>

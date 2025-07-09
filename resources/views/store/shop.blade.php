@@ -236,6 +236,12 @@
                                     @forelse($products as $product)
                                         <div class="col-md-6 col-lg-6 col-xl-4">
                                             <div class="rounded position-relative fruite-item border border-secondary">
+                                                {{-- Product Detail Link Overlay --}}
+                                                {{-- This link will cover the entire card area, but will be underneath interactive elements --}}
+                                                <a href="{{ route('store.product', $product->id) }}" class="d-block text-decoration-none text-dark position-absolute w-100 h-100 top-0 start-0" style="z-index: 1;">
+                                                    {{-- This empty link makes the whole card clickable for details --}}
+                                                </a>
+                                    
                                                 <div class="fruite-img product-card-img-container rounded-top" style="height: 250px; overflow: hidden;">
                                                     {{-- Product Image --}}
                                                     @if (!empty($product->product_img))
@@ -243,29 +249,29 @@
                                                     @else
                                                         <img src="{{ $placeholderProductImg ?? asset('build/assets/frontend/img/default-product.jpg') }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="No Image">
                                                     @endif
-
+                                    
                                                     {{-- SALE Badge --}}
                                                     @if ($product->has_discount && $product->actual_price > 0)
                                                         @php
                                                             $discountPercent = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100);
                                                         @endphp
-                                                        <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-danger text-white fw-bold rounded">
+                                                        <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-danger text-white fw-bold rounded" style="z-index: 2;">
                                                             -{{ $discountPercent }}%
                                                         </div>
                                                     @endif
                                                 </div>
-
+                                    
                                                 {{-- Category Label --}}
-                                                <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">
+                                                <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px; z-index: 2;">
                                                     {{ $product->category->name ?? 'Uncategorized' }}
                                                 </div>
-
-                                                <div class="p-4 rounded-bottom">
+                                    
+                                                <div class="p-4 rounded-bottom" style="position: relative; z-index: 2;"> {{-- Added position: relative and z-index --}}
                                                     {{-- Title --}}
                                                     <h4 class="mb-2" style="font-size: 1.25rem; line-height: 1.4;">{{ Str::words($product->name, 8, '...') }}</h4>
                                                     <p>{{ Str::limit($product->description ?? 'No description available.', 70) }}</p>
-
-                                                    {{-- 🟡 Price Section --}}
+                                    
+                                                    {{-- Price Section --}}
                                                     <div class="d-flex flex-column mb-2">
                                                         @if($product->has_discount && $product->final_price < $product->actual_price)
                                                             <div class="d-flex align-items-center gap-2">
@@ -285,9 +291,9 @@
                                                             / {{ $product->baseUnit->name ?? 'unit' }}
                                                         </span>
                                                     </div>
-
+                                    
                                                     {{-- Buttons --}}
-                                                    <div class="d-flex justify-content-between flex-lg-wrap">
+                                                    <div class="d-flex justify-content-between flex-lg-wrap" style="position: relative; z-index: 3;"> {{-- Added position: relative and z-index --}}
                                                         @if($product->in_stock)
                                                             @if($product->has_variants)
                                                                 <a href="{{ route('store.product', $product->id) }}" class="btn border border-secondary rounded-pill px-3 text-primary">
@@ -311,7 +317,7 @@
                                                             </button>
                                                         @endif
                                                     </div>
-
+                                    
                                                     <p class="mt-2 text-muted" style="font-size: 0.9em;">
                                                         Stock: {{ number_format($product->stock_quantity, 0) }} {{ $product->baseUnit->name ?? 'units' }}
                                                     </p>
