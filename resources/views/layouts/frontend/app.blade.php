@@ -239,7 +239,7 @@
                         <!--/*** This template is free as long as you keep the below author’s credit link/attribution link/backlink. ***/-->
                         <!--/*** If you'd like to use the template without the below author’s credit link/attribution link/backlink, ***/-->
                         <!--/*** you can purchase the Credit Removal License from "https://htmlcodex.com/credit-removal". ***/-->
-                        Designed By <a class="border-bottom" href="https://www.linkedin.com/in/fuzail-siddiqui-294238267/" target="_blank">{{ $setting->developed_by }}</a>
+                        Designed By <a class="border-bottom" href="https://thetechio.com/" target="_blank">{{ $setting->developed_by }}</a>
                     </div>
                 </div>
             </div>

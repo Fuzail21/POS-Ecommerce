@@ -316,22 +316,27 @@ Route::prefix('store')->group(function () {
     Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
 
+
+    Route::post('/cart/apply-coupon', [CartController::class, 'applyCoupon'])->name('cart.apply_coupon');
+    Route::post('/cart/remove-coupon', [CartController::class, 'removeCoupon'])->name('cart.remove_coupon');
+
     // Customer Authentication for Store
     Route::get('/login', [CustomerAuthenticatedSessionController::class, 'create'])->name('customer.login');
     Route::post('/login', [CustomerAuthenticatedSessionController::class, 'store']);
     Route::post('/logout', [CustomerAuthenticatedSessionController::class, 'destroy'])->name('customer.logout');
 
-    Route::get('/register', [CustomerRegisteredUserController::class, 'create'])->name('customer.register');
-    Route::post('/register', [CustomerRegisteredUserController::class, 'store']);
+    // Route::get('/register', [CustomerRegisteredUserController::class, 'create'])->name('customer.register');
+    // Route::post('/register', [CustomerRegisteredUserController::class, 'store']);
 
     // Protected routes for authenticated customers
     Route::middleware('auth:customer')->group(function () {
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('store.checkout');
         Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('store.checkout.process');
+        Route::get('/thank-you', [CheckoutController::class, 'thankYou'])->name('store.thankyou');
 
         // Customer Profile
         Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('customer.profile.edit');
-        Route::patch('/profile', [CustomerProfileController::class, 'update'])->name('customer.profile.update');
+        Route::put('/profile', [CustomerProfileController::class, 'update'])->name('customer.profile.update');
         Route::delete('/profile', [CustomerProfileController::class, 'destroy'])->name('customer.profile.destroy');
     });
 });

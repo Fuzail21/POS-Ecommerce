@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->enum('type', ['category', 'product']);
-            $table->json('target_ids'); // product_ids or category_ids
+            $table->json('target_ids')->nullable(); // product_ids or category_ids
             $table->decimal('discount', 5, 2); // e.g. 10.00 = 10%
             $table->date('start_date');
             $table->date('end_date');

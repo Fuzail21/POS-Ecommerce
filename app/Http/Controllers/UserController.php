@@ -31,6 +31,7 @@ class UserController extends Controller
             'status' => 'required|in:Active,Inactive',
             'password' => 'nullable|string|min:6', // optional, min 6 characters
             'branch_id' => 'nullable|exists:branches,id',
+            'role_id' => 'nullable|exists:roles,id',
         ]);
         try {
             $user = new User();
@@ -64,11 +65,12 @@ class UserController extends Controller
             'status' => 'required|in:Active,Inactive',
             'password' => 'nullable|string|min:6', // optional, min 6 characters
             'branch_id' => 'nullable|exists:branches,id',
+            'role_id' => 'nullable|exists:roles,id',
         ]);
     
         $user->name = $request->name;
         $user->email = $request->email;
-        // $user->role_id = $request->role_id;
+        $user->role_id = $request->role_id;
         $user->branch_id = $request->branch_id;
         $user->status = $request->status;
 

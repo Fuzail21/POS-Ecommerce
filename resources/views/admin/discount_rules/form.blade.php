@@ -5,9 +5,8 @@
 
 <div class="content-page">
     <div class="container-fluid add-form-list">
-        {{-- Added Bootstrap row and column for centering the form --}}
         <div class="row justify-content-start">
-            <div class="col-md-12"> {{-- Adjust column width as needed --}}
+            <div class="col-md-12">
                 <h2 class="mb-4">{{ $edit ? 'Edit' : 'Add' }} Discount Rule</h2>
                 <form action="{{ $edit ? route('discount_rules.update', $rule->id) : route('discount_rules.store') }}" method="POST" class="mb-3">
                     @csrf
@@ -15,7 +14,7 @@
                         @method('PUT')
                     @endif
 
-                    <div class="form-group mb-3"> {{-- Added margin-bottom for spacing --}}
+                    <div class="form-group mb-3">
                         <label for="name">Name</label>
                         <input type="text" name="name" id="name" class="form-control" value="{{ old('name', $rule->name ?? '') }}" required>
                         @error('name')
@@ -28,13 +27,24 @@
                         <select name="type" class="form-control" id="type-select">
                             <option value="product" {{ old('type', $rule->type ?? '') === 'product' ? 'selected' : '' }}>Product</option>
                             <option value="category" {{ old('type', $rule->type ?? '') === 'category' ? 'selected' : '' }}>Category</option>
+                            {{-- New option for Coupon --}}
+                            <option value="coupon" {{ old('type', $rule->type ?? '') === 'coupon' ? 'selected' : '' }}>Coupon</option>
                         </select>
                         @error('type')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
-                    <div class="form-group mb-3">
+                    {{-- New input for Coupon Code, initially hidden --}}
+                    <div class="form-group mb-3" id="coupon-code-group" style="display: none;">
+                        <label for="coupon_code">Coupon Code</label>
+                        <input type="text" name="coupon_code" id="coupon_code" class="form-control" value="{{ old('coupon_code', $rule->coupon_code ?? '') }}">
+                        @error('coupon_code')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group mb-3" id="targets-group">
                         <label for="targets-select">Targets</label>
                         {{-- The multiple attribute is crucial for Select2 to display tags --}}
                         <select name="target_ids[]" class="form-control" id="targets-select" multiple="multiple">
@@ -134,13 +144,17 @@
         $(document).ready(function () {
             // Function to load targets based on the selected type (product or category)
             function loadTargets(type) {
-                // Determine which data to use based on the type
-                // Ensure $products and $categories are passed from your controller to the view
-                let data = type === 'product' ? @json($products ?? []) : @json($categories ?? []);
+                let data = [];
+                // Only load data if type is product or category
+                if (type === 'product') {
+                    data = @json($products ?? []);
+                } else if (type === 'category') {
+                    data = @json($categories ?? []);
+                }
+
                 let select = $('#targets-select');
 
                 // Clear existing options from the Select2 instance
-                // This is important to prevent duplicates and ensure fresh options
                 select.empty();
 
                 // Populate the select element with new options
@@ -153,27 +167,41 @@
                 let selected = @json(json_decode($rule->target_ids ?? '[]', true));
 
                 // Set the selected values and trigger 'change' to update Select2's display
-                // The .val() method works directly with arrays for multiple selects
                 select.val(selected).trigger('change');
+            }
+
+            // Function to toggle visibility of coupon code and targets fields
+            function toggleFields(type) {
+                if (type === 'coupon') {
+                    $('#coupon-code-group').show();
+                    $('#targets-group').hide();
+                    // Clear Select2 selections when targets are hidden for coupon type
+                    $('#targets-select').val(null).trigger('change');
+                } else {
+                    $('#coupon-code-group').hide();
+                    $('#targets-group').show();
+                }
             }
 
             // Initialize Select2 on the #targets-select element
             $('#targets-select').select2({
-                // 'tags: true' allows users to enter new values not in the list.
-                // If you only want to allow selection from existing products/categories, set this to 'false'.
-                tags: false, // Changed to false as it's typically for pre-defined lists
-                placeholder: 'Select targets', // Placeholder text for the input
-                allowClear: true // Allows clearing all selected items
+                tags: false,
+                placeholder: 'Select targets',
+                allowClear: true
             });
 
             // Listen for changes on the 'Type' select dropdown
             $('#type-select').change(function () {
-                loadTargets($(this).val()); // Load targets based on the new type
+                const selectedType = $(this).val();
+                loadTargets(selectedType); // Load targets based on the new type
+                toggleFields(selectedType); // Toggle visibility of fields
             });
 
-            // Initial load of targets when the page is ready
+            // Initial load and toggle when the page is ready
             // This ensures the correct targets are loaded and selected on page load (especially in edit mode)
-            loadTargets($('#type-select').val());
+            const initialType = $('#type-select').val();
+            loadTargets(initialType);
+            toggleFields(initialType);
         });
     </script>
 @endsection

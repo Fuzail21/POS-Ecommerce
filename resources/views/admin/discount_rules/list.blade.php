@@ -28,7 +28,6 @@
 
             <div class="col-sm-12">
                 <div class="card">
-                    <!-- Flash Messages -->
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             {{ session('success') }}
@@ -55,6 +54,7 @@
                                     <tr class="ligth">
                                         <th>Name</th>
                                         <th>Type</th>
+                                        <th>Coupon Code</th> {{-- New Column Header --}}
                                         <th>Discount</th>
                                         <th>Start Date</th>
                                         <th>End Date</th>
@@ -66,6 +66,7 @@
                                         <tr>
                                             <td>{{ $rule->name }}</td>
                                             <td>{{ ucfirst($rule->type) }}</td>
+                                            <td>{{ $rule->coupon_code ?? '-' }}</td> {{-- Display Coupon Code or '-' if null --}}
                                             <td>{{ $rule->discount }}%</td>
                                             {{-- Format dates for better readability --}}
                                             <td>{{ $rule->start_date ? \Carbon\Carbon::parse($rule->start_date)->format('M d, Y') : 'N/A' }}</td>
@@ -91,7 +92,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">No discount rules found.</td>
+                                            <td colspan="7" class="text-center">No discount rules found.</td> {{-- Changed colspan to 7 --}}
                                         </tr>
                                     @endforelse
                                 </tbody>

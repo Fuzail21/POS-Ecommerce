@@ -22,7 +22,7 @@ class CustomerLoginRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
+     * @return array<string,
      */
     public function rules(): array
     {
@@ -39,7 +39,6 @@ class CustomerLoginRequest extends FormRequest
      */
     public function authenticate(string $guard = 'web'): void // Modified to accept guard
     {
-        // The key is to specify the 'customer' guard here when called from your CustomerAuthenticatedSessionController
         if (! Auth::guard($guard)->attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

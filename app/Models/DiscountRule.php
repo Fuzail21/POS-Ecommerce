@@ -14,6 +14,7 @@ class DiscountRule extends Model
         'discount',
         'start_date',
         'end_date',
+        'coupon_code',
     ];
 
 }

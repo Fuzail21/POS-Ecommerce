@@ -52,7 +52,7 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $item->product->name }}</td>
                                 <td>{{ $item->variant->variant_name ?? '-' }}</td>
-                                <td>{{ number_format($item->quantity, 0) }} {{ $item->unit->name }}</td>
+                                <td>{{ number_format($item->quantity, 0) }} {{ $item->unit->name ?? Null }}</td>
                                 <td>{{ $setting->currency_symbol }} {{ number_format($item->unit_price, 2) }}</td>
                                 <td>{{ $setting->currency_symbol }} {{ number_format($item->total_price, 2) }}</td>
                             </tr>

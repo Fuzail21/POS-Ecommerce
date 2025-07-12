@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
+use App\Models\DiscountRule;
 use Session;
+use Carbon\Carbon;
 
 class CartController extends Controller
 {
@@ -114,7 +116,20 @@ class CartController extends Controller
     public function view(){
         $cart = session()->get('cart', []);
         $setting = Setting::first();
-        return view('store.cart', compact('cart', 'setting'));
+
+        // Calculate subtotal from cart items
+        $subtotal = 0;
+        foreach ($cart as $item) {
+            // Ensure you're using the correct price and quantity keys
+            $subtotal += ($item['price'] * $item['quantity']);
+        }
+
+        // Retrieve current coupon info from session for initial page load
+        $couponDiscount = session('coupon_discount', 0);
+        $appliedCouponCode = session('coupon_code', null);
+
+        // Pass all necessary data to the view
+        return view('store.cart', compact('cart', 'setting', 'subtotal', 'couponDiscount', 'appliedCouponCode'));
     }
 
     public function update(Request $request){
@@ -220,4 +235,54 @@ class CartController extends Controller
         }
         return $subtotal;
     }
+
+    public function applyCoupon(Request $request){
+        $couponCode = $request->input('coupon_code');
+        $cartSubtotal = $request->input('subtotal'); // Get subtotal from frontend for current calculation
+
+        if (!$couponCode) {
+            return response()->json(['success' => false, 'message' => 'Coupon code is required.']);
+        }
+
+        $couponRule = DiscountRule::where('coupon_code', $couponCode)
+                                  ->where('type', 'coupon')
+                                  ->where('start_date', '<=', Carbon::now())
+                                  ->where('end_date', '>=', Carbon::now())
+                                  ->first();
+
+        if (!$couponRule) {
+            return response()->json(['success' => false, 'message' => 'Invalid or expired coupon code.']);
+        }
+
+        // Check if a coupon is already applied and if it's the same one
+        if (session('coupon_code') === $couponCode) {
+            return response()->json(['success' => false, 'message' => 'Coupon already applied.']);
+        }
+
+        // Calculate the discount amount
+        $discountPercentage = $couponRule->discount;
+        $discountAmount = ($cartSubtotal * $discountPercentage) / 100;
+
+        // Store coupon details in session
+        session(['coupon_code' => $couponCode]);
+        session(['coupon_discount' => $discountAmount]);
+        session(['coupon_percentage' => $discountPercentage]); // Store percentage too if useful
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Coupon applied successfully!',
+            'discount_amount' => $discountAmount,
+            'coupon_code' => $couponCode
+        ]);
+    }
+
+    public function removeCoupon(Request $request){
+        // Remove coupon details from session
+        session()->forget('coupon_code');
+        session()->forget('coupon_discount');
+        session()->forget('coupon_percentage');
+
+        return response()->json(['success' => true, 'message' => 'Coupon removed successfully.']);
+    }
+
 }

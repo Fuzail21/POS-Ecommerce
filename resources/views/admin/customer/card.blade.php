@@ -73,6 +73,17 @@
             padding: 5px 0;    /* Add some padding around the barcode */
         }
 
+        /* Style for the card ID text below the barcode */
+        .barcode-id-text {
+            font-family: 'Inter', monospace; /* Monospace font for ID for clarity */
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 8px; /* Space between barcode and ID text */
+            letter-spacing: 1px; /* Slightly increase letter spacing for readability */
+        }
+
+
         .print-btn {
             margin-top: 20px;
             padding: 10px 25px;
@@ -130,6 +141,7 @@
         $barcodeImage = '';
         // Assuming $customer is an object with a 'card_id' property
         // For demonstration, let's use a placeholder if $customer is not defined
+        // In a real application, $customer would be passed from the controller
         $customer = $customer ?? (object)[
             'card_id' => 'CUST-686500CA5E6EB',
             'name' => 'Louis Shepard',
@@ -162,10 +174,12 @@
                 <p class="mb-2 text-base"><strong>Email:</strong> {{ $customer->email }}</p>
                 <p class="mb-2 text-base"><strong>Address:</strong> {{ $customer->address }}</p>
 
-                {{-- Barcode as Image --}}
+                {{-- Barcode as Image and Card ID Text --}}
                 @if(!empty($barcodeImage))
                     <div class="barcode mt-5 text-center">
                         <img src="{{ $barcodeImage }}" alt="Customer Barcode">
+                        {{-- Display card ID number below the barcode --}}
+                        <p class="barcode-id-text">{{ $customer->card_id }}</p>
                     </div>
                 @endif
             </div>
@@ -239,6 +253,14 @@
                         padding: 5px 0;
                     }
                     /* Ensure no print-specific styles interfere with barcode */
+                    .barcode-id-text {
+                        font-family: 'Inter', monospace; /* Monospace font for ID for clarity */
+                        font-size: 14px;
+                        font-weight: bold;
+                        color: #333;
+                        margin-top: 8px;
+                        letter-spacing: 1px;
+                    }
                 </style>
             `;
 
