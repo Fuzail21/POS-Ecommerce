@@ -190,7 +190,9 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
 
     });
-
+     Route::get('e-commerce/orders', [SaleController::class, 'orders'])->name('orders.index');
+     Route::get('orders/{order}', [SaleController::class, 'show'])->name('orders.show');
+     Route::put('orders/{order}/status', [SaleController::class, 'updateStatus'])->name('orders.updateStatus');
 
 
     //Sales Return
@@ -292,18 +294,6 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::put('discount-rules/{id}', [DiscountRuleController::class, 'update'])->name('discount_rules.update');
     Route::delete('discount-rules/{id}', [DiscountRuleController::class, 'destroy'])->name('discount_rules.destroy');
 });
-
-
-// // Store
-//     Route::prefix('store')->group(function () {
-//         Route::get('/', [StoreController::class, 'landing'])->name('store.landing');
-//         Route::get('/shop', [StoreController::class, 'shop'])->name('store.shop');
-//         Route::get('/product/{id}', [StoreController::class, 'product'])->name('store.product');
-//         Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-//         Route::get('/cart', [CartController::class, 'view'])->name('cart.view');
-//         Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
-//         Route::delete('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
-//     });
 
 
 // Store Frontend

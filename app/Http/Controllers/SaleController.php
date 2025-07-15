@@ -22,13 +22,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceSentMail;
 use App\Models\DiscountRule;
+use Illuminate\Validation\Rule;
 use Auth;
 
 class SaleController extends Controller
 {
     public function index(){
         $title = "Sales List";
-        $sales = Sale::with(['customer', 'items', 'payments', 'branch'])
+        $sales = Sale::where('sale_origin', 'POS')->with(['customer', 'items', 'payments', 'branch'])
                      ->withCount('salesReturns')
                      ->latest()
                      ->paginate(10);
@@ -246,6 +247,7 @@ class SaleController extends Controller
                 'paid_amount'     => $request->amount_paid,
                 'due_amount'      => $request->balance_due,
                 'payment_method'  => $request->payment_method,
+                'sale_origin'     => 'POS',
                 'created_by'      => auth()->id(),
             ]);
 
@@ -592,6 +594,7 @@ class SaleController extends Controller
                 'paid_amount'     => $request->amount_paid,
                 'due_amount'      => $request->balance_due,
                 'payment_method'  => $request->payment_method,
+                'sale_origin'     => 'POS',                
                 'created_by'      => auth()->id(),
             ]);
 
@@ -688,6 +691,183 @@ class SaleController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Something went wrong. Please try again.');
+        }
+    }
+
+    public function orders(){
+        $title = "E-commerce Orders List";
+        // Fetch only sales that originated from E-commerce
+        $orders = Sale::where('sale_origin', 'E-commerce')->latest()->paginate(10);
+        return view('admin.orders.list', compact('orders', 'title'));
+    }
+
+    public function show(Sale $order){
+        if ($order->sale_origin !== 'E-commerce') {
+            abort(404, 'Order not found or is not an e-commerce order.');
+        }
+
+        $title = "Order Details - " . $order->invoice_number;
+
+        $order->load([
+            'customer',
+            'branch',
+            'items.product',
+            'items.variant',
+            'items.unit'
+        ]);
+
+        $setting = Setting::first();
+
+        return view('admin.orders.show', compact('order', 'title', 'setting'));
+    }
+
+    public function updateStatus(Request $request, Sale $order)
+    {
+        // Ensure only allowed statuses are used
+        $request->validate([
+            'status' => ['required', 'string', Rule::in(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'])],
+        ]);
+
+        // Optional: Check if the order is an e-commerce order if this controller only handles them
+        if ($order->sale_origin !== 'E-commerce') {
+             return redirect()->back()->with('error', 'Cannot update status for a non-e-commerce order through this interface.');
+        }
+
+        $oldStatus = $order->status;
+        $newStatus = $request->input('status');
+
+        // --- Status Transition Rules ---
+        // Prevent changing status from cancelled to anything else
+        if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+             return redirect()->back()->with('error', 'Cannot change status from Cancelled.');
+        }
+        // Prevent changing status from delivered to anything else (except possibly for returns, which should be a separate flow)
+        if ($oldStatus === 'delivered' && $newStatus !== 'delivered' && $newStatus !== 'cancelled') { // Allowing cancelled from delivered for strict scenario
+             return redirect()->back()->with('error', 'Cannot change status from Delivered.');
+        }
+        // Specific transition logic (e.g., an order must be confirmed before being shipped)
+        if ($newStatus === 'confirmed' && $oldStatus !== 'pending') {
+            return redirect()->back()->with('error', 'Order must be Pending to be Confirmed.');
+        }
+        if ($newStatus === 'shipped' && $oldStatus !== 'confirmed') {
+            return redirect()->back()->with('error', 'Order must be Confirmed to be Shipped.');
+        }
+        if ($newStatus === 'delivered' && $oldStatus !== 'shipped') {
+            return redirect()->back()->with('error', 'Order must be Shipped to be Delivered.');
+        }
+        if ($newStatus === 'pending' && !in_array($oldStatus, ['confirmed'])) { // Allow reverting confirmed to pending if needed
+            // This rule needs careful consideration based on your business flow
+            // If you can only go forward, remove this 'pending' logic.
+             return redirect()->back()->with('error', 'Cannot revert to Pending from ' . ucfirst($oldStatus) . '.');
+        }
+
+        DB::beginTransaction(); // Start a database transaction
+        try {
+            $order->status = $newStatus;
+            $order->save();
+
+            // --- Logic for 'confirmed' status ---
+            if ($newStatus === 'confirmed' && $oldStatus === 'pending') {
+                // No specific actions required yet, as per request.
+                // This block can be used for actions like sending a confirmation email.
+            }
+
+            // --- Logic for 'shipped' status ---
+            if ($newStatus === 'shipped' && $oldStatus === 'confirmed') {
+                // No specific actions required yet, as per request.
+                // This block can be used for actions like sending shipping notifications.
+            }
+
+            // --- Logic for 'delivered' status ---
+            if ($newStatus === 'delivered' && $oldStatus !== 'delivered') {
+                // If there's any outstanding due amount, create a payment record for it
+                if ($order->due_amount > 0) {
+                    $amountToPay = $order->due_amount; // Amount that was due
+
+                    Payment::create([
+                        'sale_id'          => $order->id, // Associate directly with the sale
+                        'entity_id'        => $order->customer_id,
+                        'amount'           => $amountToPay,
+                        'payment_method'   => $order->payment_method, // Assuming the final payment uses the same method or a new one
+                        'payment_date'     => Carbon::now(),
+                        'transaction_type' => 'in', // Money coming IN to the business
+                        'ref_type'         => 'sale', // Specific type for sale payment
+                        'ref_id'           => $order->id, // Reference to the sale ID
+                        'note'             => 'Final payment upon delivery for order #' . $order->invoice_number,
+                        'created_by'       => Auth::id(), // Admin user who marked as delivered
+                    ]);
+
+                    // Update order's paid_amount and due_amount to reflect full payment
+                    $order->paid_amount += $amountToPay; // Add the new payment to paid_amount
+                    $order->due_amount = 0;              // Set due amount to zero
+                    $order->save();
+                }
+            }
+
+            // --- Logic for 'cancelled' status ---
+            if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
+                // 1. Handle payments: Revert paid amounts (refund) if payment was made
+                // Only create a refund payment record if `paid_amount` is greater than 0
+                if ($order->paid_amount > 0) {
+                    // Create a new payment record for the refund (money going OUT)
+                    Payment::create([
+                        'sale_id'          => $order->id, // Associate directly with the sale
+                        'entity_id'        => $order->customer_id,
+                        'amount'           => $order->paid_amount, // The amount being refunded
+                        'payment_method'   => $order->payment_method, // Refund via the original payment method
+                        'payment_date'     => Carbon::now(),
+                        'transaction_type' => 'out', // Money going OUT from the business (refund)
+                        'ref_type'         => 'sales_return', // Custom type for sale refund
+                        'ref_id'           => $order->id, // Reference the original sale ID
+                        'note'             => 'Refund for cancelled order #' . $order->invoice_number,
+                        'created_by'       => Auth::id(), // Admin user who initiated the cancellation/refund
+                    ]);
+
+                    // Update order's due_amount to 0, implying refund processed and no more balance
+                    $order->due_amount = 0;
+                    $order->save();
+                }
+
+                // 2. Add items back to inventory stocks and show in stock ledger
+                $order->load('items'); // Ensure sale items are loaded
+                foreach ($order->items as $item) {
+                    // Find the corresponding stock entry
+                    $stock = InventoryStock::where('product_id', $item->product_id)
+                                           ->where('variant_id', $item->product_variant_id) // Use product_variant_id as per your model/schema
+                                           ->first();
+
+                    if ($stock) {
+                        // Increase stock quantity
+                        $stock->quantity_in_base_unit += $item->quantity; // Use quantity_in_base_unit based on your schema
+                        $stock->save();
+
+                        // Create StockLedger entry for the returned item
+                        StockLedger::create([
+                            'product_id'                 => $item->product_id,
+                            'variant_id'                 => $item->product_variant_id, // Use variant_id as per your image/schema
+                            'warehouse_id'               => $order->branch->warehouse->id ?? null, // Assuming branch has a warehouse relation
+                            'ref_type'                   => 'cancelled_order_return', // Specific type for cancelled order stock return
+                            'ref_id'                     => $order->id, // Reference the original sale ID
+                            'quantity_change_in_base_unit' => $item->quantity, // Quantity added back
+                            'unit_cost'                  => $item->unit_price, // Use the unit price from the sale item as the cost basis
+                            'direction'                  => 'in', // Stock is coming back IN
+                            'created_by'                 => Auth::id(), // User who initiated the cancellation
+                            'created_at'                 => Carbon::now(),
+                        ]);
+                    } else {
+                        // Log an error if stock item is not found, but don't prevent transaction completion
+                        \Log::error("Stock not found for product ID {$item->product_id} and variant ID {$item->product_variant_id} during order cancellation #{$order->id}.");
+                    }
+                }
+            }
+
+            DB::commit(); // Commit the transaction
+            return redirect()->back()->with('success', "Order #{$order->invoice_number} status updated to " . ucfirst($newStatus) . '.');
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback if any error occurs
+            \Log::error('Order status update failed for order #' . $order->id . ': ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update order status. Please try again. Error: ' . $e->getMessage());
         }
     }
 }

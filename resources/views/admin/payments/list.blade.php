@@ -81,15 +81,15 @@
                                     <tbody>
                                         @foreach($payments as $payment)
                                         @php
-                                            $dueAmount = method_exists($payment->reference, 'total') 
-                                                ? $payment->reference->total - $payment->amount 
+                                            $dueAmount = $payment->reference && method_exists($payment->reference, 'total')
+                                                ? $payment->reference->total - $payment->amount
                                                 : null;
                                         @endphp
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
                                             <td>{{ $payment->entity->name ?? '-' }}</td>
                                             <td>{{ ucfirst($payment->entity_type) ?? '-' }}</td>
-                                            <td>{{ class_basename($payment->ref_type) }} #{{ $payment->reference->id ?? '-' }}</td>
+                                            <td>{{ class_basename($payment->ref_type) }} #{{ $payment->ref_id ?? '-' }}</td>
                                             <td>{{ $setting->currency_symbol }} {{ number_format($payment->amount, 2) }}</td>
                                             <td>{{ ucfirst($payment->payment_method) }}</td>
                                             <td>{{ $payment->creator->name ?? '-' }}</td>

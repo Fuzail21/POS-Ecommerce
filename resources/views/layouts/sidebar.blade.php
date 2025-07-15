@@ -500,6 +500,19 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                         </li>
                     </ul>
                 </li>
+
+                <li class="{{ Route::is('orders.*') ? 'active' : '' }}">
+                    <a href="{{ route('orders.index') }}" class="svg-icon">
+                        <svg class="svg-icon" id="orders-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7h18"></path>
+                            <path d="M3 12h18"></path>
+                            <path d="M3 17h18"></path>
+                        </svg>
+                        <span class="ml-4">Orders</span>
+                    </a>
+                </li>
                 
                 <li class="{{ Route::is('discount_rules.*') ? 'active' : '' }}">
                     <a href="{{ route('discount_rules.index') }}" class="svg-icon">

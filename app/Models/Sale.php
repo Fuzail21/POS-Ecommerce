@@ -26,6 +26,8 @@ class Sale extends Model
         'paid_amount',
         'due_amount',
         'payment_method',
+        'sale_origin',
+        'status',
         'created_by',
     ];
 
