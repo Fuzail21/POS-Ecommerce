@@ -30,8 +30,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
-        <div class="container-fluid py-5">
-            <div class="container py-5">
+        <div style="padding-top: 3rem; padding-bottom: 3rem;"> {{-- Replaced container-fluid py-5 --}}
+            <div style="padding-top: 3rem; padding-bottom: 3rem; max-width: 1600px; margin-left: auto; margin-right: auto; padding-left: 15px; padding-right: 15px;"> {{-- Replaced container py-5 --}}
                 <h1 class="mb-4">Billing details</h1>
                 <form action="{{ route('store.checkout.process') }}" method="POST" id="checkout-form">
                     @csrf
@@ -90,13 +90,15 @@
                                 <input type="email" class="form-control" value="{{ $user->email }}" readonly>
                             </div>
                         </div>
-                        <div class="col-md-12 col-lg-6 col-xl-5">
+                        <div class="col-md-12 col-lg-12 col-xl-5">
                             <div class="table-responsive" style="overflow: hidden;">
                                 <table class="table">
                                     <thead>
                                         <tr>
                                             <th scope="col">Products</th>
                                             <th scope="col">Name</th>
+                                            <th scope="col">Color</th>
+                                            <th scope="col">Size</th>
                                             <th scope="col">Price</th>
                                             <th scope="col">Quantity</th>
                                             <th scope="col">Total</th>
@@ -119,19 +121,36 @@
                                                 <th scope="row">
                                                     <div class="d-flex align-items-center">
                                                         <img src="{{ asset('storage/' . ($details['variant_img'] ?? $details['image'])) }}"
-                                                             class="img-fluid me-5 rounded-circle"
-                                                             style="width: 90px; height: 90px; object-fit: cover;"
-                                                             alt="{{ $details['name'] }}">
+                                                                class="img-fluid me-5 rounded-circle"
+                                                                style="width: 90px; height: 90px; object-fit: cover;"
+                                                                alt="{{ $details['name'] }}">
                                                     </div>
                                                 </th>
-                                                    <td style="min-width: 150px;">
-                                                        <p class="mb-0 mt-4" style="font-size:15px;">
-                                                            {{ Str::words($details['name'], 5, '...') }}
-                                                            @if (!empty($details['variant_name']))
-                                                                - {{ $details['variant_name'] }}
-                                                            @endif
-                                                        </p>
-                                                    </td>
+                                                <td style="min-width: 150px;">
+                                                    <p class="mb-0 mt-4" style="font-size:15px;">
+                                                        {{ Str::words($details['name'], 5, '...') }}
+                                                        @if (!empty($details['variant_name']))
+                                                            - {{ $details['variant_name'] }}
+                                                        @endif
+                                                    </p>
+                                                </td>
+                                                <td >
+                                                    <p class="mb-0 mt-4" style="font-size:15px;">
+                                                        {{ $details['variant_color'] }}
+                                                        @if (empty($details['variant_color']))
+                                                            - 
+                                                        @endif
+                                                    </p>
+                                                </td>
+                                                <td >
+                                                    <p class="mb-0 mt-4" style="font-size:15px;">
+                                                        {{ $details['variant_size'] }}
+                                                        @if (empty($details['variant_size']))
+                                                            - 
+                                                        @endif
+                                                    </p>
+                                                </td>
+
                                                 <td style="min-width: 90px;">
                                                     <div class="mb-0 mt-4 price-per-item text-start" id="price-{{ $id }}">
                                                         @if ($actualPrice != $finalPrice)
@@ -144,10 +163,10 @@
                                                 <td>
                                                     <div class="input-group quantity mt-4" style="min-width: 50px;">
                                                         <input type="text" class="form-control form-control-sm text-center border-0 quantity-input"
-                                                               value="{{ $details['quantity'] }}"
-                                                               id="quantity-{{ $id }}"
-                                                               data-max-stock="{{ $details['stock'] }}"
-                                                               readonly>
+                                                                    value="{{ $details['quantity'] }}"
+                                                                    id="quantity-{{ $id }}"
+                                                                    data-max-stock="{{ $details['stock'] }}"
+                                                                    readonly>
                                                     </div>
                                                     <div id="stock-error-{{ $id }}" class="text-danger mt-1" style="font-size: 0.85em; display: none;"></div>
                                                 </td>
@@ -165,80 +184,16 @@
                                                 <td colspan="7" class="text-center py-5">Your cart is empty!</td>
                                             </tr>
                                         @endforelse
-                                  
-                                        {{-- <tr>
-                                            <th scope="row"></th>
-                                            <td class="py-4"></td>
-                                            <td class="py-4"></td>
-                                            <td class="py-4">
-                                                <p class="mb-0 text-dark py-3">Subtotal</p>
-                                            </td>
-                                            <td class="py-4">
-                                                <div class="py-3 border-bottom border-top">
-                                                    <p class="mb-0 text-dark" style="min-width: 100px;">{{ number_format($subtotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    
-                                        @if($couponDiscount > 0)
-                                            <tr>
-                                                <th scope="row"></th>
-                                                <td class="py-4"></td>
-                                                <td class="py-4"></td>
-                                                <td class="py-4">
-                                                    <p class="mb-0 text-dark py-3">Coupon Discount
-                                                        @if($couponCode)
-                                                            <span class="badge bg-success ms-2">{{ $couponCode }}</span>
-                                                        @endif
-                                                    </p>
-                                                </td>
-                                                <td class="py-4">
-                                                    <div class="py-3 border-bottom border-top">
-                                                        <p class="mb-0 text-danger" style="min-width: 100px;">-{{ number_format($couponDiscount, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endif
-
-                                        <tr>
-                                            <th scope="row"></th>
-                                            <td class="py-5">
-                                                <p class="mb-0 text-dark ">Shipping</p>
-                                            </td>
-                                            <td colspan="3" class="py-5">
-                                                <div class="form-check text-start">
-                                                    <input type="radio" class="form-check-input bg-primary border-0" id="Shipping-1" name="shipping_option" value="free_shipping" checked>
-                                                    <label class="form-check-label" for="Shipping-1">Free Shipping</label>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        
-                                        <tr>
-                                            <th scope="row"></th>
-                                            <td class="py-4">
-                                                <p class="mb-0 text-dark text-uppercase py-3">TOTAL</p>
-                                            </td>
-                                            <td class="py-4"></td>
-                                            <td class="py-4"></td>
-                                            <td class="py-4">
-                                                <div class="py-3 border-bottom border-top">
-                                                    <p class="mb-0 text-dark" id="grand-total" style="min-width: 100px;">{{ number_format($subtotalAfterCoupon, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
-                                                </div>
-                                            </td>
-                                        </tr> --}}
                                     </tbody>
                                 </table>
                             </div>
 
                             <div class="col-md-12 col-lg-12">
                                 <div class="rounded"> {{-- Added p-4 for internal padding around the total summary --}}
-                                    {{-- <h1 class="display-6 mb-4">Order <span class="fw-normal">Summary</span></h1> Changed to Order Summary for clarity --}}
-                                    {{-- Subtotal Row --}}
                                     <div class="d-flex justify-content-between py-4 border-bottom"> {{-- Added py-2 and border-bottom for clear separation --}}
                                         <h5 class="mb-0 me-4">Subtotal:</h5>
                                         <p class="mb-0 fw-bold">{{ number_format($subtotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
                                     </div>
-                                    {{-- Coupon Discount Row --}}
                                     @if($couponDiscount > 0)
                                     <div class="d-flex justify-content-between py-4 border-bottom"> {{-- Added py-2 and border-bottom --}}
                                         <h5 class="mb-0 me-4">Coupon Discount:
@@ -249,14 +204,6 @@
                                         <p class="mb-0 text-danger fw-bold">-{{ number_format($couponDiscount, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
                                     </div>
                                     @endif
-                                    {{-- Shipping Row --}}
-                                    {{-- <div class="d-flex justify-content-between py-2 border-bottom">
-                                        <h5 class="mb-0 me-4">Shipping:</h5>
-                                        @php $shippingCost = 0.00; @endphp 
-                                        <p class="mb-0 fw-bold">Flat rate: <span id="shipping-cost">{{ number_format($shippingCost, 2) }}</span> {{ $setting->currency_symbol ?? '$' }}</p>
-                                    </div>
-                                    <p class="mb-3 text-end text-muted" style="font-size: 0.9em;">Shipping to your address.</p> --}}
-                                    {{-- Total Row --}}
                                     <div class="d-flex justify-content-between pt-3"> {{-- Use pt-3 for top padding and no bottom border --}}
                                         <h5 class="mb-0 ps-0 me-4 text-primary">Total:</h5> {{-- Removed ps-4, added text-primary --}}
                                         <p class="mb-0 pe-0 fw-bold text-primary" id="grand-total">{{ number_format($subtotalAfterCoupon, 2) }} {{ $setting->currency_symbol ?? '$' }}</p> {{-- Ensure this uses $subtotalAfterCoupon and shipping --}}
@@ -280,7 +227,7 @@
                 </form>
             </div>
         </div>
-        @section('frontend_js')
+@section('frontend_js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const checkoutForm = document.getElementById('checkout-form');

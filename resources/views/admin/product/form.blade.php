@@ -123,6 +123,8 @@
                                         <thead>
                                             <tr>
                                                 <th>Variant Name</th>
+                                                <th>Color</th>
+                                                <th>Size</th>
                                                 <th>SKU</th>
                                                 {{-- <th>Barcode</th> --}}
                                                 <th>Actual Price</th>
@@ -138,6 +140,8 @@
                                                 @foreach($product->variants as $variant)
                                                     <tr>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][variant_name]" value="{{ $variant->variant_name }}" class="form-control" required></td>
+                                                        <td><input type="text" name="variants[{{ $loop->index }}][color]" value="{{ $variant->color }}" class="form-control" required></td>
+                                                        <td><input type="text" name="variants[{{ $loop->index }}][size]" value="{{ $variant->size }}" class="form-control" required></td>
                                                         <td><input type="text" name="variants[{{ $loop->index }}][sku]" value="{{ $variant->sku }}" class="form-control" required></td>
                                                         {{-- <td><input type="text" name="variants[{{ $loop->index }}][barcode]" value="{{ $variant->barcode }}" class="form-control"></td> --}}
                                                         <td><input type="number" step="0.01" name="variants[{{ $loop->index }}][actual_price]" value="{{ $variant->actual_price }}" class="form-control"></td>
@@ -252,6 +256,8 @@
 
             row.innerHTML = `
                 <td><input type="text" name="variants[${variantIndex}][variant_name]" class="form-control" required></td>
+                <td><input type="text" name="variants[${variantIndex}][color]" class="form-control" required></td>
+                <td><input type="text" name="variants[${variantIndex}][size]" class="form-control" required></td>
                 <td><input type="text" name="variants[${variantIndex}][sku]" class="form-control" required></td>
                 {{-- <td><input type="text" name="variants[${variantIndex}][barcode]" class="form-control"></td> --}}
                 <td><input type="number" step="0.01" name="variants[${variantIndex}][actual_price]" class="form-control"></td>

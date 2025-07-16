@@ -318,6 +318,8 @@ Route::prefix('store')->group(function () {
     // Route::get('/register', [CustomerRegisteredUserController::class, 'create'])->name('customer.register');
     // Route::post('/register', [CustomerRegisteredUserController::class, 'store']);
 
+    Route::post('/product-variant', [StoreController::class, 'getProductVariant'])->name('product.getVariant');
+
     // Protected routes for authenticated customers
     Route::middleware('auth:customer')->group(function () {
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('store.checkout');

@@ -37,6 +37,8 @@
                             <th>#</th>
                             <th>Product</th>
                             <th>Variant</th>
+                            <th>Color</th>
+                            <th>Size</th>
                             <th>Qty</th>
                             <th>Unit Cost</th>
                             <th>Total</th>
@@ -52,6 +54,9 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $item->product->name }}</td>
                                 <td>{{ $item->variant->variant_name ?? '-' }}</td>
+                                <td>{{ $item->variant->color ?? '-' }}</td>
+                                <td>{{ $item->variant->size ?? '-' }}</td>
+
                                 <td>{{ number_format($item->quantity, 0) }} {{ $item->unit->name ?? Null }}</td>
                                 <td>{{ $setting->currency_symbol }} {{ number_format($item->unit_price, 2) }}</td>
                                 <td>{{ $setting->currency_symbol }} {{ number_format($item->total_price, 2) }}</td>

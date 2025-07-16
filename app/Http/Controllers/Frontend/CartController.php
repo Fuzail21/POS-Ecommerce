@@ -13,42 +13,8 @@ use Carbon\Carbon;
 
 class CartController extends Controller
 {
-    // public function add(Request $request){   
-    //     $cart = session()->get('cart', []);
-    //     dd($request->all());
-    //     $id = $request->product_id;
-    //     $qty = $request->quantity ?? 1;
-
-    //     $product = Product::findOrFail($id);
-    //     $availableStock = $request->stock;
-
-    //     // Use hidden input price if sent, fallback to actual_price
-    //     $price = $request->input('price', $product->actual_price);
-
-    //     $currentCartQuantity = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
-    //     $newDesiredQuantity = $currentCartQuantity + $qty;
-
-    //     if ($newDesiredQuantity > $availableStock) {
-    //         return redirect()->back()->with('error', "Cannot add {$qty} units. Only {$availableStock} of {$product->name} in stock. You already have {$currentCartQuantity} in your cart. You can add " . ($availableStock - $currentCartQuantity) . " more.");
-    //     }
-
-    //     $cart[$id] = [
-    //         'id' => $id,
-    //         'name' => $product->name,
-    //         'stock' => $availableStock,
-    //         'price' => $price, // ✅ Discounted or final price
-    //         'actual_price' => $product->actual_price, // ✅ Store original price
-    //         'quantity' => $newDesiredQuantity,
-    //         'image' => $product->product_img,
-    //     ];
-
-    //     session()->put('cart', $cart);
-
-    //     return redirect()->back()->with('success', 'Product added to cart!');
-    // }
-
-    public function add(Request $request)
-    {
+    public function add(Request $request){
+        // dd($request->all());
         $cart = session()->get('cart', []);
         $id = $request->product_id;
         $qty = $request->quantity ?? 1;
@@ -63,6 +29,8 @@ class CartController extends Controller
         $variantId = $request->variant_id;
         $variantName = null; // Initialize variant name
         $variantImg = null;
+        $variantColor = null;
+        $variantSize = null;
 
         if ($variantId) {
 
@@ -70,6 +38,8 @@ class CartController extends Controller
             if ($variant) {
                 $variantName = $variant->variant_name;
                 $variantImg = $variant->product_img;
+                $variantSize = $variant->size;
+                $variantColor = $variant->color;
             }
         }
 
@@ -105,7 +75,8 @@ class CartController extends Controller
             'variant_id' => $variantId,
             'variant_name' => $variantName,
             'variant_img' => $variantImg,
-           
+            'variant_size' => $variantSize,
+            'variant_color' => $variantColor,
         ];
 
         session()->put('cart', $cart);

@@ -47,6 +47,8 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Variant Name</th>
+                                        <th>Color</th>
+                                        <th>Size</th>
                                         <th>SKU</th>
                                         <th>Barcode</th>
                                         <th>Price</th>
@@ -57,6 +59,8 @@
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $variant->variant_name }}</td>
+                                            <td>{{ $variant->color }}</td>
+                                            <td>{{ $variant->size }}</td>
                                             <td>{{ $variant->sku }}</td>
                                             <td>
                                                 @if($variant->barcode)

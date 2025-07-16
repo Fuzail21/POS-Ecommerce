@@ -39,24 +39,20 @@ class CustomerProfileController extends Controller
         return redirect()->route('customer.profile.edit')->with('status', 'Profile updated successfully.');
     }
 
+    // public function destroy(Request $request){
+    //     $request->validate([
+    //         'password' => ['required', 'current_password:customer'], // Specify the 'customer' guard
+    //     ]);
 
-    /**
-     * Delete the customer's account.
-     */
-    public function destroy(Request $request){
-        $request->validate([
-            'password' => ['required', 'current_password:customer'], // Specify the 'customer' guard
-        ]);
+    //     $customer = Auth::guard('customer')->user();
 
-        $customer = Auth::guard('customer')->user();
+    //     Auth::guard('customer')->logout();
 
-        Auth::guard('customer')->logout();
+    //     $customer->delete();
 
-        $customer->delete();
+    //     $request->session()->invalidate();
+    //     $request->session()->regenerateToken();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/')->with('status', 'Your account has been deleted.');
-    }
+    //     return redirect('/')->with('status', 'Your account has been deleted.');
+    // }
 }

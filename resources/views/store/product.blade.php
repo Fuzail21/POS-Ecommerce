@@ -1,4 +1,4 @@
-@extends('layouts.frontend.app')
+@extends('layouts.frontend.app') {{-- Assuming you have a layout --}}
 
 @section('frontend_content')
 
@@ -75,26 +75,22 @@
 
                                 {{-- Variant Selection (if product has variants) --}}
                                 @if ($product->has_variants && $product->variants->isNotEmpty())
+                                    {{-- Using separate color and size dropdowns as per your initial request --}}
                                     <div class="mb-4">
-                                        <label for="variant_select" class="form-label fw-bold">Select Variant:</label>
-                                        <select class="form-select" id="variant_select" name="variant_id" style="width: 200px;">
-                                            @foreach ($product->variants as $variant)
-                                                <option
-                                                    value="{{ $variant->id }}"
-                                                    data-price-adjustment="{{ $variant->final_price - $product->actual_price }}" {{-- Calculate price adjustment from base product actual price --}}
-                                                    data-stock="{{ $variant->stock_quantity }}"
-                                                    data-variant-name="{{ $variant->variant_name }}"
-                                                    data-variant-img="{{ !empty($variant->product_img) ? asset('storage/' . $variant->product_img) : ( !empty($product->product_img) ? asset('storage/' . $product->product_img) : asset('build/assets/frontend/img/default-product.jpg') ) }}"
-                                                    @if(!$variant->in_stock) disabled @endif {{-- Use in_stock property for variant --}}
-                                                >
-                                                    {{ $variant->variant_name }} (Stock: {{ number_format($variant->stock_quantity, 0) }})
-                                                    @if ($variant->has_discount)
-                                                        ({{ $setting->currency_symbol }}{{ number_format($variant->final_price, 2) }})
-                                                    @else
-                                                        ({{ $setting->currency_symbol }}{{ number_format($variant->actual_price, 2) }})
-                                                    @endif
-                                                </option>
+                                        <label for="color-select" class="form-label fw-bold">Select Color:</label>
+                                        <select class="form-select" id="color-select" name="color" style="width: 200px;">
+                                            <option value="">Select Color</option>
+                                            @foreach($colors as $color)
+                                                <option value="{{ $color }}">{{ $color }}</option>
                                             @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="size-select" class="form-label fw-bold">Select Size:</label>
+                                        <select class="form-select" id="size-select" name="size" style="width: 200px;">
+                                            <option value="">Select Size</option>
+                                            {{-- Options will be populated by JavaScript based on color selection --}}
                                         </select>
                                     </div>
                                 @endif
@@ -167,7 +163,9 @@
             const productQuantityInput = document.getElementById('product_quantity');
             const btnMinus = document.getElementById('btn_minus');
             const btnPlus = document.getElementById('btn_plus');
-            const variantSelect = document.getElementById('variant_select');
+            const colorSelect = document.getElementById('color-select');
+            const sizeSelect = document.getElementById('size-select');
+
             const displayFinalPrice = document.getElementById('display_final_price');
             const cartQuantityInput = document.getElementById('cart_quantity_input');
             const cartStockInput = document.getElementById('cart_stock_input');
@@ -178,6 +176,7 @@
             const totalStockDisplay = document.getElementById('total_stock_display');
             const productMainImage = document.getElementById('product_main_image');
 
+            const productId = "{{ $product->id }}"; // Get product ID from PHP
             const baseActualPrice = parseFloat("{{ $product->actual_price ?? 0 }}");
             const baseFinalPrice = parseFloat("{{ $product->final_price ?? ($product->actual_price ?? 0) }}");
             const productHasDiscount = "{{ $product->has_discount }}" === "1";
@@ -185,20 +184,35 @@
             const productHasVariants = "{{ $product->has_variants }}" === "1";
 
             let currentStock;
-            let selectedVariantPriceAdjustment = 0;
-            let selectedVariantStock;
-            let selectedVariantHasDiscount;
-            let selectedVariantFinalPrice;
             let selectedVariantActualPrice;
+            let selectedVariantFinalPrice;
+            let selectedVariantHasDiscount;
 
+            // Store initial product image for fallback
+            const initialProductImage = productMainImage.src;
+
+            // Store all variants data for client-side filtering of sizes
+            const allVariantsClientData = @json($product->variants);
+
+            // Create a map for quick lookup of available sizes by color
+            const availableSizesByColor = {};
+            allVariantsClientData.forEach(variant => {
+                const color = variant.color || 'NULL'; // Use 'NULL' for variants without a color
+                const size = variant.size || 'NULL';   // Use 'NULL' for variants without a size
+
+                if (!availableSizesByColor[color]) {
+                    availableSizesByColor[color] = new Set();
+                }
+                availableSizesByColor[color].add(size);
+            });
 
             // Function to update price, stock, quantity input, and button states
             function updatePriceAndStock() {
                 console.log('--- updatePriceAndStock called ---');
                 console.log('currentStock:', currentStock);
 
-                let displayedActualPrice = parseFloat(selectedVariantActualPrice);
-                let displayedFinalPrice = parseFloat(selectedVariantFinalPrice);
+                let displayedActualPrice = selectedVariantActualPrice;
+                let displayedFinalPrice = selectedVariantFinalPrice;
                 let displayedHasDiscount = selectedVariantHasDiscount;
 
                 // Update displayed prices
@@ -241,14 +255,15 @@
                 }
                 
                 // Also handle overall product in/out of stock state
-                if (currentStock <= 0) {
+                // Disable if out of stock OR if product has variants and no variant is selected
+                if (currentStock <= 0 || (productHasVariants && !cartVariantIdInput.value)) {
                     addToCartButton.style.display = 'none';
                     outOfStockButton.style.display = 'block';
-                    productQuantityInput.value = 0; // Reset quantity if out of stock
+                    productQuantityInput.value = 0; // Reset quantity if out of stock or no variant selected
                     productQuantityInput.disabled = true;
                     btnMinus.disabled = true;
                     btnPlus.disabled = true;
-                    console.log('Product is out of stock.');
+                    console.log('Product is out of stock or no variant selected.');
                 } else {
                     addToCartButton.style.display = 'block';
                     outOfStockButton.style.display = 'none';
@@ -272,53 +287,141 @@
                 console.log('--- updatePriceAndStock finished ---');
             }
 
-            // Initialize based on whether variants exist and if a default is selected
-            if (productHasVariants && variantSelect.options.length > 0) {
-                console.log('Product has variants. Initializing variant selection.');
-                let firstAvailableVariantOption = null;
-                for (let i = 0; i < variantSelect.options.length; i++) {
-                    if (!variantSelect.options[i].disabled) {
-                        firstAvailableVariantOption = variantSelect.options[i];
-                        break;
+            // Function to populate size dropdown based on selected color
+            function populateSizes(selectedColor) {
+                // Clear current size options
+                sizeSelect.innerHTML = '<option value="">Select Size</option>';
+
+                // Get sizes available for the selected color
+                const sizesForColor = availableSizesByColor[selectedColor || 'NULL']; // Use 'NULL' if no color selected
+
+                if (sizesForColor) {
+                    // Convert Set to Array, filter out 'NULL' if it's not a real size option, then sort
+                    const sortedSizes = Array.from(sizesForColor)
+                                            .filter(size => size !== 'NULL')
+                                            .sort();
+                    
+                    sortedSizes.forEach(size => {
+                        const option = document.createElement('option');
+                        option.value = size;
+                        option.textContent = size;
+                        sizeSelect.appendChild(option);
+                    });
+
+                    // If there's a 'NULL' size and no other sizes, add it back (for variants with only color, no size)
+                    if (sizesForColor.has('NULL') && sortedSizes.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = ''; // Represents no size selected for the variant
+                        option.textContent = 'N/A'; // Or 'No Specific Size'
+                        sizeSelect.appendChild(option);
                     }
                 }
+                // Reset size selection
+                sizeSelect.value = '';
+            }
 
-                if (firstAvailableVariantOption) {
-                    variantSelect.value = firstAvailableVariantOption.value; // Set the selected value
-                    const initialSelectedVariantId = firstAvailableVariantOption.value;
-                    const initialSelectedVariantStock = parseInt(firstAvailableVariantOption.dataset.stock);
-                    const initialSelectedVariantImg = firstAvailableVariantOption.dataset.variantImg;
+            // Function to fetch variant details via AJAX
+            async function fetchVariantDetails() {
+                const selectedColor = colorSelect ? colorSelect.value : '';
+                const selectedSize = sizeSelect ? sizeSelect.value : '';
 
-                    console.log('Initial selected variant:', firstAvailableVariantOption.dataset.variantName, 'ID:', initialSelectedVariantId, 'Stock:', initialSelectedVariantStock, 'Image:', initialSelectedVariantImg);
+                // If product has variants, and either color or size (or both) are selected
+                if (productHasVariants && (selectedColor || selectedSize)) {
+                    try {
+                        const response = await fetch("{{ route('product.getVariant') }}", { // Ensure this route is defined in web.php
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({
+                                product_id: productId,
+                                color: selectedColor || null, // Send null if empty string
+                                size: selectedSize || null    // Send null if empty string
+                            })
+                        });
 
-                    cartVariantIdInput.value = initialSelectedVariantId;
-                    currentStock = initialSelectedVariantStock;
-                    productMainImage.src = initialSelectedVariantImg;
+                        const data = await response.json();
+                        console.log('AJAX response for variant:', data);
 
-                    const initialVariantData = @json($product->variants->keyBy('id'));
-                    const initialVariant = initialVariantData[initialSelectedVariantId];
+                        if (data.success && data.variant) {
+                            const variant = data.variant;
+                            cartVariantIdInput.value = variant.id;
+                            currentStock = variant.stock_quantity;
+                            selectedVariantActualPrice = parseFloat(variant.actual_price);
+                            selectedVariantFinalPrice = parseFloat(variant.final_price);
+                            selectedVariantHasDiscount = variant.has_discount;
 
-                    selectedVariantActualPrice = parseFloat(initialVariant.actual_price);
-                    selectedVariantFinalPrice = parseFloat(initialVariant.final_price);
-                    selectedVariantHasDiscount = initialVariant.has_discount;
-
+                            // Update image if variant has a specific image, otherwise revert to main product image
+                            if (variant.product_img) {
+                                productMainImage.src = variant.product_img;
+                            } else {
+                                productMainImage.src = initialProductImage;
+                            }
+                        } else {
+                            // Variant not found or out of stock for the combination
+                            console.warn('Variant not found or out of stock:', data.message);
+                            currentStock = 0; // Indicate out of stock for this combination
+                            cartVariantIdInput.value = ''; // No valid variant ID
+                            selectedVariantActualPrice = baseActualPrice; // Revert to base price display
+                            selectedVariantFinalPrice = baseFinalPrice;
+                            selectedVariantHasDiscount = productHasDiscount;
+                            productMainImage.src = initialProductImage; // Revert to base image
+                        }
+                    } catch (error) {
+                        console.error('Error fetching variant details:', error);
+                        // Fallback to base product details on error
+                        currentStock = parseInt("{{ $product->stock_quantity ?? 0 }}");
+                        selectedVariantActualPrice = baseActualPrice;
+                        selectedVariantFinalPrice = baseFinalPrice;
+                        selectedVariantHasDiscount = productHasDiscount;
+                        productMainImage.src = initialProductImage;
+                        cartVariantIdInput.value = '';
+                    } finally {
+                        // Reset quantity to 1 when variant changes, then update
+                        productQuantityInput.value = 1;
+                        updatePriceAndStock();
+                    }
                 } else {
-                    console.log('No available variants found. Setting stock to 0.');
-                    currentStock = 0;
-                    cartVariantIdInput.value = '';
+                    // No variant selected or product has no variants, revert to base product details
+                    console.log('No variant selected or product has no variants. Reverting to base product details.');
+                    currentStock = parseInt("{{ $product->stock_quantity ?? 0 }}");
                     selectedVariantActualPrice = baseActualPrice;
                     selectedVariantFinalPrice = baseFinalPrice;
                     selectedVariantHasDiscount = productHasDiscount;
-                    productMainImage.src = "{{ !empty($product->product_img) ? asset('storage/' . $product->product_img) : asset('build/assets/frontend/img/default-product.jpg') }}";
+                    productMainImage.src = initialProductImage;
+                    cartVariantIdInput.value = ''; // No specific variant selected
+                    productQuantityInput.value = 1; // Reset quantity
+                    updatePriceAndStock();
                 }
+            }
+
+            // Initial setup on page load
+            if (productHasVariants) {
+                // Populate sizes initially with all sizes
+                populateSizes(''); // Pass empty string to show all sizes initially
+
+                // Attach event listeners for color and size dropdowns
+                if (colorSelect) {
+                    colorSelect.addEventListener('change', function() {
+                        populateSizes(this.value); // Update sizes based on selected color
+                        fetchVariantDetails(); // Fetch variant details for the new combination
+                    });
+                }
+                if (sizeSelect) {
+                    sizeSelect.addEventListener('change', fetchVariantDetails); // Fetch variant details when size changes
+                }
+                // Initial fetch for variants based on default selections (or no selection)
+                fetchVariantDetails();
             } else {
-                console.log('Product does not have variants or no variants available. Using base product stock.');
+                // If no variants, just set initial stock and prices from base product
                 currentStock = parseInt("{{ $product->stock_quantity ?? 0 }}");
                 selectedVariantActualPrice = baseActualPrice;
                 selectedVariantFinalPrice = baseFinalPrice;
                 selectedVariantHasDiscount = productHasDiscount;
-                productMainImage.src = "{{ !empty($product->product_img) ? asset('storage/' . $product->product_img) : asset('build/assets/frontend/img/default-product.jpg') }}";
+                updatePriceAndStock();
             }
+
 
             // Event listener for quantity minus button
             btnMinus.addEventListener('click', function (event) {
@@ -350,37 +453,55 @@
                 updatePriceAndStock();
             });
 
-            // Event listener for variant selection
-            if (productHasVariants && variantSelect) {
-                variantSelect.addEventListener('change', function () {
-                    console.log('Variant selected. Value:', this.value);
-                    const selectedOption = this.options[this.selectedIndex];
-                    const selectedVariantId = selectedOption.value;
-                    selectedVariantStock = parseInt(selectedOption.dataset.stock);
-                    const newImageSrc = selectedOption.dataset.variantImg;
-                    console.log('Selected variant stock from data-stock:', selectedVariantStock);
-                    
-                    const variantData = @json($product->variants->keyBy('id'));
-                    const selectedVariant = variantData[selectedVariantId];
-                    console.log('Selected variant object from PHP data:', selectedVariant);
+            // Add to Cart button click handler (common for both variant/non-variant products)
+            document.getElementById('add_to_cart_form').addEventListener('submit', function(event) {
+                 // Prevent default form submission
 
-                    selectedVariantActualPrice = parseFloat(selectedVariant.actual_price);
-                    selectedVariantFinalPrice = parseFloat(selectedVariant.final_price);
-                    selectedVariantHasDiscount = selectedVariant.has_discount;
+                const variantId = cartVariantIdInput.value;
+                const quantity = cartQuantityInput.value;
+                const price = cartPriceInput.value; // The final calculated price
 
-                    cartVariantIdInput.value = selectedVariantId;
-                    currentStock = selectedVariantStock;
-                    productMainImage.src = newImageSrc;
-                    console.log('currentStock updated to:', currentStock);
+                if (!variantId) {
+                    // Use a custom message box instead of alert()
+                    // You would need to implement a modal or similar UI for this
+                    console.error('Please select a valid product or variant.');
+                    alert('Please select a valid product or variant.'); // Fallback for demonstration
+                    return;
+                }
 
-                    // Reset quantity to 1 when variant changes, then update
-                    productQuantityInput.value = 1; 
-                    updatePriceAndStock();
+                // Implement your AJAX call to add to cart
+                fetch(this.action, { // Use the form's action attribute for the URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Laravel CSRF token
+                    },
+                    body: JSON.stringify({
+                        product_id: productId, // Main product ID
+                        variant_id: variantId, // The ID of the selected variant (or main product if no variants)
+                        quantity: quantity,
+                        price: price // Pass the calculated price to the cart
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Use a custom message box instead of alert()
+                        console.log('Product added to cart!');
+                        alert('Product added to cart!'); // Fallback for demonstration
+                        // Optionally update cart count in header, etc.
+                    } else {
+                        // Use a custom message box instead of alert()
+                        console.error('Error adding to cart:', data.message);
+                        alert('Error adding to cart: ' + data.message); // Fallback for demonstration
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Use a custom message box instead of alert()
+                    // alert('An error occurred. Please try again.'); // Fallback for demonstration
                 });
-            }
-
-            // Initial call to set correct price, stock, and button display on page load
-            updatePriceAndStock();
+            });
         });
     }
 </script>

@@ -80,6 +80,8 @@ class ProductController extends Controller
 
                 $variant = $product->variants()->create([
                     'variant_name' => $variantData['variant_name'],
+                    'color' => $variantData['color'],
+                    'size' => $variantData['size'],
                     'sku' => $variantData['sku'],
                     'actual_price' => $variantData['actual_price'] ?? 0,
                     'low_stock' => $variantData['low_stock'] ?? 0,
@@ -175,6 +177,10 @@ class ProductController extends Controller
                     $needsUpdate = (
                         $variant->variant_name !== $variantData['variant_name'] ||
                         $variant->barcode !== ($variantData['barcode'] ?? null) ||
+
+                        $variant->color !== ($variantData['color'] ?? null) ||
+                        $variant->size !== ($variantData['size'] ?? null) ||
+
                         $variant->actual_price != ($variantData['actual_price'] ?? 0) ||
                         $variant->low_stock != ($variantData['low_stock'] ?? 0)
                     );
@@ -185,6 +191,9 @@ class ProductController extends Controller
                             'barcode' => $variantData['barcode'] ?? $variant->barcode,
                             'actual_price' => $variantData['actual_price'] ?? 0,
                             'low_stock' => $variantData['low_stock'] ?? 0,
+                            'color' => $variantData['color'] ?? $variant->color,
+                            'size' => $variantData['size'] ?? $variant->size,
+                            
                         ]);
                     }
 

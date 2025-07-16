@@ -25,6 +25,8 @@
                     <tr>
                         <th scope="col">Products</th>
                         <th scope="col">Name</th>
+                        <th scope="col">Color</th>
+                        <th scope="col">Size</th>
                         <th scope="col">Price</th>
                         <th scope="col">Quantity</th>
                         <th scope="col">Stock</th>
@@ -58,14 +60,30 @@
                                          alt="{{ $details['name'] }}">
                                 </div>
                             </th>
-                                <td>
-                                    <p class="mb-0 mt-4">
-                                        {{ $details['name'] }}
-                                        @if (!empty($details['variant_name']))
-                                            - {{ $details['variant_name'] }}
-                                        @endif
-                                    </p>
-                                </td>
+                            <td>
+                                <p class="mb-0 mt-4">
+                                    {{ $details['name'] }}
+                                    @if (!empty($details['variant_name']))
+                                        - {{ $details['variant_name'] }}
+                                    @endif
+                                </p>
+                            </td>
+                            <td>
+                                <p class="mb-0 mt-4">
+                                    {{ $details['variant_color'] }}
+                                    @if (empty($details['variant_color']))
+                                        - 
+                                    @endif
+                                </p>
+                            </td>
+                            <td>
+                                <p class="mb-0 mt-4">
+                                    {{ $details['variant_size'] }}
+                                    @if (empty($details['variant_size']))
+                                        - 
+                                    @endif
+                                </p>
+                            </td>
                             <td>
                                 <div class="mb-0 mt-4 price-per-item text-start" id="price-{{ $id }}">
                                     @if ($actualPrice != $finalPrice)
