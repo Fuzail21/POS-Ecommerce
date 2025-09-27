@@ -47,10 +47,10 @@
                                 <h5 class="fw-bold mb-3">
                                     <span id="display_final_price">
                                         @if ($product->has_discount)
-                                            <del class="text-danger me-2">{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}</del>
-                                            <span>{{ $setting->currency_symbol }} {{ number_format($product->final_price, 2) }}</span>
+                                            <del class="text-danger me-2">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}</del>
+                                            <span>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->final_price, 2) }}</span>
                                         @else
-                                            <span>{{ $setting->currency_symbol }} {{ number_format($product->actual_price ?? 0, 2) }}</span>
+                                            <span>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price ?? 0, 2) }}</span>
                                         @endif
                                     </span>
                                     <span id="display_unit">/ {{ $product->displayUnit->name ?? 'unit' }}</span>

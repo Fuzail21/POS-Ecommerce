@@ -70,6 +70,7 @@ class CheckoutController extends Controller
     }
 
     public function process(Request $request){
+         // Get the current year for invoice number generation`
         $year = date('Y');
         // Generate the next invoice number
         $lastSale = Sale::whereYear('created_at', $year)
@@ -151,7 +152,8 @@ class CheckoutController extends Controller
                 // Safely access 'id' key.
                 $itemId = $item['id'] ?? null;
 
-                $variantId = ($itemType === 'variant') ? $itemId : null;
+
+                $variantId = $item['variant_id'] ?? null;
                 $productId = $variantId ? ProductVariant::find($variantId)?->product_id : $itemId;
 
                 // Safely access 'name' for error messages
@@ -188,6 +190,7 @@ class CheckoutController extends Controller
                     'product_id'    => $productId,
                     'variant_id'    => $variantId ?? NULL,
                     // 'warehouse_id'  => $warehouse_id,
+                    
                 ])->first();
                 if (!$stock || $stock->quantity_in_base_unit < $baseQty) {
                     throw new \Exception("Insufficient stock for " . $itemName . ".");
@@ -228,6 +231,7 @@ class CheckoutController extends Controller
             Session::forget(['cart', 'coupon_code', 'coupon_discount', 'coupon_percentage']);
 
             $sale = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->find($sale->id);
+
             $sale->currency_symbol = Setting::first()?->currency_symbol ?? '$';
             Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
 
@@ -247,8 +251,7 @@ class CheckoutController extends Controller
     public function thankYou(Request $request){
         // Retrieve data from the redirect (query parameters or session flash data)
         $invoiceNumber = $request->query('invoiceNumber');
-        $totalAmount = $request->query('paid_amount');
-
+        $totalAmount = $request->query('totalAmount');
         // You might want to fetch the setting here if not already available globally
         $setting = Setting::first();
 

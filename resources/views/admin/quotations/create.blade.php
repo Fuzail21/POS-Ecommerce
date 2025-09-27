@@ -122,10 +122,10 @@
 
                                                         {{ $variant->variant_name }} -
                                                         @if($hasDiscount)
-                                                            <del>{{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }}</del>
-                                                            <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol }} {{ number_format($variant->discounted_price, 2) }}</strong>
+                                                            <del>{{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->actual_price, 2) }}</del>
+                                                            <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->discounted_price, 2) }}</strong>
                                                         @else
-                                                            {{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }}
+                                                            {{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->actual_price, 2) }}
                                                         @endif
                                                         ({{ $variant->in_stock ? 'Stock: ' . $variant->stock_quantity : 'Out of Stock' }})
                                                     </option>
@@ -138,10 +138,10 @@
                                             @endphp
                                             <p class="mb-1">
                                                 @if($hasDiscount)
-                                                    <del>{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}</del>
-                                                    <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol }} {{ number_format($product->discounted_price, 2) }}</strong>
+                                                    <del>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}</del>
+                                                    <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->discounted_price, 2) }}</strong>
                                                 @else
-                                                    {{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}
+                                                    {{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}
                                                 @endif
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
@@ -188,14 +188,14 @@
                         </table>
 
                     <div style="margin-top: 15px;">
-
+                        <h4>Adjustments</h4>
                         <div style="margin-bottom: 10px;">
                             <label for="taxrate">Tax</label><br>
                             <div style="display: flex; align-items: center;">
                                 <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">%</span>
                                 <input type="number" name="taxrate" id="taxrate" placeholder="Tax" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;"
-                                       value="{{ old('taxrate', $quotation->tax_amount ?? 0) }}">
+                                       value="{{ old('taxrate', $quotation->tax_percentage ?? 0) }}">
                             </div>
                         </div>
 
@@ -213,17 +213,17 @@
                         <div style="margin-bottom: 10px;">
                             <label for="discountRate">Discount</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol ?? '$' }} </span>
                                 <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;"
-                                       value="{{ old('discountRate', $quotation->discount_amount ?? 0) }}">
+                                       value="{{ old('discountRate', $quotation->discount_percentage ?? 0) }}">
                             </div>
                         </div>
 
                         <div style="margin-bottom: 10px;">
                             <label for="shippingRate">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">{{ $setting->currency_symbol }} </span>
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">{{ $setting->currency_symbol ?? '$' }} </span>
                                 <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;"
                                        value="{{ old('shippingRate', $quotation->shipping_cost ?? 0) }}">
@@ -234,12 +234,12 @@
 
 
                         <div class="mt-3">
-                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol }} <span id="subtotal">0.00</span></p>
-                            <p><strong>Discount:</strong> {{ $setting->currency_symbol }} <span id="discount">0.00</span></p>
-                            <p><strong>Tax:</strong> {{ $setting->currency_symbol }} <span id="tax">0.00</span></p>
-                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol }} <span id="shipping">0.00</span></p>
+                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="subtotal">0.00</span></p>
+                            <p><strong>Discount:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="discount">0.00</span></p>
+                            <p><strong>Tax:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="shipping">0.00</span></p>
                             <hr>
-                            <h5><strong>Total:</strong> {{ $setting->currency_symbol }} <span id="total">0.00</span></h5>
+                            <h5><strong>Total:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="total">0.00</span></h5>
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
@@ -265,6 +265,7 @@
                 <input type="hidden" name="total_payable" id="total_payable">
                 <input type="hidden" id="subtotal_hidden" name="subtotal">
                 <input type="hidden" id="tax_hidden" name="tax">
+                <input type="hidden" id="taxrate_hidden" name="taxrate">
                 <input type="hidden" id="discount_hidden" name="discount">
                 <input type="hidden" id="shipping_hidden" name="shipping">
                 <input type="hidden" name="customer_id" id="selected_customer_id">
@@ -303,7 +304,7 @@
 </div>
 
 <script>
-    const currencySymbol = @json($setting->currency_symbol);
+    const currencySymbol = @json($setting->currency_symbol ?? '$');
     const initialCartData = @json($initialCart ?? []); // Pass initial cart data for edit mode
 
     function updateDiscountSymbol() {
@@ -432,6 +433,7 @@
             document.getElementById('discount_hidden').value = discount.toFixed(2);
             document.getElementById('tax_hidden').value = tax.toFixed(2);
             document.getElementById('shipping_hidden').value = shipping.toFixed(2);
+            document.getElementById('taxrate_hidden').value = taxValue.toFixed(2);
 
             totalPayableInput.value = total.toFixed(2);
 

@@ -242,6 +242,7 @@ class SaleController extends Controller
                 'total_amount'    => $request->subtotal,
                 'discount_amount' => $request->discount,
                 'tax_amount'      => $request->tax,
+                'tax_percentage'  => $request->taxRate,
                 'shipping'        => $request->shipping,
                 'final_amount'    => $request->total_payable,
                 'paid_amount'     => $request->amount_paid,
@@ -825,7 +826,7 @@ class SaleController extends Controller
 
                     // Update order's due_amount to 0, implying refund processed and no more balance
                     $order->due_amount = 0;
-                    $order->save();
+                    // $order->save();
                 }
 
                 // 2. Add items back to inventory stocks and show in stock ledger
@@ -833,18 +834,17 @@ class SaleController extends Controller
                 foreach ($order->items as $item) {
                     // Find the corresponding stock entry
                     $stock = InventoryStock::where('product_id', $item->product_id)
-                                           ->where('variant_id', $item->product_variant_id) // Use product_variant_id as per your model/schema
+                                           ->where('variant_id', $item->variant_id) // Use variant_id as per your model/schema
                                            ->first();
-
                     if ($stock) {
                         // Increase stock quantity
                         $stock->quantity_in_base_unit += $item->quantity; // Use quantity_in_base_unit based on your schema
-                        $stock->save();
+                        // $stock->save();
 
                         // Create StockLedger entry for the returned item
                         StockLedger::create([
                             'product_id'                 => $item->product_id,
-                            'variant_id'                 => $item->product_variant_id, // Use variant_id as per your image/schema
+                            'variant_id'                 => $item->variant_id, // Use variant_id as per your image/schema
                             'warehouse_id'               => $order->branch->warehouse->id ?? null, // Assuming branch has a warehouse relation
                             'ref_type'                   => 'cancelled_order_return', // Specific type for cancelled order stock return
                             'ref_id'                     => $order->id, // Reference the original sale ID

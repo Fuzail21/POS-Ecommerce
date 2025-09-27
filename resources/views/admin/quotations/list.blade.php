@@ -76,7 +76,7 @@
                                     <td>{{ \Carbon\Carbon::parse($quotation->quotation_date)->format('Y-m-d') }}</td> {{-- Format date --}}
                                     <td>{{ $quotation->customer->name ?? 'N/A' }}</td> {{-- Access customer name --}}
                                     <td>{{ $quotation->branch->name ?? 'N/A' }}</td>
-                                    <td>{{ $setting->currency_symbol ?? 'PKR' }} {{ number_format($quotation->grand_total, 2) }}</td> {{-- Display grand total --}}
+                                    <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($quotation->grand_total, 2) }}</td> {{-- Display grand total --}}
                                     <td>
                                         <span class="badge {{ ($quotation->status == 'pending') ? 'badge-warning' : (($quotation->status == 'sent') ? 'badge-success' : 'badge-secondary') }}">
                                             {{ ucfirst($quotation->status) }}

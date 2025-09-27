@@ -397,7 +397,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="discount">Discount</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol ?? '$' }} </span>
                                 <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -407,7 +407,7 @@
                         <div style="margin-bottom: 10px;">
                             <label for="shipping">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">{{ $setting->currency_symbol }} </span>
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">{{ $setting->currency_symbol ?? '$' }} </span>
                                 <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
@@ -417,12 +417,12 @@
 
 
                         <div class="mt-3">
-                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol }} <span id="subtotal">0.00</span></p>
-                            <p><strong>Discount:</strong> {{ $setting->currency_symbol }} <span id="discount">0.00</span></p>
-                            <p><strong>Tax:</strong> {{ $setting->currency_symbol }} <span id="tax">0.00</span></p>
-                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol }} <span id="shipping">0.00</span></p>
+                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="subtotal">0.00</span></p>
+                            <p><strong>Discount:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="discount">0.00</span></p>
+                            <p><strong>Tax:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="shipping">0.00</span></p>
                             <hr>
-                            <h5><strong>Total:</strong> {{ $setting->currency_symbol }} <span id="total">0.00</span></h5>
+                            <h5><strong>Total:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="total">0.00</span></h5>
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
@@ -560,7 +560,7 @@
 <!-- Bootstrap JS Bundle (includes Popper) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const currencySymbol = @json($setting->currency_symbol);
+    const currencySymbol = @json($setting->currency_symbol ?? '$');
 
     function updateDiscountSymbol() {
         const symbol = document.getElementById('discount-symbol');

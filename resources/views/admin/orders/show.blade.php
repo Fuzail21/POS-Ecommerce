@@ -82,11 +82,11 @@
                                     @forelse($order->items as $item)
                                         <tr>
                                             <td>{{ $item->product->name ?? 'N/A' }}</td>
-                                            <td>{{ $item->variant->name ?? 'N/A' }}</td>
+                                            <td>{{ $item->variant->variant_name ?? 'N/A' }}</td>
                                             <td>{{ $item->unit->name ?? 'N/A' }}</td>
                                             <td>{{ $item->quantity }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($item->unit_price, 2) }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($item->total_price, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($item->unit_price, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($item->total_price, 2) }}</td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -101,16 +101,16 @@
 
                         <div class="row justify-content-end">
                             <div class="col-md-6">
-                                <p class="text-right"><strong>Subtotal:</strong> {{ $setting->currency_symbol }} {{ number_format($order->total_amount, 2) }}</p>
+                                <p class="text-right"><strong>Subtotal:</strong> {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->total_amount, 2) }}</p>
                                 @if($order->discount_amount > 0)
-                                    <p class="text-right text-danger"><strong>Discount:</strong> -{{ $setting->currency_symbol }} {{ number_format($order->discount_amount, 2) }}</p>
+                                    <p class="text-right text-danger"><strong>Discount:</strong> -{{ $setting->currency_symbol ?? '$' }} {{ number_format($order->discount_amount, 2) }}</p>
                                 @endif
-                                <p class="text-right"><strong>Tax:</strong> {{ $setting->currency_symbol }} {{ number_format($order->tax_amount, 2) }}</p>
-                                <p class="text-right"><strong>Shipping:</strong> {{ $setting->currency_symbol }} {{ number_format($order->shipping, 2) }}</p>
-                                <h4 class="text-right"><strong>Grand Total:</strong> {{ $setting->currency_symbol }} {{ number_format($order->final_amount, 2) }}</h4>
-                                <p class="text-right text-success"><strong>Amount Paid:</strong> {{ $setting->currency_symbol }} {{ number_format($order->paid_amount, 2) }}</p>
+                                <p class="text-right"><strong>Tax:</strong> {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->tax_amount, 2) }}</p>
+                                <p class="text-right"><strong>Shipping:</strong> {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->shipping, 2) }}</p>
+                                <h4 class="text-right"><strong>Grand Total:</strong> {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->final_amount, 2) }}</h4>
+                                <p class="text-right text-success"><strong>Amount Paid:</strong> {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->paid_amount, 2) }}</p>
                                 @if($order->due_amount > 0)
-                                    <p class="text-right text-danger"><strong>Due Amount:</strong> {{ $setting->currency_symbol }} {{ number_format($order->due_amount, 2) }}</p>
+                                    <p class="text-right text-danger"><strong>Due Amount:</strong> {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->due_amount, 2) }}</p>
                                 @endif
                             </div>
                         </div>

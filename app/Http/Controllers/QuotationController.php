@@ -416,6 +416,7 @@ class QuotationController extends Controller
             $subtotal = $request->input('subtotal');
             $discount = $request->input('discount') ?? 0;
             $tax = $request->input('tax') ?? 0;
+            $taxPercentage = $request->input('taxrate') ?? 0;
             $shipping = $request->input('shipping') ?? 0;
             $finalGrandTotal = $request->input('total_payable');
 
@@ -424,7 +425,8 @@ class QuotationController extends Controller
                 'customer_id' => $request->customer_id,
                 'branch_id' => $request->branch_id, // Using warehouse_id from the request
                 'quotation_date' => $request->quotation_date,
-                'order_tax_percentage' => $tax,
+                'tax_percentage' => $taxPercentage,
+                'order_tax_amount' => $tax,
                 'discount_percentage' => $discount,
                 'shipping_cost' => $shipping,
                 'grand_total' => $finalGrandTotal,
@@ -742,6 +744,7 @@ class QuotationController extends Controller
             $subtotal = $request->input('subtotal');
             $discount = $request->input('discount') ?? 0;
             $tax = $request->input('tax') ?? 0;
+            $taxPercentage = $request->input('taxrate') ?? 0;
             $shipping = $request->input('shipping') ?? 0;
             $finalGrandTotal = $request->input('total_payable');
 
@@ -750,7 +753,8 @@ class QuotationController extends Controller
                 'customer_id' => $request->customer_id,
                 'branch_id' => $request->branch_id,
                 'quotation_date' => $request->quotation_date,
-                'order_tax_percentage' => $tax,
+                'order_tax_amount' => $tax,
+                'tax_percentage' => $taxPercentage,
                 'discount_percentage' => $discount,
                 'shipping_cost' => $shipping,
                 'grand_total' => $finalGrandTotal,

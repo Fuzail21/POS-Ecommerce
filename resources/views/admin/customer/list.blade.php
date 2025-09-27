@@ -77,7 +77,7 @@
                                     <td>{{ $customer->name }}</td>
                                     <td>{{ $customer->phone }}</td>
                                     <td>{{ $customer->email }}</td>
-                                    <td>{{ $setting->currency_symbol }} {{ number_format($customer->balance, 2) }}</td>
+                                    <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($customer->balance, 2) }}</td>
                                     <td>
                                         <div class="d-flex align-items-center list-action">
                                             {{-- Edit --}}

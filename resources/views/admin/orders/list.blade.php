@@ -66,11 +66,11 @@
                                             <td>{{ $order->invoice_number }}</td>
                                             <td>{{ $order->customer->name ?? '-' }}</td>
                                             <td>{{ \Carbon\Carbon::parse($order->sale_date)->format('d M Y') }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($order->final_amount, 2) }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($order->discount_amount, 2) }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($order->paid_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($order->final_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($order->discount_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($order->paid_amount, 2) }}</td>
                                             <td class="{{ $order->due_amount > 0 ? 'text-danger' : 'text-success' }}">
-                                                {{ $setting->currency_symbol }} {{ number_format($order->due_amount, 2) }}
+                                                {{ $setting->currency_symbol ?? '$' }} {{ number_format($order->due_amount, 2) }}
                                             </td>
                                             <td>{{ $order->payment_method }}</td>
                                             <td>

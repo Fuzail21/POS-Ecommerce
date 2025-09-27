@@ -90,7 +90,7 @@
                                             <td>{{ $payment->entity->name ?? '-' }}</td>
                                             <td>{{ ucfirst($payment->entity_type) ?? '-' }}</td>
                                             <td>{{ class_basename($payment->ref_type) }} #{{ $payment->ref_id ?? '-' }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($payment->amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($payment->amount, 2) }}</td>
                                             <td>{{ ucfirst($payment->payment_method) }}</td>
                                             <td>{{ $payment->creator->name ?? '-' }}</td>
                                             <td>

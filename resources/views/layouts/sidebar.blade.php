@@ -146,29 +146,6 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                     </ul>
                 </li>
 
-                <li class="{{ Route::is('branch.*') ? 'active' : '' }}">
-                    <a href="#branch" class="{{ Route::is('branch.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('branch.*') ? 'true' : 'false' }}">
-                        <svg class="svg-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                            <path d="M3 12h18M3 6h18M3 18h18"></path>
-                        </svg>
-                        <span class="ml-4">Branches</span>
-                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
-                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                             viewBox="0 0 24 24">
-                            <polyline points="10 15 15 20 20 15"></polyline>
-                            <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                        </svg>
-                    </a>
-                    <ul id="branch" class="iq-submenu collapse {{ Route::is('branch.*') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
-                        <li class="{{ Route::is('branch.list') ? 'active' : '' }}">
-                            <a href="{{ route('branch.list') }}"><i class="las la-minus"></i><span>Branches List</span></a>
-                        </li>
-                        <li class="{{ Route::is('branch.create') ? 'active' : '' }}">
-                            <a href="{{ route('branch.create') }}"><i class="las la-minus"></i><span>Add Branch</span></a>
-                        </li>
-                    </ul>
-                </li>
-
                 <li class="{{ Route::is('warehouse.list') || Route::is('warehouse.create') ? 'active' : '' }}">
                     <a href="#warehouse"
                        class="{{ Route::is('warehouse.list') || Route::is('warehouse.create') ? '' : 'collapsed' }}"
@@ -201,6 +178,29 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                             <a href="{{ route('warehouse.create') }}">
                                 <i class="las la-minus"></i><span>Add Warehouse</span>
                             </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="{{ Route::is('branch.*') ? 'active' : '' }}">
+                    <a href="#branch" class="{{ Route::is('branch.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('branch.*') ? 'true' : 'false' }}">
+                        <svg class="svg-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M3 12h18M3 6h18M3 18h18"></path>
+                        </svg>
+                        <span class="ml-4">Branches</span>
+                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                             viewBox="0 0 24 24">
+                            <polyline points="10 15 15 20 20 15"></polyline>
+                            <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                        </svg>
+                    </a>
+                    <ul id="branch" class="iq-submenu collapse {{ Route::is('branch.*') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                        <li class="{{ Route::is('branch.list') ? 'active' : '' }}">
+                            <a href="{{ route('branch.list') }}"><i class="las la-minus"></i><span>Branches List</span></a>
+                        </li>
+                        <li class="{{ Route::is('branch.create') ? 'active' : '' }}">
+                            <a href="{{ route('branch.create') }}"><i class="las la-minus"></i><span>Add Branch</span></a>
                         </li>
                     </ul>
                 </li>
@@ -280,31 +280,6 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                     </ul>
                 </li>
 
-                <li class="{{ Route::is('products.list') || Route::is('products.create') ? 'active' : '' }}">
-                    <a href="#product" class="{{ Route::is('products.list') || Route::is('products.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('products.list') || Route::is('products.create') ? 'true' : 'false' }}">
-                        <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path d="M20 13V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8m16 0v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6m16 0H4" />
-                        </svg>
-                        <span class="ml-4">Product</span>
-                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
-                        </svg>
-                    </a>
-
-                    <ul id="product" class="iq-submenu collapse {{ Route::is('products.list') || Route::is('products.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
-                        <li class="{{ Route::is('products.list') ? 'active' : '' }}">
-                            <a href="{{ route('products.list') }}">
-                                <i class="las la-minus"></i><span>Products List</span>
-                            </a>
-                        </li>
-                        <li class="{{ Route::is('products.create') ? 'active' : '' }}">
-                            <a href="{{ route('products.create') }}">
-                                <i class="las la-minus"></i><span>Add Product</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
                 <li class="{{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? 'active' : '' }}">
                     <a href="#supplier" class="{{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('suppliers.list') || Route::is('suppliers.create') || Route::is('reports.supplier_products') ? 'true' : 'false' }}">
                         <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -335,6 +310,30 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                     </ul>
                 </li>
 
+                <li class="{{ Route::is('products.list') || Route::is('products.create') ? 'active' : '' }}">
+                    <a href="#product" class="{{ Route::is('products.list') || Route::is('products.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('products.list') || Route::is('products.create') ? 'true' : 'false' }}">
+                        <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path d="M20 13V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8m16 0v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6m16 0H4" />
+                        </svg>
+                        <span class="ml-4">Product</span>
+                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="10 15 15 20 20 15"></polyline><path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                        </svg>
+                    </a>
+
+                    <ul id="product" class="iq-submenu collapse {{ Route::is('products.list') || Route::is('products.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                        <li class="{{ Route::is('products.list') ? 'active' : '' }}">
+                            <a href="{{ route('products.list') }}">
+                                <i class="las la-minus"></i><span>Products List</span>
+                            </a>
+                        </li>
+                        <li class="{{ Route::is('products.create') ? 'active' : '' }}">
+                            <a href="{{ route('products.create') }}">
+                                <i class="las la-minus"></i><span>Add Product</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
                 <li class="{{ Route::is('customers.list') || Route::is('customers.create') ? 'active' : '' }}">
                     <a href="#customer" class="{{ Route::is('customers.list') || Route::is('customers.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('customers.list') || Route::is('customers.create') ? 'true' : 'false' }}">

@@ -103,7 +103,7 @@
 <script>
     const customers = @json($customers);
     const suppliers = @json($suppliers);
-    const currencySymbol = @json($setting->currency_symbol);
+    const currencySymbol = @json($setting->currency_symbol ?? '$');
 
 
     document.getElementById('entityType').addEventListener('change', function () {

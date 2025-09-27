@@ -69,10 +69,10 @@
                                             <td>{{ $sale->customer->name ?? '-' }}</td>
                                             <td>{{ $sale->branch->name ?? '-' }}</td>
                                             <td>{{ \Carbon\Carbon::parse($sale->sale_date)->format('d M Y') }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->total_amount, 2) }}</td>
-                                            <td>{{ $setting->currency_symbol }} {{ number_format($sale->paid_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->total_amount, 2) }}</td>
+                                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->paid_amount, 2) }}</td>
                                             <td class="{{ $sale->due_amount > 0 ? 'text-danger' : 'text-success' }}">
-                                                {{ $setting->currency_symbol }} {{ number_format($sale->due_amount, 2) }}
+                                                {{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->due_amount, 2) }}
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center list-action">

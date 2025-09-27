@@ -64,7 +64,7 @@
 
                                 <div class="form-group">
                                     <label>Email</label>
-                                    <input type="email" name="email" class="form-control" value="{{ old('email', $supplier->email ?? '') }}">
+                                    <input type="email" name="email" required class="form-control" value="{{ old('email', $supplier->email ?? '') }}">
                                     @error('email') <small class="text-danger">{{ $message }}</small> @enderror
                                 </div>
 

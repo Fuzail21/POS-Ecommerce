@@ -77,7 +77,7 @@
                                     <td>{{ $supplier->name }}</td>
                                     <td>{{ $supplier->email }}</td>
                                     <td>{{ $supplier->phone }}</td>
-                                    <td>{{ $setting->currency_symbol }} {{ number_format($supplier->balance, 2) }}</td>
+                                    <td>{{ $setting->currency_symbol ?? '' }} {{ number_format($supplier->balance, 2) }}</td>
                                     <td>
                                        <div class="d-flex align-items-center list-action">
                                            <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('suppliers.edit', $supplier->id) }}">

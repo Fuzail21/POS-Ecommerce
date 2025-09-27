@@ -46,11 +46,11 @@
                         <div class="col-lg-6">
                             <ul class="list-inline mb-0">
                                 {{-- <li class="list-inline-item">{{ $setting->footer }}</li> --}}
-                                <li class="list-inline-item">Developed by <a href="https://thetechio.com/" target="_blank">{{ $setting->developed_by }}</a></li>
+                                <li class="list-inline-item">Developed by <a href="https://thetechio.com/" target="_blank">{{ $setting->developed_by ?? 'The Tech IO' }}</a></li>
                             </ul>
                         </div>
                         <div class="col-lg-6 text-right">
-                            <span class="mr-1"><script>document.write(new Date().getFullYear())</script>©</span> <a href="{{ route('dashboard') }}" class="">{{ $setting->business_name }}</a>.
+                            <span class="mr-1"><script>document.write(new Date().getFullYear())</script>©</span> <a href="{{ route('dashboard') }}" class="">{{ $setting->business_name ?? 'POS' }}</a>.
                         </div>
                     </div>
                 </div>

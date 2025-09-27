@@ -234,7 +234,7 @@
                                             </tr>
                                             <tr>
                                                 <th class="text-left">Tax:</th>
-                                                <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->order_tax_percentage ?? 0, 2) }}</td>
+                                                <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->order_tax_amount ?? 0, 2) }}</td>
                                             </tr>
                                             <tr>
                                                 <th class="text-left">Shipping:</th>

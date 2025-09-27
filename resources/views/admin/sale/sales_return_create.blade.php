@@ -117,7 +117,7 @@
                                                         data-stock="{{ $variant->stock_quantity }}"
                                                         data-unit-id="{{ $product->default_display_unit_id }}" 
                                                         {{ !$variant->in_stock ? 'disabled' : '' }}>
-                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol }} {{ number_format($variant->actual_price, 2) }}
+                                                        {{ $variant->variant_name }} - {{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->actual_price, 2) }}
                                                         {{ !$variant->in_stock ? '(Out of Stock)' : '(Stock: '.$variant->stock_quantity.')' }}
                                                     </option>
                                                 @endforeach
@@ -125,7 +125,7 @@
                                             <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
                                         @else
                                             
-                                            <p class="mb-1">{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}
+                                            <p class="mb-1">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}
                                                 <br><small>(Stock: {{ $product->stock_quantity }})</small>
                                             </p>
                                             @if($product->in_stock)
@@ -177,25 +177,27 @@
                             <div style="display: flex; align-items: center;">
                                 <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;">%</span>
                                 <input type="number" name="taxrate" id="taxrate" placeholder="Tax" autocomplete="off"
+                                       value="{{ $sale->tax_percentage ?? 0 }}"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
+
                             </div>
                         </div>
 
                         <div style="margin-top: 8px;">
                             <label>Discount Type:</label><br>
                             <label>
-                                <input type="radio" name="discount_type" value="fixed" checked onclick="updateDiscountSymbol()"> Fixed
+                                <input type="radio" name="discount_type" value="fixed" {{ (old('discount_type', $sale->discount_type ?? 'fixed') == 'fixed') ? 'checked' : '' }} checked onclick="updateDiscountSymbol()"> Fixed
                             </label>
                             <label style="margin-left: 15px;">
-                                <input type="radio" name="discount_type" value="percentage" onclick="updateDiscountSymbol()"> Percentage
+                                <input type="radio" name="discount_type" value="percentage" {{ (old('discount_type', $sale->discount_type ?? 'fixed') == 'percentage') ? 'checked' : '' }} onclick="updateDiscountSymbol()"> Percentage
                             </label>
                         </div>
 
                         <div style="margin-bottom: 10px;">
                             <label for="discount">Discount</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
-                                <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off"
+                                <span id="discount-symbol" style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol ?? '$' }} </span>
+                                <input type="number" name="discountRate" id="discountRate" placeholder="Discount" autocomplete="off" value="{{ $sale->discount_amount ?? 0 }}"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
                         </div>
@@ -203,8 +205,8 @@
                         <div style="margin-bottom: 10px;">
                             <label for="shipping">Shipping</label><br>
                             <div style="display: flex; align-items: center;">
-                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol }} </span>
-                                <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off"
+                                <span style="padding: 6px 10px; background-color: #f1f1f1; border: 1px solid #ccc; border-right: none; border-radius: 4px 0 0 4px;"> {{ $setting->currency_symbol ?? '$' }} </span>
+                                <input type="number" name="shippingRate" id="shippingRate" placeholder="Shipping" autocomplete="off" value="{{ $sale->shipping ?? 0 }}"
                                        style="flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-left: none; border-radius: 0 4px 4px 0;">
                             </div>
                         </div>
@@ -213,12 +215,12 @@
 
 
                         <div class="mt-3">
-                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol }} <span id="subtotal">0.00</span></p>
-                            <p><strong>Discount:</strong> {{ $setting->currency_symbol }} <span id="discount">0.00</span></p>
-                            <p><strong>Tax:</strong> {{ $setting->currency_symbol }} <span id="tax">0.00</span></p>
-                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol }} <span id="shipping">0.00</span></p>
+                            <p><strong>Subtotal:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="subtotal">0.00</span></p>
+                            <p><strong>Discount:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="discount">0.00</span></p>
+                            <p><strong>Tax:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="tax">0.00</span></p>
+                            <p><strong>Shipping:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="shipping">0.00</span></p>
                             <hr>
-                            <h5><strong>Total:</strong> {{ $setting->currency_symbol }} <span id="total">0.00</span></h5>
+                            <h5><strong>Total:</strong> {{ $setting->currency_symbol ?? '$' }} <span id="total">0.00</span></h5>
                         </div>
 
                         <div class="mt-3 d-flex justify-content-between">
@@ -320,7 +322,7 @@
 
 
 <script>
-    const currencySymbol = @json($setting->currency_symbol);
+    const currencySymbol = @json($setting->currency_symbol ?? '$');
     
     function updateDiscountSymbol() {
         const symbol = document.getElementById('discount-symbol');

@@ -75,7 +75,7 @@
                                     <td>{{ $expense->id }}</td>
                                     <td>{{ $expense->branch->name ?? '-' }}</td>
                                     <td>{{ $expense->category->name ?? '-' }}</td>
-                                    <td>{{$setting->currency_symbol}} {{ number_format($expense->amount, 2) }}</td>
+                                    <td>{{$setting->currency_symbol ?? '$'}} {{ number_format($expense->amount, 2) }}</td>
                                     <td>{{ \Carbon\Carbon::parse($expense->expense_date)->format('d M Y') }}</td>
                                     <td>{{ $expense->creator->name ?? '-' }}</td>
                                     <td>

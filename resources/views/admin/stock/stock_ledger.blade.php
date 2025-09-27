@@ -134,8 +134,8 @@
                                         <td>{{ $ledger->warehouse->name ?? '-' }}</td>
                                         <td>{{ ucfirst($ledger->ref_type) }}</td>
                                         <td>
-                                            @if (in_array($ledger->ref_type, ['purchase', 'sale']))
-                                            {{ $ledger->ref_type === 'purchase' ? '+' : '-' }}
+                                            @if (in_array($ledger->ref_type, ['purchase', 'sale', 'cancelled_order_return', 'return']))
+                                            {{ in_array($ledger->ref_type, ['purchase', 'cancelled_order_return', 'return']) ? '+' : '-' }}
                                             {{ number_format($ledger->converted_qty, 0) }}
                                             {{ $ledger->unit_name }}
                                             @else

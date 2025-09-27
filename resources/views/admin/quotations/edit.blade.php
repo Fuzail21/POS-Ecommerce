@@ -163,14 +163,14 @@
                                     Discount:
                                     <div class="input-group input-group-sm w-50">
                                         <span class="input-group-text">{{ $setting->currency_symbol ?? '$' }}</span>
-                                        <input type="number" step="0.01" min="0" class="form-control text-end" id="discount_amount" name="discount_amount" value="{{ old('discount_amount', $quotation->discount_amount ?? 0) }}">
+                                        <input type="number" step="0.01" min="0" class="form-control text-end" id="discount_amount" name="discount_amount" value="{{ old('discount_amount', $quotation->discount_percentage ?? 0) }}">
                                     </div>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     Tax:
                                     <div class="input-group input-group-sm w-50">
                                         <span class="input-group-text">{{ $setting->currency_symbol ?? '$' }}</span>
-                                        <input type="number" step="0.01" min="0" class="form-control text-end" id="tax_amount" name="tax_amount" value="{{ old('tax_amount', $quotation->tax_amount ?? 0) }}">
+                                        <input type="number" step="0.01" min="0" class="form-control text-end" id="tax_amount" name="tax_amount" value="{{ old('tax_amount', $quotation->order_tax_percentage ?? 0) }}">
                                     </div>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">

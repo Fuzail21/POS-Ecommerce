@@ -203,10 +203,10 @@
                                                                 <div class="mb-2">
                                                                     <p class="text-dark fs-5 fw-bold mb-0">
                                                                         @if ($product->has_discount)
-                                                                            <del class="text-danger me-2">{{ $setting->currency_symbol }} {{ number_format($product->actual_price, 2) }}</del>
-                                                                            <span>{{ $setting->currency_symbol }} {{ number_format($product->final_price, 2) }}</span>
+                                                                            <del class="text-danger me-2">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}</del>
+                                                                            <span>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->final_price, 2) }}</span>
                                                                         @else
-                                                                            {{ $setting->currency_symbol }} {{ number_format($product->actual_price ?? 0, 2) }}
+                                                                            {{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price ?? 0, 2) }}
                                                                         @endif
                                                                         / {{ $product->displayUnit->name ?? 'unit' }}
                                                                     </p>

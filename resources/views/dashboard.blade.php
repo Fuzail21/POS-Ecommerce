@@ -186,7 +186,7 @@
                                     </div>
                                     {{-- Text section (value and title) --}}
                                     <div class="text-right d-flex flex-column justify-content-center"> {{-- Added flex-column and justify-content-center here --}}
-                                        <h4 class="mb-0 card-value">{{ $settings->currency_symbol }}
+                                        <h4 class="mb-0 card-value">{{ $settings->currency_symbol ?? '$' }}
                                             {{ number_format($card['value'], 2) }}</h4>
                                         <small class="card-title">{{ $card['title'] }}</small>
                                     </div>
@@ -296,7 +296,7 @@
                                                         @endif
                                                     @endforeach
                                                 </td>
-                                                <td>{{ $settings->currency_symbol }}
+                                                <td>{{ $settings->currency_symbol ?? '$' }}
                                                     {{ number_format($sale->total_amount, 2) }}</td>
                                             </tr>
                                         @empty
@@ -545,7 +545,7 @@
                 tooltip: {
                     y: {
                         formatter: function(val) {
-                            return "{{ $settings->currency_symbol }}" + " " + val.toFixed(2)
+                            return "{{ $settings->currency_symbol ?? '$' }}" + " " + val.toFixed(2)
                         }
                     }
                 },

@@ -122,12 +122,15 @@
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
                     
-                        @if($setting->logo_path)
+                        @if(optional($setting)->logo_path)
                             <div class="mt-2">
                                 <img src="{{ asset('storage/' . $setting->logo_path) }}" alt="Logo"
                                      style="width: 50px; height: 50px; border-radius: 50%; border: 1px solid black;">
                                 <p class="text-muted mb-0" style="font-size: 12px;">Current Logo (50x50)</p>
                             </div>
+                          @else
+                            <p class="text-muted mb-0" style="font-size: 12px;">No logo uploaded.</p>
+                          
                         @endif
                     </div>
 
