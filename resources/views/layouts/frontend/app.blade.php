@@ -1,275 +1,570 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ $setting->business_name ?? 'Online Store' }}</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <head>
-        <meta charset="utf-8">
-        <title>Fruitables - Vegetable Website Template</title>
-        <meta content="width=device-width, initial-scale=1.0" name="viewport">
-        <meta content="" name="keywords">
-        <meta content="" name="description">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-        <!-- Google Web Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
-        <!-- Icon Font Stylesheet -->
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Libraries -->
+    <link href="{{ asset('build/assets/frontend/lib/lightbox/css/lightbox.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('build/assets/frontend/lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('build/assets/frontend/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('build/assets/frontend/css/style.css') }}" rel="stylesheet">
 
-        {{-- <!-- Libraries Stylesheet -->
-        <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
-        <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --clr-primary: {{ $setting->primary_color ?? '#2563eb' }};
+            --clr-dark:    #0f172a;
+            --clr-slate:   #1e293b;
+            --clr-muted:   #64748b;
+            --clr-light:   #f8fafc;
+            --clr-border:  #e2e8f0;
+            --radius-card: 14px;
+            --shadow-sm:   0 1px 4px rgba(0,0,0,.07);
+            --shadow-md:   0 6px 24px rgba(0,0,0,.1);
+        }
 
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: var(--clr-slate); background: #fff; }
 
-        <!-- Customized Bootstrap Stylesheet -->
-        <link href="css/bootstrap.min.css" rel="stylesheet">
+        /* ── Topbar ── */
+        .store-topbar {
+            background: var(--clr-dark);
+            padding: 7px 0;
+            font-size: .78rem;
+        }
+        .store-topbar a { color: #94a3b8; text-decoration: none; transition: color .2s; }
+        .store-topbar a:hover { color: #fff; }
+        .topbar-social a {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 26px; height: 26px; border-radius: 50%;
+            background: rgba(255,255,255,.07); color: #94a3b8;
+            font-size: .7rem; text-decoration: none; transition: all .2s;
+        }
+        .topbar-social a:hover { background: var(--clr-primary); color: #fff; }
 
-        <!-- Template Stylesheet -->
-        <link href="css/style.css" rel="stylesheet"> --}}
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+        /* ── Navbar ── */
+        .store-navbar {
+            background: #fff;
+            border-bottom: 1px solid var(--clr-border);
+            box-shadow: var(--shadow-sm);
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        .store-navbar .container { height: 64px; }
+        .navbar-brand-name {
+            font-size: 1.35rem; font-weight: 800;
+            color: var(--clr-primary) !important;
+            letter-spacing: -.5px; text-decoration: none;
+        }
+        .nav-pill-link {
+            font-size: .875rem; font-weight: 500; color: var(--clr-muted) !important;
+            padding: .4rem .9rem !important; border-radius: 8px;
+            transition: all .2s; text-decoration: none;
+        }
+        .nav-pill-link:hover { color: var(--clr-primary) !important; background: rgba(37,99,235,.06); }
+        .nav-pill-link.active { color: var(--clr-primary) !important; background: rgba(37,99,235,.1); font-weight: 600; }
+        .cart-btn {
+            position: relative; width: 40px; height: 40px; border-radius: 10px;
+            background: var(--clr-light); border: 1px solid var(--clr-border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--clr-slate); text-decoration: none; transition: all .2s;
+        }
+        .cart-btn:hover { background: var(--clr-primary); color: #fff; border-color: var(--clr-primary); }
+        .cart-badge {
+            position: absolute; top: -6px; right: -6px;
+            background: var(--clr-primary); color: #fff;
+            font-size: .6rem; font-weight: 700;
+            width: 17px; height: 17px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #fff;
+        }
+        .user-avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--clr-primary); color: #fff;
+            font-size: .8rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dropdown-menu {
+            border: 1px solid var(--clr-border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            padding: .5rem;
+            min-width: 180px;
+        }
+        .dropdown-item {
+            border-radius: 8px; font-size: .875rem;
+            padding: .5rem .75rem; font-weight: 500;
+            color: var(--clr-slate);
+        }
+        .dropdown-item:hover { background: var(--clr-light); color: var(--clr-primary); }
+        .dropdown-item.text-danger:hover { background: #fff1f2; color: #ef4444; }
 
-        <link href="{{ asset('build/assets/frontend/lib/lightbox/css/lightbox.min.css') }}" rel="stylesheet">
-        <link href="{{ asset('build/assets/frontend/lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+        /* ── Page header ── */
+        .page-header-band {
+            background: linear-gradient(135deg, var(--clr-dark) 0%, var(--clr-slate) 100%);
+            padding: 52px 0 36px;
+        }
+        .page-header-band h1 { font-size: 1.75rem; font-weight: 700; color: #fff; margin: 0 0 .5rem; }
+        .breadcrumb-item a { color: #94a3b8; text-decoration: none; font-size: .82rem; }
+        .breadcrumb-item.active { color: #e2e8f0; font-size: .82rem; }
+        .breadcrumb-item + .breadcrumb-item::before { color: #475569; }
 
-        <link href="{{ asset('build/assets/frontend/css/bootstrap.min.css') }}" rel="stylesheet">
+        /* ── Product card ── */
+        .p-card {
+            border: 1px solid var(--clr-border);
+            border-radius: var(--radius-card);
+            overflow: hidden;
+            transition: transform .22s ease, box-shadow .22s ease;
+            background: #fff;
+            display: flex; flex-direction: column; height: 100%;
+        }
+        .p-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .p-card-img {
+            height: 210px; overflow: hidden;
+            position: relative; background: var(--clr-light);
+        }
+        .p-card-img img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform .3s ease;
+        }
+        .p-card:hover .p-card-img img { transform: scale(1.04); }
+        .p-card-body { padding: 1.1rem; display: flex; flex-direction: column; flex: 1; }
+        .p-card-cat {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(15,23,42,.65); color: #fff;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: .7rem; font-weight: 600; z-index: 2;
+            backdrop-filter: blur(4px);
+        }
+        .p-card-sale {
+            position: absolute; top: 10px; right: 10px;
+            background: #ef4444; color: #fff;
+            padding: 3px 8px; border-radius: 6px;
+            font-size: .7rem; font-weight: 700; z-index: 2;
+        }
+        .p-card-oos {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(15,23,42,.7); color: #fff;
+            text-align: center; padding: 6px;
+            font-size: .75rem; font-weight: 600; z-index: 2;
+        }
+        .p-card-title { font-size: .9rem; font-weight: 600; color: var(--clr-dark); margin-bottom: .2rem; line-height: 1.4; }
+        .p-card-desc  { font-size: .78rem; color: #94a3b8; flex: 1; margin-bottom: .75rem; }
+        .p-price      { font-size: 1.05rem; font-weight: 700; color: var(--clr-dark); }
+        .p-price-orig { font-size: .8rem; color: #94a3b8; text-decoration: line-through; }
+        .p-unit       { font-size: .72rem; color: #94a3b8; }
 
-        <link href="{{ asset('build/assets/frontend/css/style.css') }}" rel="stylesheet">
+        /* ── Buttons ── */
+        .btn-prim {
+            background: var(--clr-primary); color: #fff;
+            border: none; border-radius: 9px;
+            padding: 9px 18px; font-size: .85rem; font-weight: 600;
+            transition: all .2s; cursor: pointer; display: inline-flex;
+            align-items: center; gap: 6px;
+        }
+        .btn-prim:hover { filter: brightness(1.1); color: #fff; transform: translateY(-1px); }
+        .btn-outline {
+            background: transparent; color: var(--clr-primary);
+            border: 1.5px solid var(--clr-primary); border-radius: 9px;
+            padding: 9px 18px; font-size: .85rem; font-weight: 600;
+            transition: all .2s; cursor: pointer; display: inline-flex;
+            align-items: center; gap: 6px; text-decoration: none;
+        }
+        .btn-outline:hover { background: var(--clr-primary); color: #fff; }
+        .btn-ghost {
+            background: var(--clr-light); color: var(--clr-muted);
+            border: 1px solid var(--clr-border); border-radius: 9px;
+            padding: 9px 18px; font-size: .85rem; font-weight: 500;
+        }
 
-        @yield('frontend_css')
-    
-    </head>
+        /* ── Feature cards ── */
+        .feat-card {
+            background: #fff; border: 1px solid var(--clr-border);
+            border-radius: var(--radius-card); padding: 1.75rem 1.25rem;
+            text-align: center; transition: box-shadow .2s;
+        }
+        .feat-card:hover { box-shadow: var(--shadow-md); }
+        .feat-icon {
+            width: 56px; height: 56px; border-radius: 14px;
+            background: var(--clr-primary);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .feat-icon i { color: #fff; font-size: 1.2rem; }
+        .feat-card h6 { font-weight: 700; font-size: .9rem; color: var(--clr-dark); margin-bottom: .2rem; }
+        .feat-card p  { font-size: .78rem; color: var(--clr-muted); margin: 0; }
 
-    <body>
- 
+        /* ── Category sidebar ── */
+        .cat-link {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px; border-radius: 9px;
+            color: var(--clr-muted); font-size: .855rem;
+            text-decoration: none; transition: all .2s;
+            margin-bottom: 3px; font-weight: 500;
+        }
+        .cat-link:hover, .cat-link.active {
+            background: rgba(37,99,235,.08);
+            color: var(--clr-primary);
+        }
+        .cat-count {
+            font-size: .7rem; background: var(--clr-light);
+            color: var(--clr-muted); padding: 2px 8px; border-radius: 10px;
+        }
+        .cat-link.active .cat-count { background: var(--clr-primary); color: #fff; }
 
-        <!-- Spinner Start -->
-        <div id="spinner" class="show w-100 vh-100 bg-white position-fixed translate-middle top-50 start-50  d-flex align-items-center justify-content-center">
-            <div class="spinner-grow text-primary" role="status"></div>
-        </div>
-        <!-- Spinner End -->
+        /* ── Pagination ── */
+        .pagination {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap;
+            list-style: none;
+            margin: 0; padding: 0;
+        }
+        .pagination .page-item { display: inline-flex; }
+        .pagination .page-link {
+            border: 1.5px solid var(--clr-border); border-radius: 8px !important;
+            color: var(--clr-muted); margin: 0 2px;
+            font-size: .85rem; font-weight: 500;
+        }
+        .pagination .page-item.active .page-link {
+            background: var(--clr-primary);
+            border-color: var(--clr-primary); color: #fff;
+        }
+        .pagination .page-link:hover { border-color: var(--clr-primary); color: var(--clr-primary); }
 
-        
-                <!-- Navbar start -->
-        <div class="container-fluid fixed-top">
-            <div class="container topbar bg-primary d-none d-lg-block">
-                <div class="d-flex justify-content-between">
-                    <div class="top-info ps-2">
-                        <small class="me-3"><i class="fas fa-map-marker-alt me-2 text-secondary"></i> <a href="#" class="text-white">{{$setting->address}}</a></small>
-                        <small class="me-3"><i class="fas fa-envelope me-2 text-secondary"></i><a href="#" class="text-white">{{$setting->default_email}}</a></small>
-                    </div>
-                    {{-- <div class="top-link pe-2">
-                        <a href="#" class="text-white"><small class="text-white mx-2">Privacy Policy</small>/</a>
-                        <a href="#" class="text-white"><small class="text-white mx-2">Terms of Use</small>/</a>
-                        <a href="#" class="text-white"><small class="text-white ms-2">Sales and Refunds</small></a>
-                    </div> --}}
-                </div>
+        /* ── Inputs ── */
+        .field-input {
+            border: 1.5px solid var(--clr-border); border-radius: 9px;
+            padding: 10px 14px; font-size: .875rem; color: var(--clr-slate);
+            width: 100%; transition: border-color .2s, box-shadow .2s;
+        }
+        .field-input:focus {
+            border-color: var(--clr-primary); outline: none;
+            box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+        }
+
+        /* ── Footer ── */
+        .store-footer { background: var(--clr-dark); }
+        .footer-brand { font-size: 1.25rem; font-weight: 800; color: #fff; }
+        .footer-about { color: #64748b; font-size: .82rem; line-height: 1.6; }
+        .footer-h { color: #e2e8f0; font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 1rem; }
+        .footer-a { color: #64748b; font-size: .84rem; text-decoration: none; display: block; margin-bottom: .55rem; transition: color .2s; }
+        .footer-a:hover { color: #fff; }
+        .footer-social a {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px; border-radius: 9px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.1);
+            color: #64748b; font-size: .8rem; text-decoration: none;
+            transition: all .2s; margin-right: 6px;
+        }
+        .footer-social a:hover { background: var(--clr-primary); border-color: var(--clr-primary); color: #fff; }
+        .footer-newsletter-input {
+            background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+            border-radius: 9px; color: #fff; padding: 10px 14px;
+            font-size: .84rem; width: 100%;
+        }
+        .footer-newsletter-input::placeholder { color: #475569; }
+        .footer-copyright { background: #070c14; padding: .9rem 0; }
+        .footer-copyright p { color: #475569; font-size: .78rem; margin: 0; }
+        .footer-divider { border-color: rgba(255,255,255,.06); margin: 2rem 0 1.5rem; }
+
+        /* ── Back to top ── */
+        .back-to-top { background: var(--clr-primary) !important; border-color: var(--clr-primary) !important; }
+
+        /* ── Spinner ── */
+        #spinner { z-index: 9999; }
+
+        /* ── Alerts ── */
+        .alert { border-radius: 10px; font-size: .875rem; border: none; }
+
+        /* ── Section titles ── */
+        .sec-title { font-size: 1.6rem; font-weight: 800; color: var(--clr-dark); letter-spacing: -.4px; }
+        .sec-sub   { font-size: .85rem; color: var(--clr-muted); }
+
+        /* ── Hero ── */
+        .hero-wrap {
+            background: linear-gradient(140deg, var(--clr-dark) 0%, #1a2744 60%, #0f172a 100%);
+            min-height: 480px; padding: 110px 0 80px;
+            position: relative; overflow: hidden;
+        }
+        .hero-wrap::after {
+            content: ''; position: absolute;
+            top: -40%; right: -5%; width: 55%; height: 160%;
+            background: radial-gradient(ellipse at center, rgba(37,99,235,.18) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(37,99,235,.15); color: #93c5fd;
+            border: 1px solid rgba(37,99,235,.25);
+            padding: 5px 14px; border-radius: 50px;
+            font-size: .76rem; font-weight: 600; margin-bottom: 1.1rem;
+        }
+        .hero-title {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 800; color: #fff;
+            line-height: 1.12; letter-spacing: -1.5px;
+        }
+        .hero-accent { color: var(--clr-primary); }
+        .hero-sub { color: #94a3b8; font-size: 1rem; max-width: 460px; margin: 1rem 0 2rem; }
+        .hero-stat-val { font-size: 1.4rem; font-weight: 800; color: #fff; }
+        .hero-stat-lbl { font-size: .73rem; color: #64748b; }
+        .hero-divider { border-left: 1px solid rgba(255,255,255,.1); padding-left: 1.25rem; margin-left: .5rem; }
+
+        /* Cart badge on body */
+        .qty-display {
+            background: var(--clr-light); border: 1px solid var(--clr-border);
+            border-radius: 8px; padding: 6px 14px;
+            font-size: .875rem; font-weight: 500; color: var(--clr-slate);
+            min-width: 44px; text-align: center;
+        }
+    </style>
+
+    @yield('frontend_css')
+</head>
+
+<body>
+    <!-- Spinner -->
+    <div id="spinner" class="show w-100 vh-100 bg-white position-fixed translate-middle top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-grow" style="color: var(--clr-primary);" role="status"></div>
+    </div>
+
+    <!-- Topbar -->
+    <div class="store-topbar d-none d-lg-block">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-map-marker-alt me-1 text-blue-400"></i>
+                <a href="#" class="me-3">{{ $setting->address ?? '' }}</a>
+                <i class="fas fa-envelope me-1"></i>
+                <a href="#">{{ $setting->default_email ?? '' }}</a>
             </div>
-            <div class="container px-0">
-                <nav class="navbar navbar-light bg-white navbar-expand-xl">
-                    <a href="{{route('store.landing')}}" class="navbar-brand"><h1 class="text-primary display-6">{{ $setting->business_name }}</h1></a>
-                    <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-                        <span class="fa fa-bars text-primary"></span>
-                    </button>
-                    <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
-                        <div class="navbar-nav mx-auto">
-                            <a href="{{ route('store.landing') }}" 
-                               class="nav-item nav-link {{ Route::is('store.landing') ? 'active' : '' }}">Home</a>
+            <div class="topbar-social">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+    </div>
 
-                            <a href="{{ route('store.shop') }}" 
-                               class="nav-item nav-link {{ Route::is('store.shop') ? 'active' : '' }}">Shop</a>
+    <!-- Navbar -->
+    <nav class="store-navbar navbar navbar-expand-xl">
+        <div class="container d-flex align-items-center">
+            <a href="{{ route('store.landing') }}" class="navbar-brand-name me-4">
+                {{ $setting->business_name ?? 'Store' }}
+            </a>
+            <button class="navbar-toggler border-0 ms-auto me-3" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navMain">
+                <i class="fas fa-bars" style="color: var(--clr-slate);"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav me-auto gap-1">
+                    <li class="nav-item">
+                        <a href="{{ route('store.landing') }}"
+                           class="nav-pill-link {{ Route::is('store.landing') ? 'active' : '' }}">
+                            Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('store.shop') }}"
+                           class="nav-pill-link {{ Route::is('store.shop') ? 'active' : '' }}">
+                            Shop
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2 ms-auto">
+                    @php
+                        $cartItems = session('cart');
+                        $itemCount = is_array($cartItems) ? count($cartItems) : 0;
+                    @endphp
+                    <a href="{{ route('cart.view') }}" class="cart-btn" title="Cart">
+                        <i class="fa fa-shopping-bag"></i>
+                        <span class="cart-badge">{{ $itemCount }}</span>
+                    </a>
 
-                            {{-- <a href="{{ url('contact.html') }}" 
-                               class="nav-item nav-link {{ request()->is('contact*') ? 'active' : '' }}">Contact</a> --}}
-                        </div>
-
-                        <div class="d-flex m-3 me-0">
-                            {{-- <button class="btn-search btn border border-secondary btn-md-square rounded-circle bg-white me-4" data-bs-toggle="modal" data-bs-target="#searchModal"><i class="fas fa-search text-primary"></i></button> --}}
-                            <a href="{{ route('cart.view') }}" class="position-relative me-4 my-auto">
-                                <i class="fa fa-shopping-bag fa-2x"></i>
-                                    @php
-                                        $cartItems = session('cart');
-                                        $itemCount = is_array($cartItems) ? count($cartItems) : 0;
-                                    @endphp
-
-                                    <span class="position-absolute bg-secondary rounded-circle d-flex align-items-center justify-content-center text-dark px-1"
-                                          style="top: -5px; left: 15px; height: 20px; min-width: 20px;">
-                                        {{ $itemCount }}
-                                    </span>
-                            </a>
-                            @if(Auth::guard('customer')->check())
-                                {{-- If customer is logged in, show user icon with dropdown --}}
-                                <div class="nav-item dropdown my-auto">
-                                    <a href="#" class="nav-link dropdown-toggle" id="customerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-user fa-2x"></i>
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="customerDropdown">
-                                        <li><a class="dropdown-item" href="{{ route('customer.profile.edit') }}">Profile</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <form method="POST" action="{{ route('customer.logout') }}">
-                                                @csrf
-                                                <button type="submit" class="dropdown-item">Logout</button>
-                                            </form>
-                                        </li>
-                                    </ul>
+                    @if(Auth::guard('customer')->check())
+                        @php $authCustomer = Auth::guard('customer')->user(); @endphp
+                        <div class="dropdown">
+                            <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+                                    id="custDrop" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="user-avatar">
+                                    {{ strtoupper(substr($authCustomer->name ?? 'U', 0, 1)) }}
                                 </div>
-                            @else
-                                {{-- If customer is not logged in, show login icon --}}
-                                <a href="{{ route('customer.login') }}" class="my-auto">
-                                    <i class="fas fa-sign-in-alt fa-2x"></i> {{-- Changed to sign-in icon for clarity --}}
-                                </a>
-                            @endif
+                                <div class="d-none d-md-block text-start" style="line-height:1.2;">
+                                    <div style="font-size:.8rem; font-weight:700; color:var(--clr-dark);">{{ $authCustomer->name }}</div>
+                                </div>
+                                <i class="fas fa-chevron-down" style="font-size:.6rem; color:var(--clr-muted);"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="custDrop" style="min-width:230px;">
+                                {{-- User info header --}}
+                                <li style="padding:.9rem 1rem .75rem; border-bottom:1px solid var(--clr-border);">
+                                    <div style="display:flex; align-items:center; gap:.65rem;">
+                                        <div style="width:38px; height:38px; border-radius:10px; background:var(--clr-primary); color:#fff; font-size:.9rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                            {{ strtoupper(substr($authCustomer->name ?? 'U', 0, 1)) }}
+                                        </div>
+                                        <div style="min-width:0;">
+                                            <div style="font-size:.85rem; font-weight:700; color:var(--clr-dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                {{ $authCustomer->name }} {{ $authCustomer->last_name }}
+                                            </div>
+                                            <div style="font-size:.72rem; color:var(--clr-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                {{ $authCustomer->email }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li style="padding:.35rem .5rem 0;">
+                                    <a class="dropdown-item" href="{{ route('customer.profile.edit') }}"
+                                       style="display:flex; align-items:center; gap:.6rem; padding:.55rem .75rem; border-radius:8px; font-size:.855rem;">
+                                        <span style="width:28px; height:28px; border-radius:8px; background:rgba(37,99,235,.1); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                            <i class="fas fa-user-circle" style="color:var(--clr-primary); font-size:.75rem;"></i>
+                                        </span>
+                                        My Profile
+                                    </a>
+                                </li>
+                                <li style="padding:0 .5rem;">
+                                    <a class="dropdown-item" href="{{ route('store.orders') }}"
+                                       style="display:flex; align-items:center; gap:.6rem; padding:.55rem .75rem; border-radius:8px; font-size:.855rem;">
+                                        <span style="width:28px; height:28px; border-radius:8px; background:rgba(245,158,11,.1); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                            <i class="fas fa-box" style="color:#f59e0b; font-size:.75rem;"></i>
+                                        </span>
+                                        My Orders
+                                    </a>
+                                </li>
+                                <li style="padding:0 .5rem .35rem;"><hr class="dropdown-divider my-1"></li>
+                                <li style="padding:0 .5rem .5rem;">
+                                    <form method="POST" action="{{ route('customer.logout') }}">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-danger"
+                                                style="display:flex; align-items:center; gap:.6rem; padding:.55rem .75rem; border-radius:8px; font-size:.855rem;">
+                                            <span style="width:28px; height:28px; border-radius:8px; background:#fff1f2; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                                <i class="fas fa-sign-out-alt" style="color:#ef4444; font-size:.75rem;"></i>
+                                            </span>
+                                            Sign Out
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
                         </div>
-                    </div>
-                </nav>
+                    @else
+                        <a href="{{ route('customer.login') }}" class="btn-prim" style="text-decoration:none;">
+                            <i class="fas fa-sign-in-alt"></i> Sign In
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
-        <!-- Navbar End -->
+    </nav>
 
-
-        <!-- Modal Search Start -->
-        <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-fullscreen">
-                <div class="modal-content rounded-0">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Search by keyword</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body d-flex align-items-center">
-                        <div class="input-group w-75 mx-auto d-flex">
-                            <input type="search" class="form-control p-3" placeholder="keywords" aria-describedby="search-icon-1">
-                            <span id="search-icon-1" class="input-group-text p-3"><i class="fa fa-search"></i></span>
-                        </div>
+    <!-- Modal Search -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Search</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center">
+                    <div class="input-group w-75 mx-auto">
+                        <input type="search" class="form-control p-3 field-input" placeholder="Search products...">
+                        <span class="input-group-text p-3"><i class="fa fa-search"></i></span>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Modal Search End -->
+    </div>
 
+    @yield('frontend_content')
 
-        @yield('frontend_content')
- 
- 
- 
- 
- 
- 
-         <!-- Footer Start -->
-        <div class="container-fluid bg-dark text-white-50 footer pt-5 mt-5">
-            <div class="container py-5">
-                <div class="pb-4 mb-4" style="border-bottom: 1px solid rgba(226, 175, 24, 0.5) ;">
-                    <div class="row g-4">
-                        <div class="col-lg-3">
-                            <a href="#">
-                                <h1 class="text-primary mb-0">{{$setting->business_name}}</h1>
-                                {{-- <p class="text-secondary mb-0">Fresh products</p> --}}
-                            </a>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="position-relative mx-auto">
-                                <input class="form-control border-0 w-100 py-3 px-4 rounded-pill" type="number" placeholder="Your Email">
-                                <button type="submit" class="btn btn-primary border-0 border-secondary py-3 px-4 position-absolute rounded-pill text-white" style="top: 0; right: 0;">Subscribe Now</button>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="d-flex justify-content-end pt-3">
-                                <a class="btn  btn-outline-secondary me-2 btn-md-square rounded-circle" href=""><i class="fab fa-twitter"></i></a>
-                                <a class="btn btn-outline-secondary me-2 btn-md-square rounded-circle" href=""><i class="fab fa-facebook-f"></i></a>
-                                <a class="btn btn-outline-secondary me-2 btn-md-square rounded-circle" href=""><i class="fab fa-youtube"></i></a>
-                                <a class="btn btn-outline-secondary btn-md-square rounded-circle" href=""><i class="fab fa-linkedin-in"></i></a>
-                            </div>
-                        </div>
+    <!-- Footer -->
+    <footer class="store-footer pt-5 mt-5">
+        <div class="container">
+            <div class="row g-4 py-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-brand mb-2">{{ $setting->business_name ?? 'Store' }}</div>
+                    <p class="footer-about mb-3">
+                        Your trusted destination for quality products at the best prices. Shop with confidence, delivered fast.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
                     </div>
                 </div>
-                <div class="row g-5">
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-item">
-                            <h4 class="text-light mb-3">Why People Like us!</h4>
-                            <p class="mb-4">typesetting, remaining essentially unchanged. It was 
-                                popularised in the 1960s with the like Aldus PageMaker including of Lorem Ipsum.</p>
-                            <a href="" class="btn border-secondary py-2 px-4 rounded-pill text-primary">Read More</a>
-                        </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <div class="footer-h">Shop</div>
+                    <a href="{{ route('store.landing') }}" class="footer-a">Home</a>
+                    <a href="{{ route('store.shop') }}" class="footer-a">All Products</a>
+                    <a href="{{ route('cart.view') }}" class="footer-a">My Cart</a>
+                    @if(Auth::guard('customer')->check())
+                        <a href="{{ route('store.orders') }}" class="footer-a">Orders</a>
+                    @endif
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <div class="footer-h">Account</div>
+                    @if(Auth::guard('customer')->check())
+                        <a href="{{ route('customer.profile.edit') }}" class="footer-a">Profile</a>
+                        <a href="{{ route('store.orders') }}" class="footer-a">Order History</a>
+                    @else
+                        <a href="{{ route('customer.login') }}" class="footer-a">Sign In</a>
+                        <a href="{{ route('customer.register') }}" class="footer-a">Register</a>
+                    @endif
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-h">Newsletter</div>
+                    <p class="footer-about mb-3">Get the latest deals and updates straight to your inbox.</p>
+                    <div class="d-flex gap-2">
+                        <input type="email" class="footer-newsletter-input" placeholder="Enter your email">
+                        <button class="btn-prim flex-shrink-0" style="border-radius:9px; padding:10px 16px;">Subscribe</button>
                     </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="d-flex flex-column text-start footer-item">
-                            <h4 class="text-light mb-3">Shop Info</h4>
-                            <a class="btn-link" href="">About Us</a>
-                            <a class="btn-link" href="">Contact Us</a>
-                            <a class="btn-link" href="">Privacy Policy</a>
-                            <a class="btn-link" href="">Terms & Condition</a>
-                            <a class="btn-link" href="">Return Policy</a>
-                            <a class="btn-link" href="">FAQs & Help</a>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="d-flex flex-column text-start footer-item">
-                            <h4 class="text-light mb-3">Account</h4>
-                            <a class="btn-link" href="">My Account</a>
-                            <a class="btn-link" href="">Shop details</a>
-                            <a class="btn-link" href="">Shopping Cart</a>
-                            <a class="btn-link" href="">Wishlist</a>
-                            <a class="btn-link" href="">Order History</a>
-                            <a class="btn-link" href="">International Orders</a>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-item">
-                            <h4 class="text-light mb-3">Contact</h4>
-                            <p>Address: 1429 Netus Rd, NY 48247</p>
-                            <p>Email: Example@gmail.com</p>
-                            <p>Phone: +0123 4567 8910</p>
-                            <p>Payment Accepted</p>
-                            <img src="img/payment.png" class="img-fluid" alt="">
-                        </div>
-                    </div>
+                    @if($setting->address ?? false)
+                    <p class="footer-about mt-3 mb-0">
+                        <i class="fas fa-map-marker-alt me-1"></i> {{ $setting->address }}<br>
+                        <i class="fas fa-envelope me-1 mt-1"></i> {{ $setting->default_email ?? '' }}
+                    </p>
+                    @endif
                 </div>
             </div>
-        </div>
-        <!-- Footer End -->
 
-        <!-- Copyright Start -->
-        <div class="container-fluid copyright bg-dark py-4">
-            <div class="container">
-                <div class="row">
-                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                        <span class="text-light"><a href="#"><i class="fas fa-copyright text-light me-2"></i>{{ $setting->business_name }}</a>, {{ $setting->footer }}</span>
-                    </div>
-                    <div class="col-md-6 my-auto text-center text-md-end text-white">
-                        <!--/*** This template is free as long as you keep the below author’s credit link/attribution link/backlink. ***/-->
-                        <!--/*** If you'd like to use the template without the below author’s credit link/attribution link/backlink, ***/-->
-                        <!--/*** you can purchase the Credit Removal License from "https://htmlcodex.com/credit-removal". ***/-->
-                        Designed By <a class="border-bottom" href="https://thetechio.com/" target="_blank">{{ $setting->developed_by }}</a>
-                    </div>
-                </div>
+            <hr class="footer-divider">
+
+            <div class="footer-copyright d-flex justify-content-between align-items-center flex-wrap gap-2 pb-4">
+                <p>&copy; {{ date('Y') }} {{ $setting->business_name ?? 'Store' }}. All rights reserved.</p>
+                <p>Developed by <a href="#" style="color:#64748b; text-decoration:none; font-weight:500;">{{ $setting->developed_by ?? '' }}</a></p>
             </div>
         </div>
-        <!-- Copyright End -->
+    </footer>
 
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary border-3 border-primary rounded-circle back-to-top">
+        <i class="fa fa-arrow-up"></i>
+    </a>
 
+    <!-- JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('build/assets/frontend/lib/easing/easing.min.js') }}"></script>
+    <script src="{{ asset('build/assets/frontend/lib/waypoints/waypoints.min.js') }}"></script>
+    <script src="{{ asset('build/assets/frontend/lib/lightbox/js/lightbox.min.js') }}"></script>
+    <script src="{{ asset('build/assets/frontend/lib/owlcarousel/owl.carousel.min.js') }}"></script>
+    <script src="{{ asset('build/assets/frontend/js/main.js') }}"></script>
 
-        <!-- Back to Top -->
-        <a href="#" class="btn btn-primary border-3 border-primary rounded-circle back-to-top"><i class="fa fa-arrow-up"></i></a>   
-
-        
-        <!-- JavaScript Libraries -->
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-        {{-- <script src="lib/easing/easing.min.js"></script>
-        <script src="lib/waypoints/waypoints.min.js"></script>
-        <script src="lib/lightbox/js/lightbox.min.js"></script>
-        <script src="lib/owlcarousel/owl.carousel.min.js"></script> --}}
-
-        <script src="{{ asset('build/assets/frontend/lib/easing/easing.min.js') }}"></script>
-        <script src="{{ asset('build/assets/frontend/lib/waypoints/waypoints.min.js') }}"></script>
-        <script src="{{ asset('build/assets/frontend/lib/lightbox/js/lightbox.min.js') }}"></script>
-        <script src="{{ asset('build/assets/frontend/lib/owlcarousel/owl.carousel.min.js') }}"></script>
-
-        <!-- Template Javascript -->
-        {{-- <script src="js/main.js"></script> --}}
-        <script src="{{ asset('build/assets/frontend/js/main.js') }}"></script>
-
-        @yield('frontend_js')
-    </body>
-
+    @yield('frontend_js')
+</body>
 </html>

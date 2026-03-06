@@ -21,18 +21,25 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceSentMail;
+use App\Mail\OrderStatusUpdated;
 use App\Models\DiscountRule;
 use Illuminate\Validation\Rule;
 use Auth;
+use App\Traits\BranchScoped;
+use App\Services\SmsService;
 
 class SaleController extends Controller
 {
+    use BranchScoped;
+
     public function index(){
         $title = "Sales List";
-        $sales = Sale::where('sale_origin', 'POS')->with(['customer', 'items', 'payments', 'branch'])
+        $query = Sale::where('sale_origin', 'POS')
+                     ->with(['customer', 'items', 'payments', 'branch'])
                      ->withCount('salesReturns')
-                     ->latest()
-                     ->paginate(10);
+                     ->latest();
+        $this->applyBranchScope($query);
+        $sales = $query->paginate(10);
         return view('admin.sale.list', compact('sales', 'title'));
     }
 
@@ -44,46 +51,68 @@ class SaleController extends Controller
         $units = Unit::all();
         $setting = Setting::first();
 
-        $search = $request->input('search');
-        $products = collect();
+        $search      = $request->input('search');
+        $branchId    = $request->input('branch_id');
+        $warehouseId = null;
+        $products    = collect();
 
-        // ✅ Load active discount rules
-        $now = now();
-        $activeDiscounts = \App\Models\DiscountRule::where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
-            ->get();
-
-        $query = Product::whereNull('deleted_at')
-            ->with([
-                'baseUnit',
-                'variants.inventoryStocks',
-                'variants.product.baseUnit',
-                'inventoryStocks',
-            ]);
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%");
-            });
-        } else {
-            $query->latest()->take(12);
+        if ($branchId) {
+            $branch      = Branch::find($branchId);
+            $warehouseId = $branch?->warehouse_id;
         }
 
-            $products = $query->get()->map(function ($product) use ($activeDiscounts) {
-                $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                $product->stock_quantity = $baseQuantity / $conversionFactor;
-                $product->in_stock = $product->stock_quantity > 0;
+        // AJAX with no branch selected — return placeholder
+        if ($request->ajax() && !$warehouseId) {
+            return '<div class="col-12 text-center text-muted py-5">
+                        <p class="mb-0"><i class="fas fa-store fa-2x mb-2 d-block"></i>Select a branch above to see available products.</p>
+                    </div>';
+        }
 
+        if ($warehouseId) {
+            $now = now();
+            $activeDiscounts = \App\Models\DiscountRule::where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)
+                ->get();
+
+            // Only return products that have stock > 0 in the selected branch's warehouse
+            $query = Product::whereNull('deleted_at')
+                ->where(function ($q) use ($warehouseId) {
+                    $q->whereHas('inventoryStocks', function ($sq) use ($warehouseId) {
+                        $sq->where('warehouse_id', $warehouseId)
+                           ->where('quantity_in_base_unit', '>', 0);
+                    })->orWhereHas('variants.inventoryStocks', function ($sq) use ($warehouseId) {
+                        $sq->where('warehouse_id', $warehouseId)
+                           ->where('quantity_in_base_unit', '>', 0);
+                    });
+                })
+                ->with([
+                    'baseUnit',
+                    'variants.product.baseUnit',
+                    'variants.inventoryStocks' => fn($q) => $q->where('warehouse_id', $warehouseId),
+                    'inventoryStocks'          => fn($q) => $q->where('warehouse_id', $warehouseId),
+                ]);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%");
+                });
+            } else {
+                $query->latest()->take(12);
+            }
+
+            $products = $query->get()->map(function ($product) use ($activeDiscounts) {
+                $conversionFactor        = $product->baseUnit->conversion_factor ?? 1;
+                $baseQuantity            = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                $product->stock_quantity = $baseQuantity / $conversionFactor;
+                $product->in_stock       = $product->stock_quantity > 0;
                 $product->discounted_price = $product->actual_price;
 
-                // ✅ Check if this product or its category has a discount
                 foreach ($activeDiscounts as $rule) {
                     $targets = collect(json_decode($rule->target_ids));
                     if (
-                        ($rule->type === 'product' && $targets->contains($product->id)) ||
+                        ($rule->type === 'product'  && $targets->contains($product->id)) ||
                         ($rule->type === 'category' && $targets->contains($product->category_id))
                     ) {
                         $product->discounted_price = $product->actual_price - ($product->actual_price * ($rule->discount / 100));
@@ -92,17 +121,16 @@ class SaleController extends Controller
                 }
 
                 foreach ($product->variants as $variant) {
-                    $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                    $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                    $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                    $variant->in_stock = $variant->stock_quantity > 0;
-
+                    $variantConversionFactor  = $variant->product->baseUnit->conversion_factor ?? 1;
+                    $variantQuantity          = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                    $variant->stock_quantity  = $variantQuantity / $variantConversionFactor;
+                    $variant->in_stock        = $variant->stock_quantity > 0;
                     $variant->discounted_price = $variant->actual_price;
 
                     foreach ($activeDiscounts as $rule) {
                         $targets = collect(json_decode($rule->target_ids));
                         if (
-                            ($rule->type === 'product' && $targets->contains($product->id)) ||
+                            ($rule->type === 'product'  && $targets->contains($product->id)) ||
                             ($rule->type === 'category' && $targets->contains($product->category_id))
                         ) {
                             $variant->discounted_price = $variant->actual_price - ($variant->actual_price * ($rule->discount / 100));
@@ -113,92 +141,100 @@ class SaleController extends Controller
 
                 return $product;
             });
+        }
 
-            // ✅ AJAX: Return product cards with discounted prices
-            if ($request->ajax()) {
-                $html = '';
-
-                foreach ($products as $product) {
-                    $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                    $productImgSrc = !empty($product->product_img)
-                    ? asset('storage/' . $product->product_img)
-                    : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
-                    $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
-                    $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
-                    // Product image
-                    if (!empty($product->product_img)) {
-                        $html .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
-                    } else {
-                        $html .= '<div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
-                    }
-                    $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
-                    if ($product->variants->count()) {
-                        $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
-                        $html .= '<option disabled selected>Choose Variant</option>';
-                        foreach ($product->variants as $variant) {
-                            $disabled = !$variant->in_stock ? 'disabled' : '';
-                            $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
-                            $finalVariantPrice = $variant->discounted_price;
-                            $hasVariantDiscount = $finalVariantPrice < $variant->actual_price;
-                            $label = htmlspecialchars($variant->variant_name) . ' - ';
-                            if ($hasVariantDiscount) {
-                                $label .= '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> ';
-                                $label .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalVariantPrice, 2) . '</strong>';
-                            } else {
-                                $label .= $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
-                            }
-                            $label .= ' ' . $stockText;
-                            $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
-                                'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                                'data-price="' . $finalVariantPrice . '" ' .
-                                'data-stock="' . $variant->stock_quantity . '" ' .
-                                'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                $label .
-                                '</option>';
-                        }
-                        $html .= '</select>';
-                        $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
-                    } else {
-                        $finalPrice = $product->discounted_price;
-                        $hasDiscount = $finalPrice < $product->actual_price;
-                        $html .= '<p class="mb-1">';
-                        if ($hasDiscount) {
-                            $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
-                            $html .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
-                        } else {
-                            $html .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
-                        }
-                        $html .= '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
-                        if ($product->in_stock) {
-                            $html .= '<button ' .
-                                'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
-                                'data-id="product-' . $product->id . '" ' .
-                                'data-name="' . htmlspecialchars($product->name) . '" ' .
-                                'data-price="' . $finalPrice . '" ' .
-                                'data-stock="' . $product->stock_quantity . '" ' .
-                                'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                'Add to Cart' .
-                                '</button>';
-                        } else {
-                            $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
-                        }
-                    }
-
-                    $html .= '</div></div>';
-                }
-
-                return $html;
+        // AJAX: return product card HTML
+        if ($request->ajax()) {
+            if ($products->isEmpty()) {
+                return '<div class="col-12 text-center text-muted py-5">
+                            <p class="mb-0">No products with available stock at this branch.</p>
+                        </div>';
             }
 
-            return view('admin.sale.create', compact(
-                'categories',
-                'units',
-                'products',
-                'title',
-                'customers',
-                'branches',
-                'setting'
-            ));
+            $html = '';
+            foreach ($products as $product) {
+                $isOutOfStock  = !$product->in_stock && $product->variants->count() === 0;
+                $productImgSrc = !empty($product->product_img)
+                    ? asset('storage/' . $product->product_img)
+                    : null;
+
+                $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
+                $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
+
+                if ($productImgSrc) {
+                    $html .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin:auto;">';
+                } else {
+                    $html .= '<div style="width:100px;height:100px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;margin:auto;">N/A</div>';
+                }
+
+                $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+
+                if ($product->variants->count()) {
+                    $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
+                    $html .= '<option disabled selected>Choose Variant</option>';
+                    foreach ($product->variants as $variant) {
+                        $disabled    = !$variant->in_stock ? 'disabled' : '';
+                        $stockText   = $variant->in_stock ? '(Stock: ' . (int)$variant->stock_quantity . ')' : '(Out of Stock)';
+                        $finalPrice  = $variant->discounted_price;
+                        $hasDiscount = $finalPrice < $variant->actual_price;
+                        $label = htmlspecialchars($variant->variant_name) . ' - ';
+                        if ($hasDiscount) {
+                            $label .= '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> ';
+                            $label .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                        } else {
+                            $label .= $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
+                        }
+                        $label .= ' ' . $stockText;
+                        $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" '
+                            . 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" '
+                            . 'data-price="' . $finalPrice . '" '
+                            . 'data-stock="' . (int)$variant->stock_quantity . '" '
+                            . 'data-unit-id="' . $product->default_display_unit_id . '">'
+                            . $label . '</option>';
+                    }
+                    $html .= '</select>';
+                    $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
+                } else {
+                    $finalPrice  = $product->discounted_price;
+                    $hasDiscount = $finalPrice < $product->actual_price;
+                    $html .= '<p class="mb-1">';
+                    if ($hasDiscount) {
+                        $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
+                        $html .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                    } else {
+                        $html .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
+                    }
+                    $html .= '<br><small>(Stock: ' . (int)$product->stock_quantity . ')</small></p>';
+
+                    if ($product->in_stock) {
+                        $html .= '<button '
+                            . 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" '
+                            . 'data-id="product-' . $product->id . '" '
+                            . 'data-name="' . htmlspecialchars($product->name) . '" '
+                            . 'data-price="' . $finalPrice . '" '
+                            . 'data-stock="' . (int)$product->stock_quantity . '" '
+                            . 'data-unit-id="' . $product->default_display_unit_id . '">'
+                            . 'Add to Cart</button>';
+                    } else {
+                        $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+                    }
+                }
+
+                $html .= '</div></div>';
+            }
+
+            return $html;
+        }
+
+        return view('admin.sale.create', compact(
+            'categories',
+            'units',
+            'products',
+            'title',
+            'customers',
+            'branches',
+            'setting'
+        ));
     }
 
     public function process(Request $request){
@@ -233,6 +269,29 @@ class SaleController extends Controller
                 throw new \Exception('Invalid cart data.');
             }
 
+            // PRE-FLIGHT STOCK CHECK — verify every item before any DB write (locked to prevent race conditions)
+            foreach ($cart as $item) {
+                $variantId = $item['type'] === 'variant' ? $item['id'] : null;
+                $productId = $variantId ? optional(ProductVariant::find($variantId))->product_id : ($item['id'] ?? null);
+                if (!$productId) continue;
+
+                $unit    = Unit::find($item['unit_id'] ?? null);
+                $baseQty = ($item['qty'] ?? 0) * ($unit->conversion_factor ?? 1);
+
+                $available = InventoryStock::where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->where('warehouse_id', $warehouse_id)
+                    ->lockForUpdate()
+                    ->value('quantity_in_base_unit') ?? 0;
+
+                if ($available < $baseQty) {
+                    throw new \Exception(
+                        'Insufficient stock for "' . ($item['name'] ?? 'product') .
+                        '". Available: ' . (int)$available . ', Requested: ' . (int)$baseQty . '.'
+                    );
+                }
+            }
+
             // Create the sale
             $sale = Sale::create([
                 'customer_id'     => $request->customer_id,
@@ -241,6 +300,7 @@ class SaleController extends Controller
                 'sale_date'       => now(),
                 'total_amount'    => $request->subtotal,
                 'discount_amount' => $request->discount,
+                'discount_type'   => $request->input('discount_type', 'fixed'),
                 'tax_amount'      => $request->tax,
                 'tax_percentage'  => $request->taxRate,
                 'shipping'        => $request->shipping,
@@ -281,17 +341,14 @@ class SaleController extends Controller
                     'tax'                   => null,
                 ]);
 
-                // Update stock
-                $stock = InventoryStock::where([
-                    'product_id'   => $productId,
-                    'variant_id'   => $variantId,
-                    'warehouse_id' => $warehouse_id,
-                ])->first();
-
-                if (!$stock || $stock->quantity_in_base_unit < $baseQty) {
-                    // skip this product, do not fail the whole transaction
-                    continue;
-                }
+                $stock = InventoryStock::firstOrCreate(
+                    [
+                        'product_id'   => $productId,
+                        'variant_id'   => $variantId,
+                        'warehouse_id' => $warehouse_id,
+                    ],
+                    ['quantity_in_base_unit' => 0]
+                );
 
                 $stock->decrement('quantity_in_base_unit', $baseQty);
 
@@ -308,16 +365,16 @@ class SaleController extends Controller
                 ]);
             }
 
-            // Handle payment
+            // Handle payment — 'in' = money enters the business from customer
             if ($request->amount_paid > 0) {
                 Payment::create([
                     'entity_type'      => 'customer',
                     'entity_id'        => $request->customer_id,
-                    'transaction_type' => 'out',
+                    'transaction_type' => 'in',
                     'ref_type'         => 'sale',
                     'ref_id'           => $sale->id,
                     'amount'           => $request->amount_paid,
-                    'method'           => $request->payment_method,
+                    'payment_method'   => $request->payment_method,
                     'created_by'       => auth()->id(),
                     'note'             => null,
                 ]);
@@ -333,14 +390,22 @@ class SaleController extends Controller
 
             DB::commit();
 
-            $sale = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->latest()->first();
-            $sale->currency_symbol = Setting::first()?->currency_symbol ?? 'PKR';
-            Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
+            // Send invoice email — non-critical, must not block sale completion
+            try {
+                $saleForMail = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->find($sale->id);
+                if ($saleForMail?->customer?->email) {
+                    $saleForMail->currency_symbol = Setting::first()?->currency_symbol ?? 'PKR';
+                    Mail::to($saleForMail->customer->email)->send(new InvoiceSentMail($saleForMail));
+                }
+            } catch (\Exception $mailEx) {
+                Log::warning('Invoice email failed: ' . $mailEx->getMessage());
+            }
 
             return redirect()->route('sales.list')->with('success', 'Sale recorded successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Something went wrong. Please try again.');
+            Log::error('Sale creation failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->withInput()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
    
@@ -419,130 +484,197 @@ class SaleController extends Controller
         return view('admin.sale.invoice', compact('sale', 'title')); // passes $purchase to the view
     }
 
-    public function pos(Request $request){
-        $title = "Point of Sale";
-        $categories = Category::all();
-        $branches = Branch::all();
-        $customers = Customer::all();
-        $units = Unit::all();
+    public function downloadPdf($id){
+        $sale = Sale::with(['customer', 'branch', 'items.unit', 'items.product', 'items.variant'])
+                    ->findOrFail($id);
         $setting = Setting::first();
+        $currencySymbol = $setting->currency_symbol ?? '$';
 
-        $search = $request->input('search');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.sale-invoice', compact('sale', 'setting', 'currencySymbol'));
+        $pdf->setPaper('a4', 'portrait');
 
-        $now = now();
-        $activeDiscounts = \App\Models\DiscountRule::where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
-            ->get();
+        return $pdf->download('sale-invoice-' . $sale->invoice_number . '.pdf');
+    }
 
-        $query = Product::whereNull('deleted_at')
-            ->with([
-                'baseUnit',
-                'variants.inventoryStocks',
-                'variants.product.baseUnit',
-                'inventoryStocks',
-            ]);
+    public function pos(Request $request){
+        $title      = "Point of Sale";
+        $categories = Category::all();
+        $branches   = Branch::all();
+        $customers  = Customer::all();
+        $units      = Unit::all();
+        $setting    = Setting::first();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%");
-            });
-        } else {
-            $query->latest()->take(10);
+        $search      = $request->input('search');
+        $branchId    = $request->input('branch_id');
+        $warehouseId = null;
+        $products    = collect();
+
+        if ($branchId) {
+            $branch      = Branch::find($branchId);
+            $warehouseId = $branch?->warehouse_id;
         }
 
-        $products = $query->get()->map(function ($product) use ($activeDiscounts) {
-            $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-            $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-            $product->stock_quantity = $baseQuantity / $conversionFactor;
-            $product->in_stock = $product->stock_quantity > 0;
+        // AJAX with no branch selected — return placeholder
+        if ($request->ajax() && !$warehouseId) {
+            return '<div class="col-12 text-center text-muted py-5">
+                        <p class="mb-0"><i class="fas fa-store fa-2x mb-2 d-block"></i>Select a branch above to see available products.</p>
+                    </div>';
+        }
 
-            $product->final_price = $product->actual_price;
+        if ($warehouseId) {
+            $now = now();
+            $activeDiscounts = DiscountRule::where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)
+                ->get();
 
-            foreach ($activeDiscounts as $rule) {
-                $targets = collect(json_decode($rule->target_ids));
-                if (
-                    ($rule->type === 'product' && $targets->contains($product->id)) ||
-                    ($rule->type === 'category' && $targets->contains($product->category_id))
-                ) {
-                    $product->final_price = $product->actual_price - ($product->actual_price * ($rule->discount / 100));
-                    break;
-                }
+            $query = Product::whereNull('deleted_at')
+                ->where(function ($q) use ($warehouseId) {
+                    $q->whereHas('inventoryStocks', function ($sq) use ($warehouseId) {
+                        $sq->where('warehouse_id', $warehouseId)
+                           ->where('quantity_in_base_unit', '>', 0);
+                    })->orWhereHas('variants.inventoryStocks', function ($sq) use ($warehouseId) {
+                        $sq->where('warehouse_id', $warehouseId)
+                           ->where('quantity_in_base_unit', '>', 0);
+                    });
+                })
+                ->with([
+                    'baseUnit',
+                    'variants.product.baseUnit',
+                    'variants.inventoryStocks' => fn($q) => $q->where('warehouse_id', $warehouseId),
+                    'inventoryStocks'          => fn($q) => $q->where('warehouse_id', $warehouseId),
+                ]);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%");
+                });
+            } else {
+                $query->latest()->take(12);
             }
 
-            foreach ($product->variants as $variant) {
-                $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                $variant->in_stock = $variant->stock_quantity > 0;
-
-                $variant->final_price = $variant->actual_price;
+            $products = $query->get()->map(function ($product) use ($activeDiscounts) {
+                $conversionFactor        = $product->baseUnit->conversion_factor ?? 1;
+                $baseQuantity            = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                $product->stock_quantity = $baseQuantity / $conversionFactor;
+                $product->in_stock       = $product->stock_quantity > 0;
+                $product->final_price    = $product->actual_price;
 
                 foreach ($activeDiscounts as $rule) {
                     $targets = collect(json_decode($rule->target_ids));
                     if (
-                        ($rule->type === 'product' && $targets->contains($product->id)) ||
+                        ($rule->type === 'product'  && $targets->contains($product->id)) ||
                         ($rule->type === 'category' && $targets->contains($product->category_id))
                     ) {
-                        $variant->final_price = $variant->actual_price - ($variant->actual_price * ($rule->discount / 100));
+                        $product->final_price = $product->actual_price - ($product->actual_price * ($rule->discount / 100));
                         break;
                     }
                 }
+
+                foreach ($product->variants as $variant) {
+                    $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+                    $variantQuantity         = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                    $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+                    $variant->in_stock       = $variant->stock_quantity > 0;
+                    $variant->final_price    = $variant->actual_price;
+
+                    foreach ($activeDiscounts as $rule) {
+                        $targets = collect(json_decode($rule->target_ids));
+                        if (
+                            ($rule->type === 'product'  && $targets->contains($product->id)) ||
+                            ($rule->type === 'category' && $targets->contains($product->category_id))
+                        ) {
+                            $variant->final_price = $variant->actual_price - ($variant->actual_price * ($rule->discount / 100));
+                            break;
+                        }
+                    }
+                }
+
+                return $product;
+            });
+        }
+
+        // AJAX: return product card HTML
+        if ($request->ajax()) {
+            if ($products->isEmpty()) {
+                return '<div class="col-12 text-center text-muted py-5">
+                            <p class="mb-0">No products with available stock at this branch.</p>
+                        </div>';
             }
 
-            return $product;
-        });
-
-        if ($request->ajax()) {
             $html = '';
             foreach ($products as $product) {
-                $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/70x70/f0f0f0/808080?text=N/A';
+                $isOutOfStock  = !$product->in_stock && $product->variants->count() === 0;
+                $productImgSrc = !empty($product->product_img)
+                    ? asset('storage/' . $product->product_img)
+                    : null;
 
                 $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
                 $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
-                $html .= '<img src="' . $productImgSrc . '" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
+
+                if ($productImgSrc) {
+                    $html .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin:auto;">';
+                } else {
+                    $html .= '<div style="width:70px;height:70px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;margin:auto;">N/A</div>';
+                }
+
                 $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
 
                 if ($product->variants->count()) {
                     $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
                     $html .= '<option disabled selected>Choose Variant</option>';
                     foreach ($product->variants as $variant) {
-                        $disabled = !$variant->in_stock ? 'disabled' : '';
-                        $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
-                        $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
-                            'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                            'data-price="' . $variant->final_price . '" ' .
-                            'data-stock="' . $variant->stock_quantity . '" ' .
-                            'data-unit-id="' . $product->default_display_unit_id . '">' .
-                            htmlspecialchars($variant->variant_name) . ' - ' . htmlspecialchars($setting->currency_symbol) . ' ' . number_format($variant->final_price, 2) . ' ' . $stockText .
-                            '</option>';
+                        $disabled    = !$variant->in_stock ? 'disabled' : '';
+                        $stockText   = $variant->in_stock ? '(Stock: ' . (int)$variant->stock_quantity . ')' : '(Out of Stock)';
+                        $finalPrice  = $variant->final_price;
+                        $hasDiscount = $finalPrice < $variant->actual_price;
+                        $label = htmlspecialchars($variant->variant_name) . ' - ';
+                        if ($hasDiscount) {
+                            $label .= '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> ';
+                            $label .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                        } else {
+                            $label .= $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
+                        }
+                        $label .= ' ' . $stockText;
+                        $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" '
+                            . 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" '
+                            . 'data-price="' . $finalPrice . '" '
+                            . 'data-stock="' . (int)$variant->stock_quantity . '" '
+                            . 'data-unit-id="' . $product->default_display_unit_id . '">'
+                            . $label . '</option>';
                     }
                     $html .= '</select>';
                     $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
                 } else {
+                    $finalPrice  = $product->final_price;
+                    $hasDiscount = $finalPrice < $product->actual_price;
                     $html .= '<p class="mb-1">';
-                    if ($product->actual_price != $product->final_price) {
-                        $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> '; 
+                    if ($hasDiscount) {
+                        $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
+                        $html .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                    } else {
+                        $html .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
                     }
-                    $html .= $setting->currency_symbol . ' ' . number_format($product->final_price, 2);
-                    $html .= '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
+                    $html .= '<br><small>(Stock: ' . (int)$product->stock_quantity . ')</small></p>';
 
                     if ($product->in_stock) {
-                        $html .= '<button class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
-                            'data-id="product-' . $product->id . '" ' .
-                            'data-name="' . htmlspecialchars($product->name) . '" ' .
-                            'data-price="' . $product->final_price . '" ' .
-                            'data-stock="' . $product->stock_quantity . '" ' .
-                            'data-unit-id="' . $product->default_display_unit_id . '">' .
-                            'Add to Cart</button>';
+                        $html .= '<button '
+                            . 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" '
+                            . 'data-id="product-' . $product->id . '" '
+                            . 'data-name="' . htmlspecialchars($product->name) . '" '
+                            . 'data-price="' . $finalPrice . '" '
+                            . 'data-stock="' . (int)$product->stock_quantity . '" '
+                            . 'data-unit-id="' . $product->default_display_unit_id . '">'
+                            . 'Add to Cart</button>';
                     } else {
                         $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
                     }
                 }
+
                 $html .= '</div></div>';
             }
+
             return $html;
         }
 
@@ -581,6 +713,29 @@ class SaleController extends Controller
                 throw new \Exception('Invalid cart data.');
             }
 
+            // PRE-FLIGHT STOCK CHECK — verify every item before any DB write (locked to prevent race conditions)
+            foreach ($cart as $item) {
+                $variantId = $item['type'] === 'variant' ? $item['id'] : null;
+                $productId = $variantId ? optional(ProductVariant::find($variantId))->product_id : ($item['id'] ?? null);
+                if (!$productId) continue;
+
+                $unit    = Unit::find($item['unit_id'] ?? null);
+                $baseQty = ($item['qty'] ?? 0) * ($unit->conversion_factor ?? 1);
+
+                $available = InventoryStock::where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->where('warehouse_id', $warehouse_id)
+                    ->lockForUpdate()
+                    ->value('quantity_in_base_unit') ?? 0;
+
+                if ($available < $baseQty) {
+                    throw new \Exception(
+                        'Insufficient stock for "' . ($item['name'] ?? 'product') .
+                        '". Available: ' . (int)$available . ', Requested: ' . (int)$baseQty . '.'
+                    );
+                }
+            }
+
             // Create the sale
             $sale = Sale::create([
                 'customer_id'     => $request->customer_id,
@@ -589,13 +744,14 @@ class SaleController extends Controller
                 'sale_date'       => now(),
                 'total_amount'    => $request->subtotal,
                 'discount_amount' => $request->discount,
+                'discount_type'   => $request->input('discount_type', 'fixed'),
                 'tax_amount'      => $request->tax,
                 'shipping'        => $request->shipping,
                 'final_amount'    => $request->total_payable,
                 'paid_amount'     => $request->amount_paid,
                 'due_amount'      => $request->balance_due,
                 'payment_method'  => $request->payment_method,
-                'sale_origin'     => 'POS',                
+                'sale_origin'     => 'POS',
                 'created_by'      => auth()->id(),
             ]);
 
@@ -628,17 +784,14 @@ class SaleController extends Controller
                     'tax'                   => null,
                 ]);
 
-                // Update stock
-                $stock = InventoryStock::where([
-                    'product_id'   => $productId,
-                    'variant_id'   => $variantId,
-                    'warehouse_id' => $warehouse_id,
-                ])->first();
-
-                if (!$stock || $stock->quantity_in_base_unit < $baseQty) {
-                    // skip this product, do not fail the whole transaction
-                    continue;
-                }
+                $stock = InventoryStock::firstOrCreate(
+                    [
+                        'product_id'   => $productId,
+                        'variant_id'   => $variantId,
+                        'warehouse_id' => $warehouse_id,
+                    ],
+                    ['quantity_in_base_unit' => 0]
+                );
 
                 $stock->decrement('quantity_in_base_unit', $baseQty);
 
@@ -655,16 +808,16 @@ class SaleController extends Controller
                 ]);
             }
 
-            // Handle payment
+            // Handle payment — 'in' = money enters the business from customer
             if ($request->amount_paid > 0) {
                 Payment::create([
                     'entity_type'      => 'customer',
                     'entity_id'        => $request->customer_id,
-                    'transaction_type' => 'out',
+                    'transaction_type' => 'in',
                     'ref_type'         => 'sale',
                     'ref_id'           => $sale->id,
                     'amount'           => $request->amount_paid,
-                    'method'           => $request->payment_method,
+                    'payment_method'   => $request->payment_method,
                     'created_by'       => auth()->id(),
                     'note'             => null,
                 ]);
@@ -684,14 +837,22 @@ class SaleController extends Controller
                 'sale_id' => $sale->id,
             ]);
 
-            $sale = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->latest()->first();
-            $sale->currency_symbol = Setting::first()?->currency_symbol ?? 'PKR';
-            Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
+            // Send email — non-critical
+            try {
+                $saleForMail = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->find($sale->id);
+                if ($saleForMail?->customer?->email) {
+                    $saleForMail->currency_symbol = Setting::first()?->currency_symbol ?? 'PKR';
+                    Mail::to($saleForMail->customer->email)->send(new InvoiceSentMail($saleForMail));
+                }
+            } catch (\Exception $mailEx) {
+                Log::warning('POS invoice email failed: ' . $mailEx->getMessage());
+            }
 
             return redirect()->route('pos.index');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', 'Something went wrong. Please try again.');
+            Log::error('POS sale failed: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
@@ -766,6 +927,29 @@ class SaleController extends Controller
         try {
             $order->status = $newStatus;
             $order->save();
+
+            // Send email notification to the customer
+            if ($order->customer && $order->customer->email) {
+                $order->load('customer');
+                try {
+                    Mail::to($order->customer->email)->send(new OrderStatusUpdated($order, $oldStatus));
+                } catch (\Exception $mailEx) {
+                    \Log::warning('Order status email failed for order #' . $order->id . ': ' . $mailEx->getMessage());
+                }
+            }
+
+            // Send SMS notification
+            if ($order->customer && $order->customer->phone) {
+                try {
+                    app(SmsService::class)->sendOrderStatusUpdated(
+                        $order->customer->phone,
+                        $order->invoice_number,
+                        $newStatus
+                    );
+                } catch (\Exception $smsEx) {
+                    \Log::warning('Order SMS failed for order #' . $order->id . ': ' . $smsEx->getMessage());
+                }
+            }
 
             // --- Logic for 'confirmed' status ---
             if ($newStatus === 'confirmed' && $oldStatus === 'pending') {

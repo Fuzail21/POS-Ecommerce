@@ -18,6 +18,7 @@ use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use App\Services\SmsService;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth; // Import Auth facade
 
@@ -91,12 +92,6 @@ class CheckoutController extends Controller
             return back()->withInput()->with('error', 'The "Ecommerce-store" branch was not found. Please ensure it exists.');
         }
         $branchId = $branch->id;
-        
-        $warehouse_id = $branch->warehouse->id ?? null;
-        // Ensure a warehouse ID was successfully retrieved for stock operations.
-        if (!$warehouse_id) {
-            return back()->withInput()->with('error', 'The selected branch does not have an associated warehouse. Please configure the branch.');
-        }
 
         DB::beginTransaction();
 
@@ -107,71 +102,76 @@ class CheckoutController extends Controller
                 throw new \Exception('Invalid or empty cart data provided.');
             }
 
-            $calculatedTotalAmount = 0;
-            foreach ($cart as $item) {
-                // Safely access 'price' and 'quantity' here too
-                $finalPrice = $item['price'] ?? 0;
-                $quantity = $item['quantity'] ?? 0;
-                $calculatedTotalAmount += ($finalPrice * $quantity);
-            }
-
             $customerId = Auth::id();
             if (!$customerId) {
                 throw new \Exception('User not authenticated. Cannot process sale.');
             }
 
-            // Retrieve values from the request, which come from hidden inputs in checkout.blade.php
+            // Retrieve values from the request
             $discountAmount = $request->coupon_discount_amount ?? 0;
-            $taxAmount = $request->tax_amount ?? 0;
-            $shippingCost = $request->shipping ?? 0;
-            $finalAmount = $request->total_payable; // This should be the grand total after all calculations
-            $paidAmount = $request->amount_paid;   // This should also be the final amount for full payment
-            $paymentMethod = 'cash';
+            $taxAmount      = $request->tax_amount ?? 0;
+            $shippingCost   = $request->shipping ?? 0;
+            $finalAmount    = $request->total_payable;
+            $paidAmount     = $request->amount_paid ?? 0;
+            $paymentMethod  = $request->payment_method ?? 'cash';
+
+            // PRE-FLIGHT STOCK CHECK — verify every cart item before any DB write
+            foreach ($cart as $item) {
+                $variantId = $item['variant_id'] ?? null;
+                $itemId    = $item['id'] ?? null;
+                $productId = $variantId ? optional(ProductVariant::find($variantId))->product_id : $itemId;
+                if (!$productId) continue;
+
+                $unit    = isset($item['unit_id']) ? Unit::find($item['unit_id']) : null;
+                $baseQty = ($item['quantity'] ?? 0) * ($unit->conversion_factor ?? 1);
+
+                $available = InventoryStock::where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->sum('quantity_in_base_unit');
+
+                if ($available < $baseQty) {
+                    throw new \Exception(
+                        'Sorry, "' . ($item['name'] ?? 'a product') .
+                        '" is out of stock. Available: ' . (int)$available . '.'
+                    );
+                }
+            }
 
             $sale = Sale::create([
-                'customer_id'       => $customerId,
-                'branch_id'         => $branchId,
-                'invoice_number'    => $invoiceNo,
-                'sale_date'         => now(),
-                'total_amount'      => $finalAmount, // This is the sum of item prices before coupon discount
-                'discount_amount'   => $discountAmount,     // Use the discount amount from the request
-                'tax_amount'        => $taxAmount,         // Use tax amount from the request
-                'shipping'          => $shippingCost,       // Use shipping cost from the request
-                'final_amount'      => $finalAmount,         // Use the final_amount passed from the frontend
-                'paid_amount'       => 0,          // Use the paid_amount passed from the frontend
-                'due_amount'        => $paidAmount, // Calculate due amount
-                'payment_method'    => $paymentMethod,
-                'sale_origin'       => 'E-commerce',
-                'status'            => 'pending',
-                'created_by'        => auth()->id(),
+                'customer_id'    => $customerId,
+                'branch_id'      => $branchId,
+                'invoice_number' => $invoiceNo,
+                'sale_date'      => now(),
+                'total_amount'   => $finalAmount,
+                'discount_amount'=> $discountAmount,
+                'tax_amount'     => $taxAmount,
+                'shipping'       => $shippingCost,
+                'final_amount'   => $finalAmount,
+                'paid_amount'    => $paidAmount,
+                'due_amount'     => $finalAmount - $paidAmount,
+                'payment_method' => $paymentMethod,
+                'sale_origin'    => 'E-commerce',
+                'status'         => 'pending',
+                'created_by'     => auth()->id(),
             ]);
 
             foreach ($cart as $item) {
-                // Safely access 'type' key. If it's not present, default to empty string.
-                $itemType = $item['type'] ?? '';
-                // Safely access 'id' key.
-                $itemId = $item['id'] ?? null;
-
-
                 $variantId = $item['variant_id'] ?? null;
+                $itemId    = $item['id'] ?? null;
                 $productId = $variantId ? ProductVariant::find($variantId)?->product_id : $itemId;
 
-                // Safely access 'name' for error messages
-                $itemName = $item['name'] ?? 'product';
-
                 if (!$productId || !Product::find($productId)) {
-                    \Log::warning("Skipping invalid product/variant during sale processing. Item: " . json_encode($item));
+                    \Log::warning("Skipping invalid product/variant during checkout. Item: " . json_encode($item));
                     continue;
                 }
 
-                // Safely access other item properties
-                $unitId     = $item['unit_id'] ?? null;
-                $quantity   = $item['quantity'] ?? 0;
-                $unitPrice  = $item['price'] ?? 0;
+                $unitId      = $item['unit_id'] ?? null;
+                $quantity    = $item['quantity'] ?? 0;
+                $unitPrice   = $item['price'] ?? 0;
                 $actualPrice = $item['actual_price'] ?? $unitPrice;
-                $totalPrice = $unitPrice * $quantity;
+                $totalPrice  = $unitPrice * $quantity;
 
-                $unit = $unitId ? Unit::find($unitId) : null;
+                $unit    = $unitId ? Unit::find($unitId) : null;
                 $baseQty = $quantity * ($unit->conversion_factor ?? 1);
 
                 SaleItem::create([
@@ -186,45 +186,56 @@ class CheckoutController extends Controller
                     'discount'              => null,
                     'tax'                   => null,
                 ]);
-                $stock = InventoryStock::where([
-                    'product_id'    => $productId,
-                    'variant_id'    => $variantId ?? NULL,
-                    // 'warehouse_id'  => $warehouse_id,
-                    
-                ])->first();
-                if (!$stock || $stock->quantity_in_base_unit < $baseQty) {
-                    throw new \Exception("Insufficient stock for " . $itemName . ".");
+
+                // Deduct stock greedily from whichever warehouses have available qty
+                $stocks = InventoryStock::where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->where('quantity_in_base_unit', '>', 0)
+                    ->orderBy('quantity_in_base_unit', 'desc')
+                    ->lockForUpdate()
+                    ->get();
+
+                $remaining = $baseQty;
+                foreach ($stocks as $stockRow) {
+                    if ($remaining <= 0) break;
+                    $deduct = min($remaining, $stockRow->quantity_in_base_unit);
+                    $stockRow->decrement('quantity_in_base_unit', $deduct);
+                    StockLedger::create([
+                        'product_id'                   => $productId,
+                        'variant_id'                   => $variantId,
+                        'warehouse_id'                 => $stockRow->warehouse_id,
+                        'ref_type'                     => 'sale',
+                        'ref_id'                       => $sale->id,
+                        'quantity_change_in_base_unit' => $deduct,
+                        'unit_cost'                    => $actualPrice,
+                        'direction'                    => 'out',
+                        'created_by'                   => auth()->id(),
+                    ]);
+                    $remaining -= $deduct;
                 }
+            }
 
-                $stock->decrement('quantity_in_base_unit', $baseQty);
-
-                StockLedger::create([
-                    'product_id'                => $productId,
-                    'variant_id'                => $variantId,
-                    'warehouse_id'              => $warehouse_id,
-                    'ref_type'                  => 'sale',
-                    'ref_id'                    => $sale->id,
-                    'quantity_change_in_base_unit' => $baseQty,
-                    'unit_cost'                 => $actualPrice,
-                    'direction'                 => 'out',
-                    'created_by'                => auth()->id(),
+            // Record payment if money was actually received at checkout
+            // 'in' = money enters the business from the customer
+            if ($paidAmount > 0) {
+                Payment::create([
+                    'entity_type'      => 'customer',
+                    'entity_id'        => $customerId,
+                    'transaction_type' => 'in',
+                    'ref_type'         => 'sale',
+                    'ref_id'           => $sale->id,
+                    'amount'           => $paidAmount,
+                    'payment_method'   => $paymentMethod,
+                    'created_by'       => auth()->id(),
+                    'note'             => 'E-commerce payment for ' . $invoiceNo,
                 ]);
             }
 
-            // $amountPaid = $sale->final_amount;
-            // if ($amountPaid > 0) {
-            //     Payment::create([
-            //         'entity_type'      => 'customer',
-            //         'entity_id'        => $customerId,
-            //         'transaction_type' => 'out',
-            //         'ref_type'         => 'sale',
-            //         'ref_id'           => $sale->id,
-            //         'amount'           => $amountPaid,
-            //         'method'           => $request->payment_method ?? 'Cash On Delivery',
-            //         'created_by'       => auth()->id(),
-            //         'note'             => 'Payment for Sale ' . $invoiceNo,
-            //     ]);
-            // }
+            // Update customer balance for any outstanding due amount
+            $dueAmount = $finalAmount - $paidAmount;
+            if ($dueAmount > 0) {
+                Customer::where('id', $customerId)->increment('balance', $dueAmount);
+            }
 
             DB::commit();
 
@@ -233,7 +244,24 @@ class CheckoutController extends Controller
             $sale = Sale::with(['customer', 'branch', 'items.product', 'items.variant', 'items.unit'])->find($sale->id);
 
             $sale->currency_symbol = Setting::first()?->currency_symbol ?? '$';
-            Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
+            try {
+                Mail::to($sale->customer->email)->send(new InvoiceSentMail($sale));
+            } catch (\Exception $mailEx) {
+                \Log::warning('Checkout invoice email failed: ' . $mailEx->getMessage());
+            }
+
+            // SMS confirmation
+            if ($sale->customer->phone) {
+                try {
+                    app(SmsService::class)->sendOrderPlaced(
+                        $sale->customer->phone,
+                        $sale->invoice_number,
+                        $sale->final_amount
+                    );
+                } catch (\Exception $smsEx) {
+                    \Log::warning('Checkout SMS failed: ' . $smsEx->getMessage());
+                }
+            }
 
             // Redirect to the new thank you page, passing invoice number and total amount
             return redirect()->route('store.thankyou', [
@@ -246,6 +274,31 @@ class CheckoutController extends Controller
             \Log::error('Checkout process failed: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in ' . $e->getFile());
             return back()->withInput()->with('error', 'Something went wrong during checkout. Please try again. Error: ' . $e->getMessage());
         }
+    }
+
+    public function orders()
+    {
+        $orders = Sale::where('customer_id', auth('customer')->id())
+            ->where('sale_origin', 'E-commerce')
+            ->with(['items.product', 'items.variant'])
+            ->latest('sale_date')
+            ->paginate(10);
+
+        $setting = Setting::first();
+
+        return view('store.orders', compact('orders', 'setting'));
+    }
+
+    public function orderDetail($id)
+    {
+        $order = Sale::where('customer_id', auth('customer')->id())
+            ->where('sale_origin', 'E-commerce')
+            ->with(['items.product', 'items.variant'])
+            ->findOrFail($id);
+
+        $setting = Setting::first();
+
+        return view('store.order-detail', compact('order', 'setting'));
     }
 
     public function thankYou(Request $request){

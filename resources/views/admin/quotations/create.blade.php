@@ -90,79 +90,9 @@
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                         <div class="row" id="product-list">
-                            {{-- Product list loop is now directly embedded here --}}
-                            @foreach($products as $product)
-                                @php
-                                    $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                                @endphp
-                                <div class="col-md-3 mb-2 product-item d-flex">
-                                    <div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 {{ $isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '' }}">
-                                        @if (!empty($product->product_img))
-                                            <img src="{{ asset('storage/' . $product->product_img) }}" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">
-                                        @else
-                                            <div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>
-                                        @endif
-
-                                        <h6 class="mt-2 mb-1">{{ $product->name }}</h6>
-
-                                        @if($product->variants->count())
-                                            <select class="form-control mb-2 variant-selector mt-auto" data-product-id="{{ $product->id }}">
-                                                <option disabled selected>Choose Variant</option>
-                                                @foreach($product->variants as $variant)
-                                                    @php
-                                                        $hasDiscount = $variant->discounted_price < $variant->actual_price;
-                                                    @endphp
-                                                    <option
-                                                        value="variant-{{ $variant->id }}"
-                                                        data-name="{{ $product->name }} - {{ $variant->variant_name }}"
-                                                        data-price="{{ $variant->discounted_price }}"
-                                                        data-stock="{{ $variant->stock_quantity }}"
-                                                        data-unit-id="{{ $product->default_display_unit_id }}"
-                                                        {{ !$variant->in_stock ? 'disabled' : '' }}>
-
-                                                        {{ $variant->variant_name }} -
-                                                        @if($hasDiscount)
-                                                            <del>{{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->actual_price, 2) }}</del>
-                                                            <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->discounted_price, 2) }}</strong>
-                                                        @else
-                                                            {{ $setting->currency_symbol ?? '$' }} {{ number_format($variant->actual_price, 2) }}
-                                                        @endif
-                                                        ({{ $variant->in_stock ? 'Stock: ' . $variant->stock_quantity : 'Out of Stock' }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>
-                                        @else
-                                            @php
-                                                $hasDiscount = $product->discounted_price < $product->actual_price;
-                                            @endphp
-                                            <p class="mb-1">
-                                                @if($hasDiscount)
-                                                    <del>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}</del>
-                                                    <strong style="color: #FF2700; font-weight: bold;">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->discounted_price, 2) }}</strong>
-                                                @else
-                                                    {{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}
-                                                @endif
-                                                <br><small>(Stock: {{ $product->stock_quantity }})</small>
-                                            </p>
-
-                                            @if($product->in_stock)
-                                                <button
-                                                    class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart"
-                                                    data-id="product-{{ $product->id }}"
-                                                    data-name="{{ $product->name }}"
-                                                    data-price="{{ $product->discounted_price }}"
-                                                    data-stock="{{ $product->stock_quantity }}"
-                                                    data-unit-id="{{ $product->default_display_unit_id }}">
-                                                    Add to Cart
-                                                </button>
-                                            @else
-                                                <button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>
-                                            @endif
-                                        @endif
-                                    </div>
-                                </div>
-                            @endforeach
+                            <div class="col-12 text-center text-muted py-5" id="branch-placeholder">
+                                <p class="mb-0"><i class="fas fa-store fa-2x mb-2 d-block"></i>Select a branch above to see available products.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -372,10 +302,6 @@
 
         customerSelect.addEventListener('change', () => {
             selectedCustomerInput.value = customerSelect.value;
-        });
-
-        branchSelect.addEventListener('change', () => {
-            selectedBranchInput.value = branchSelect.value;
         });
 
         dateSelect.addEventListener('change', () => {
@@ -595,38 +521,51 @@
             // Any specific logic for modal on show
         });
 
-        // --- AJAX Search Implementation ---
+        // --- AJAX Product Load (branch-aware) ---
         const productSearchForm = document.getElementById('product-search-form');
-        const searchInput = document.getElementById('search-input');
-        const productListDiv = document.getElementById('product-list');
+        const searchInput       = document.getElementById('search-input');
+        const productListDiv    = document.getElementById('product-list');
 
-        productSearchForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
+        function loadProducts(branchId, searchQuery) {
+            if (!branchId) {
+                productListDiv.innerHTML = '<div class="col-12 text-center text-muted py-5"><p class="mb-0"><i class="fas fa-store fa-2x mb-2 d-block"></i>Select a branch above to see available products.</p></div>';
+                return;
+            }
 
-            const searchQuery = searchInput.value;
-
-            // Show a loading indicator (optional)
             productListDiv.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
 
-            fetch(`{{ route('quotations.create') }}?search=${encodeURIComponent(searchQuery)}`, { // Still use create route for AJAX
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest' // Identify as an AJAX request
-                }
-            })
-            .then(response => response.text()) // Get the HTML response
-            .then(html => {
-                // Update only the product list section with the HTML received directly from the controller
-                productListDiv.innerHTML = html;
+            let url = `{{ route('quotations.create') }}?branch_id=${encodeURIComponent(branchId)}`;
+            if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
 
-                // Re-attach event listeners to newly loaded products
-                attachProductEventListeners();
-            })
-            .catch(error => {
-                console.error('Error fetching products:', error);
-                productListDiv.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading products. Please try again.</div>';
-            });
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    productListDiv.innerHTML = html;
+                    attachProductEventListeners();
+                })
+                .catch(() => {
+                    productListDiv.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading products. Please try again.</div>';
+                });
+        }
+
+        // Auto-load products when branch changes
+        branchSelect.addEventListener('change', function () {
+            selectedBranchInput.value = this.value;
+            searchInput.value = '';
+            loadProducts(this.value, '');
         });
-        // --- End AJAX Search Implementation ---
+
+        // Search within selected branch
+        productSearchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const branchId = branchSelect.value;
+            if (!branchId) {
+                alert('Please select a branch first.');
+                return;
+            }
+            loadProducts(branchId, searchInput.value);
+        });
+        // --- End AJAX Product Load ---
 
         function showStockError(message) {
             const errorDiv = document.getElementById('stock-error');

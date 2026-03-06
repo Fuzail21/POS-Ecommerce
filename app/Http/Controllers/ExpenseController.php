@@ -8,9 +8,11 @@ use App\Models\Expense;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\User;
+use App\Traits\BranchScoped;
 
 class ExpenseController extends Controller
 {
+    use BranchScoped;
     public function index(){
         $expenseCategories = ExpenseCategory::paginate(20);
         $title = 'Expense Category List';
@@ -57,10 +59,18 @@ class ExpenseController extends Controller
     }
 
     //Expense
-    public function list(){
-        $expenses = Expense::with(['category', 'branch', 'creator'])->paginate(20);
+    public function list(Request $request){
+        $query = Expense::with(['category', 'branch', 'creator'])->latest();
+        $this->applyBranchScope($query);
+
+        $month = $request->input('month');
+        if ($month) {
+            $query->whereRaw('DATE_FORMAT(expense_date, "%Y-%m") = ?', [$month]);
+        }
+
+        $expenses = $query->paginate(10)->withQueryString();
         $title = 'Expense List';
-        return view('admin.expense.list', compact('expenses', 'title'));
+        return view('admin.expense.list', compact('expenses', 'title', 'month'));
     }
 
     public function expenseCreate(){

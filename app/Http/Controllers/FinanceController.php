@@ -10,21 +10,29 @@ use App\Models\Sale;
 use App\Models\Store;
 use App\Models\Supplier;
 use App\Models\Purchase;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Traits\BranchScoped;
 
 
 class FinanceController extends Controller
 {
+    use BranchScoped;
+
     // ---------- PAYMENTS ----------
 
     public function index(){
-        $title =  "Payments List";
-        $payments = Payment::with(['entity', 'creator', 'reference'])
-                   ->orderBy('created_at', 'desc')
-                   ->paginate(20);
+        $title = "Payments List";
+        $query = Payment::with(['entity', 'creator'])->orderBy('created_at', 'desc');
 
-                        //    dd($payments);
-    
+        $branchId = $this->getAuthBranchId();
+        if ($branchId !== null) {
+            $branchUserIds = User::where('branch_id', $branchId)->pluck('id');
+            $query->whereIn('created_by', $branchUserIds);
+        }
+
+        $payments = $query->paginate(20);
+
         return view('admin.payments.list', compact('payments', 'title'));
     }
 

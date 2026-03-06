@@ -94,10 +94,9 @@
                                                         <i class="ri-file-list-3-line" style="font-size: 1.1rem;"></i>
                                                     </a>
 
-
-                                                    {{-- <a class="badge bg-info p-1" href="" data-toggle="tooltip" title="View">
-                                                        <i class="ri-eye-line" style="font-size: 1.1rem;"></i>
-                                                    </a> --}}
+                                                    <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Create Return" href="{{ route('purchase_returns.create', $purchase->id) }}">
+                                                        <i class="ri-arrow-go-back-line" style="font-size: 1.1rem;"></i>
+                                                    </a>
                                                 </div>
                                             </td>
                                         </tr>

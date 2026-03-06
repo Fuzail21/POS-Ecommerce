@@ -61,19 +61,20 @@
                 </button>
             </div>
             
-            {{-- Forgot Password and Create Account Links (uncomment if needed) --}}
-            {{-- <div class="mt-6 text-center">
-                @if (Route::has('password.request'))
-                    <a class="text-sm text-indigo-600 hover:underline dark:text-indigo-400" href="{{ route('password.request') }}">
-                        Forgot your password?
-                    </a>
+            <div class="mt-6 text-center space-y-3">
+                @if (Route::has('customer.password.request'))
+                    <div>
+                        <a class="text-sm text-indigo-600 hover:underline dark:text-indigo-400" href="{{ route('customer.password.request') }}">
+                            Forgot your password?
+                        </a>
+                    </div>
                 @endif
-                <div class="mt-3">
-                    <a href="{{ route('register') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 hover:underline">
+                <div>
+                    <a href="{{ route('customer.register') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 hover:underline">
                         Don't have an account? Create one
                     </a>
                 </div>
-            </div> --}}
+            </div>
 
         </form>
     </div>

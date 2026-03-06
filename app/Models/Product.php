@@ -24,6 +24,7 @@ class Product extends Model
         'tax_rate',
         'actual_price',
         'low_stock',
+        'product_img',
     ];
 
     public function category() {
@@ -56,12 +57,13 @@ class Product extends Model
 
     public function getTotalStockAttribute()
     {
-        return $this->inventoryStock->sum('quantity_in_base_unit');
+        return $this->inventoryStocks()->sum('quantity_in_base_unit');
     }
 
     public function getIsLowStockAttribute()
     {
-        return $this->total_stock <= 5;
+        $threshold = $this->low_stock ?? 5;
+        return $this->total_stock <= $threshold;
     }
 
     public function branch()
@@ -79,11 +81,15 @@ class Product extends Model
     {
         $price = $this->actual_price;
         $today = now()->toDateString();
-    
-        $rules = \App\Models\DiscountRule::where('start_date', '<=', $today)
-            ->where('end_date', '>=', $today)
-            ->get();
-    
+
+        // Static cache: runs once per request regardless of how many products are loaded (N+1 fix)
+        static $rules = null;
+        if ($rules === null) {
+            $rules = \App\Models\DiscountRule::where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today)
+                ->get();
+        }
+
         foreach ($rules as $rule) {
             $ids = json_decode($rule->target_ids, true);
         

@@ -19,7 +19,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        return view('frontend.auth.register'); // Create this view
+        return view('store.auth.register');
     }
 
     /**
@@ -30,23 +30,23 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:'.Customer::class],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:'.Customer::class],
+            'phone'    => ['required', 'string', 'max:20'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            // Add any other customer-specific fields here
         ]);
 
         $customer = Customer::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'phone'    => $request->phone,
             'password' => Hash::make($request->password),
-            // Populate other customer fields
         ]);
 
         event(new Registered($customer));
 
-        Auth::guard('customer')->login($customer); // Log in the customer with the 'customer' guard
+        Auth::guard('customer')->login($customer);
 
-        return redirect(route('store.checkout', absolute: false)); // Redirect to checkout after registration
+        return redirect()->route('store.shop');
     }
 }

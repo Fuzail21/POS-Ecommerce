@@ -144,6 +144,13 @@
                                     'route' => route('sale_return.list'),
                                 ],
                                 [
+                                    'title' => 'Purchase Returns',
+                                    'icon' => 'fas fa-undo-alt',
+                                    'value' => $purchaseReturns,
+                                    'color' => '#fd7e14', // Orange
+                                    'route' => route('purchase_returns.index'),
+                                ],
+                                [
                                     'title' => 'Today Total Sales', // Changed to match image
                                     'icon' => 'fas fa-dollar-sign',
                                     'value' => $todaySales,
@@ -330,6 +337,7 @@
                                                 <th>Product Name</th>
                                                 <th>Current Stock</th>
                                                 <th>Category</th>
+                                                <th>Warehouse</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -338,7 +346,7 @@
                                                     $conversion = $product->baseUnit->conversion_factor ?? 1;
                                                     $productLowStockThreshold = $product->low_stock ?? 0;
                                                 @endphp
-                
+
                                                 {{-- Display base product stock if applicable and it's low --}}
                                                 @if ($product->inventoryStock && ($product->inventoryStock->quantity_in_base_unit / $conversion) <= $productLowStockThreshold)
                                                     <tr>
@@ -348,6 +356,7 @@
                                                             {{ $product->baseUnit->name ?? '' }}
                                                         </td>
                                                         <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                                        <td><span class="badge badge-primary">{{ $product->inventoryStock->warehouse->name ?? 'N/A' }}</span></td>
                                                     </tr>
                                                 @elseif (!$product->inventoryStock && !$product->has_variants)
                                                     {{-- If no base inventory stock and no variants, treat as 0 and low --}}
@@ -355,14 +364,15 @@
                                                         <td>{{ $product->name ?? 'N/A' }}</td>
                                                         <td>0 {{ $product->baseUnit->name ?? '' }} (No Stock Record)</td>
                                                         <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                                        <td><span class="badge badge-secondary">No Stock Record</span></td>
                                                     </tr>
                                                 @endif
-                
+
                                                 {{-- Display variant stock alerts --}}
                                                 @foreach ($product->variants as $variant)
                                                     @php
-                                                        $variantConversion = $product->baseUnit->conversion_factor ?? 1; // Assuming variant stock is in base unit
-                                                        $variantLowStockThreshold = $variant->low_stock ?? $productLowStockThreshold; // Use variant's threshold, fallback to product's
+                                                        $variantConversion = $product->baseUnit->conversion_factor ?? 1;
+                                                        $variantLowStockThreshold = $variant->low_stock ?? $productLowStockThreshold;
                                                     @endphp
                                                     @if ($variant->inventoryStock && ($variant->inventoryStock->quantity_in_base_unit / $variantConversion) <= $variantLowStockThreshold)
                                                         <tr>
@@ -373,8 +383,8 @@
                                                                 {{ number_format($variant->inventoryStock->quantity_in_base_unit / $variantConversion, 0) }}
                                                                 {{ $product->baseUnit->name ?? '' }}
                                                             </td>
-                                                            {{-- Assuming variants share baseUnit with parent product --}}
                                                             <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                                            <td><span class="badge badge-primary">{{ $variant->inventoryStock->warehouse->name ?? 'N/A' }}</span></td>
                                                         </tr>
                                                     @elseif(!$variant->inventoryStock)
                                                         {{-- If variant exists but has no stock record --}}
@@ -384,13 +394,14 @@
                                                             </td>
                                                             <td>0 {{ $product->baseUnit->name ?? '' }} (No Stock Record)</td>
                                                             <td>{{ $product->category->name ?? 'N/A' }}</td>
+                                                            <td><span class="badge badge-secondary">No Stock Record</span></td>
                                                         </tr>
                                                     @endif
                                                 @endforeach
                                             @endforeach
                                             @if ($stockAlertProducts->isEmpty())
                                                 <tr>
-                                                    <td colspan="3">No products or variants are currently low in stock.</td>
+                                                    <td colspan="4">No products or variants are currently low in stock.</td>
                                                 </tr>
                                             @endif
                                         </tbody>
@@ -458,8 +469,7 @@
                     switch (range) {
                         case 'today':
                             startDate = today.clone().startOf('day');
-                           // endDate = today.clone().endOf('day');
-                            endDate = today.clone().add(1, 'day').startOf('day');
+                            endDate = today.clone().endOf('day');
                             break;
                         case 'this_week':
                             startDate = today.clone().startOf('week');

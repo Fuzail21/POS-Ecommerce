@@ -11,6 +11,7 @@ use App\Models\Purchase;
 use App\Models\Setting;
 use App\Models\SalesReturn;
 use App\Models\ReturnPurchase;
+use App\Models\PurchaseReturn;
 use App\Models\SalesReturnItem;
 use App\Models\SaleItem;
 use App\Models\PurchaseItem;
@@ -216,47 +217,44 @@ class POSController extends Controller
         $title = "Dashboard";
 
         // Get date range from request or set defaults
-        $startDate = $request->input('start_date') ? Carbon::parse($request->input('start_date')) : Carbon::today()->startOfDay();
-        $endDate = $request->input('end_date') ? Carbon::parse($request->input('end_date')) : Carbon::today()->endOfDay();
+        $startDate = $request->input('start_date')
+            ? Carbon::parse($request->input('start_date'))->startOfDay()
+            : Carbon::today()->startOfDay();
+        $endDate = $request->input('end_date')
+            ? Carbon::parse($request->input('end_date'))->endOfDay()
+            : Carbon::today()->endOfDay();
 
-        // Total Sales (from payments table) - Filtered by date range
-        $sales = Payment::where('ref_type', 'Sale')
-                        ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
-                            $query->whereBetween('created_at', [$startDate, $endDate]);
-                        })
-                        ->sum('amount');
+        $hasDateFilter = $request->filled('start_date') && $request->filled('end_date');
 
-        // Total Purchases (from payments table) - Filtered by date range
-        $purchases = Payment::where('ref_type', 'Purchase')
-                            ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
-                                $query->whereBetween('created_at', [$startDate, $endDate]);
-                            })
-                            ->sum('amount');
+        // Total Sales — query sales table directly (final_amount = after discount/tax)
+        $sales = Sale::when($hasDateFilter, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                     ->sum('final_amount');
 
-        // Sales Returns (from payments table) - Filtered by date range
-        $salesReturns = Payment::where('ref_type', 'sales_return')
-                                ->when($request->has('start_date') && $request->has('end_date'), function ($query) use ($startDate, $endDate) {
-                                    $query->whereBetween('created_at', [$startDate, $endDate]);
-                                })
-                                ->sum('amount');
+        // Total Purchases — query purchases table directly
+        $purchases = Purchase::when($hasDateFilter, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                              ->sum('total_amount');
 
-        // Today’s Sales (from payments) - always for today
-        $todaySales = Payment::where('ref_type', 'Sale')
-                                ->whereDate('created_at', Carbon::today())
-                                ->sum('amount');
+        // Sales Returns — query sales_returns table directly
+        $salesReturns = SalesReturn::when($hasDateFilter, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                                    ->sum('total_return_amount');
 
-        // Today’s Received (same as today's sales)
-        $todayReceived = $todaySales;
+        // Purchase Returns — query purchase_returns table
+        $purchaseReturns = PurchaseReturn::when($hasDateFilter, fn($q) => $q->whereBetween('created_at', [$startDate, $endDate]))
+                                          ->sum('total_return_amount');
 
-        // Today’s Purchases (total purchase value from payments) - always for today
-        $todayPurchases = Payment::where('ref_type', 'Purchase')
-                                    ->whereDate('created_at', Carbon::today())
-                                    ->sum('amount');
+        // Today's Sales — from sales table
+        $todaySales = Sale::whereDate('created_at', Carbon::today())->sum('final_amount');
 
-        // Today’s Expense - always for today
+        // Today's Received — actual paid amount from today's sales
+        $todayReceived = Sale::whereDate('created_at', Carbon::today())->sum('paid_amount');
+
+        // Today's Purchases — from purchases table
+        $todayPurchases = Purchase::whereDate('created_at', Carbon::today())->sum('total_amount');
+
+        // Today's Expense - always for today
         $todayExpense = Expense::whereDate('created_at', Carbon::today())->sum('amount');
 
-        // Today’s Purchase Payments (separate for dashboard card)
+        // Today's Purchase Payments (separate for dashboard card)
         $todayPurchasePayments = $todayPurchases;
 
 
@@ -269,12 +267,8 @@ class POSController extends Controller
         $currentDate = clone $startOfWeek;
         while ($currentDate->lessThanOrEqualTo($endOfWeek)) {
             $date = $currentDate->toDateString();
-            $dailySales = Payment::where('ref_type', 'Sale')
-                                 ->whereDate('created_at', $date)
-                                 ->sum('amount');
-            $dailyPurchases = Payment::where('ref_type', 'Purchase')
-                                     ->whereDate('created_at', $date)
-                                     ->sum('amount');
+            $dailySales     = Sale::whereDate('created_at', $date)->sum('final_amount');
+            $dailyPurchases = Purchase::whereDate('created_at', $date)->sum('total_amount');
 
             $weeklySalesPurchases[] = [
                 'date' => $currentDate->format('Y-m-d'),
@@ -368,10 +362,9 @@ class POSController extends Controller
         $stockAlertProducts = Product::with([
             'category',
             'baseUnit',
-            'variants.inventoryStock',
+            'variants.inventoryStock.warehouse',
             'variants.displayUnit',
-            'inventoryStock',
-            'branch'
+            'inventoryStock.warehouse',
         ])->where(function ($query) {
             // Condition for products without variants
             $query->where(function ($subQuery) {
@@ -402,6 +395,7 @@ class POSController extends Controller
             'sales',
             'purchases',
             'salesReturns',
+            'purchaseReturns',
             'todaySales',
             'todayReceived',
             'todayPurchases',

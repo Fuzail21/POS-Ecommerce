@@ -75,11 +75,17 @@
                             <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->total_amount, 2) }}</td>
                         </tr>
                         <tr>
-                            <th>Discount:</th>
-                            <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->discount_amount, 2) }}</td>
+                            <th>
+                                @if(($sale->discount_type ?? 'fixed') === 'percentage')
+                                    Discount (%):
+                                @else
+                                    Discount:
+                                @endif
+                            </th>
+                            <td>- {{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->discount_amount, 2) }}</td>
                         </tr>
                         <tr>
-                            <th>Tax:</th>
+                            <th>Tax @if(($sale->tax_percentage ?? 0) > 0)({{ $sale->tax_percentage }}%)@endif:</th>
                             <td>{{ $setting->currency_symbol ?? '$' }} {{ number_format($sale->tax_amount, 2) }}</td>
                         </tr>
                         <tr>
@@ -106,6 +112,26 @@
             {{-- <div class="text-center mt-5">
                 <p>Thank you for your purchase!</p>
             </div> --}}
+        </div>
+
+        <div class="text-right mb-3 mr-3">
+            <a href="{{ route('sales.pdf', $sale->id) }}" class="btn btn-danger" target="_blank">
+                <i class="fa fa-file-pdf"></i> Download PDF
+            </a>
+            @php
+                $whatsappPhone = preg_replace('/[^0-9]/', '', $sale->customer->phone ?? '');
+                $whatsappPhone = $whatsappPhone ? (str_starts_with($whatsappPhone, '92') ? $whatsappPhone : '92' . ltrim($whatsappPhone, '0')) : '';
+                $whatsappMsg   = urlencode("Hello {$sale->customer->name}, your invoice #{$sale->invoice_number} for " . ($setting->currency_symbol ?? 'Rs') . " " . number_format($sale->final_amount, 2) . " is ready. Download it here: " . route('sales.pdf', $sale->id));
+            @endphp
+            @if($whatsappPhone)
+            <a href="https://wa.me/{{ $whatsappPhone }}?text={{ $whatsappMsg }}"
+               class="btn btn-success ml-2" target="_blank">
+                <i class="fab fa-whatsapp"></i> Share via WhatsApp
+            </a>
+            @endif
+            <button onclick="window.print()" class="btn btn-secondary ml-2">
+                <i class="fa fa-print"></i> Print
+            </button>
         </div>
     </div>
 </div>

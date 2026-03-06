@@ -197,9 +197,9 @@
                         </select>
                     </div>
                     <div>
-                        <select name="products[${productIndex}][variant_id]" 
-                                class="form-control variant-select" required>
-                            <option value="">-- Select Variant --</option>
+                        <select name="products[${productIndex}][variant_id]"
+                                class="form-control variant-select">
+                            <option value="">-- No Variant --</option>
                         </select>
                     </div>
                 </td>

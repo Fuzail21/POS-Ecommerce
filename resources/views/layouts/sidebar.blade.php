@@ -355,8 +355,8 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                     </ul>
                 </li>
 
-                <li class="{{ Route::is('purchases.list') || Route::is('purchases.create') ? 'active' : '' }}">
-                    <a href="#purchase" class="{{ Route::is('purchases.list') || Route::is('purchases.create') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('purchases.list') || Route::is('purchases.create') ? 'true' : 'false' }}">
+                <li class="{{ Route::is('purchases.*') || Route::is('purchase_returns.*') ? 'active' : '' }}">
+                    <a href="#purchase" class="{{ Route::is('purchases.*') || Route::is('purchase_returns.*') ? '' : 'collapsed' }}" data-toggle="collapse" aria-expanded="{{ Route::is('purchases.*') || Route::is('purchase_returns.*') ? 'true' : 'false' }}">
                         <svg class="svg-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path d="M3 3h18v4H3zM3 7h18l-1 13H4L3 7zm5 4h2v5H8v-5zm6 0h2v5h-2v-5z"/>
                         </svg>
@@ -366,12 +366,15 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                             <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
                         </svg>
                     </a>
-                    <ul id="purchase" class="iq-submenu collapse {{ Route::is('purchases.list') || Route::is('purchases.create') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                    <ul id="purchase" class="iq-submenu collapse {{ Route::is('purchases.*') || Route::is('purchase_returns.*') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
                         <li class="{{ Route::is('purchases.list') ? 'active' : '' }}">
                             <a href="{{ route('purchases.list') }}"><i class="las la-minus"></i><span>Purchase List</span></a>
                         </li>
                         <li class="{{ Route::is('purchases.create') ? 'active' : '' }}">
                             <a href="{{ route('purchases.create') }}"><i class="las la-minus"></i><span>Add Purchase</span></a>
+                        </li>
+                        <li class="{{ Route::is('purchase_returns.*') ? 'active' : '' }}">
+                            <a href="{{ route('purchase_returns.index') }}"><i class="las la-minus"></i><span>Purchase Returns</span></a>
                         </li>
                     </ul>
                 </li>
@@ -543,6 +546,74 @@ body.sidebar-collapsed .iq-sidebar-logo img {
                         </svg>
                         <span class="ml-4">Stock Ledger</span>
                     </a>
+                </li>
+
+                <li class="{{ Route::is('stock.transfers.*') ? 'active' : '' }}">
+                    <a href="{{ route('stock.transfers.index') }}" class="svg-icon">
+                        <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="17 1 21 5 17 9"></polyline>
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                            <polyline points="7 23 3 19 7 15"></polyline>
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                        </svg>
+                        <span class="ml-4">Stock Transfers</span>
+                    </a>
+                </li>
+
+                <li class="{{ Route::is('stock.adjustment.*') ? 'active' : '' }}">
+                    <a href="{{ route('stock.adjustment.create') }}" class="svg-icon">
+                        <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        <span class="ml-4">Stock Adjustment</span>
+                    </a>
+                </li>
+
+                {{-- Reports --}}
+                <li class="{{ Route::is('reports.*') ? 'active' : '' }}">
+                    <a href="#reportsMenu"
+                       class="{{ Route::is('reports.*') ? '' : 'collapsed' }}"
+                       data-toggle="collapse"
+                       aria-expanded="{{ Route::is('reports.*') ? 'true' : 'false' }}">
+                        <svg class="svg-icon" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
+                             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                             stroke-linejoin="round" viewBox="0 0 24 24">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        <span class="ml-4">Reports</span>
+                        <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20"
+                             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="10 15 15 20 20 15"></polyline>
+                            <path d="M4 4h7a4 4 0 0 1 4 4v12"></path>
+                        </svg>
+                    </a>
+                    <ul id="reportsMenu" class="iq-submenu collapse {{ Route::is('reports.*') ? 'show' : '' }}" data-parent="#iq-sidebar-toggle">
+                        <li class="{{ Route::is('reports.sales') ? 'active' : '' }}">
+                            <a href="{{ route('reports.sales') }}"><i class="las la-minus"></i><span>Sales Report</span></a>
+                        </li>
+                        <li class="{{ Route::is('reports.purchases') ? 'active' : '' }}">
+                            <a href="{{ route('reports.purchases') }}"><i class="las la-minus"></i><span>Purchases Report</span></a>
+                        </li>
+                        <li class="{{ Route::is('reports.expenses') ? 'active' : '' }}">
+                            <a href="{{ route('reports.expenses') }}"><i class="las la-minus"></i><span>Expenses Report</span></a>
+                        </li>
+                        <li class="{{ Route::is('reports.profit-loss') ? 'active' : '' }}">
+                            <a href="{{ route('reports.profit-loss') }}"><i class="las la-minus"></i><span>Profit &amp; Loss</span></a>
+                        </li>
+                        <li class="{{ Route::is('reports.inventory-valuation') ? 'active' : '' }}">
+                            <a href="{{ route('reports.inventory-valuation') }}"><i class="las la-minus"></i><span>Inventory Valuation</span></a>
+                        </li>
+                    </ul>
                 </li>
 
                 <li class="{{ Route::is('settings.index') ? 'active' : '' }}">

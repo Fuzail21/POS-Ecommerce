@@ -80,11 +80,6 @@
                                     </thead>
                                     <tbody>
                                         @foreach($payments as $payment)
-                                        @php
-                                            $dueAmount = $payment->reference && method_exists($payment->reference, 'total')
-                                                ? $payment->reference->total - $payment->amount
-                                                : null;
-                                        @endphp
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
                                             <td>{{ $payment->entity->name ?? '-' }}</td>
@@ -98,9 +93,13 @@
                                                     {{-- <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" title="Edit" href="{{ route('payments.edit', $payment->id) }}">
                                                         <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                                     </a> --}}
-                                                    <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" title="Delete" href="{{ route('payments.destroy', $payment->id) }}">
-                                                        <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                                    </a>
+                                                    <form action="{{ route('payments.destroy', $payment->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this payment?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="badge bg-warning border-0 mr-2 p-1" data-toggle="tooltip" title="Delete" style="cursor:pointer">
+                                                            <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>

@@ -93,6 +93,15 @@
             <div class="text-center mt-5">
                 <p>Thank you for your purchase!</p>
             </div>
+
+            <div class="text-right mb-3">
+                <a href="{{ route('purchases.pdf', $purchase->id) }}" class="btn btn-danger" target="_blank">
+                    <i class="fa fa-file-pdf"></i> Download PDF
+                </a>
+                <button onclick="window.print()" class="btn btn-secondary ml-2">
+                    <i class="fa fa-print"></i> Print
+                </button>
+            </div>
         </div>
     </div>
 </div>

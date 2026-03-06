@@ -165,9 +165,40 @@ class SalesReturnController extends Controller
             });
 
             if (empty($returnedItems)) {
-                // If no items are selected for return and no specific return note, might be an error or just a cancelled return
-                // You might adjust this based on whether a return can exist with no items.
                 return back()->with('error', 'No items selected for return with a quantity greater than zero.');
+            }
+
+            // VALIDATE: return qty must not exceed original sale qty (accounting for prior returns)
+            foreach ($returnedItems as $item) {
+                $variantId = ($item['type'] === 'variant' && isset($item['id'])) ? $item['id'] : null;
+                $productId = ($item['type'] === 'variant' && $variantId)
+                    ? optional(ProductVariant::find($variantId))->product_id
+                    : ($item['id'] ?? null);
+
+                if (!$productId) continue;
+
+                $saleItem = SaleItem::where('sale_id', $sale->id)
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->first();
+
+                if (!$saleItem) {
+                    throw new \Exception('Item "' . ($item['name'] ?? 'product') . '" was not part of the original sale.');
+                }
+
+                $alreadyReturned = SalesReturnItem::where('sale_id', $sale->id)
+                    ->where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->sum('quantity');
+
+                $requestedQty = $item['qty'] ?? 0;
+                if (($alreadyReturned + $requestedQty) > $saleItem->quantity) {
+                    throw new \Exception(
+                        'Return qty for "' . ($item['name'] ?? 'product') .
+                        '" (' . $requestedQty . ') exceeds returnable qty. ' .
+                        'Original: ' . $saleItem->quantity . ', Already returned: ' . $alreadyReturned . '.'
+                    );
+                }
             }
 
             // 3. Calculate total return amount (gross value of items returned)
@@ -265,7 +296,7 @@ class SalesReturnController extends Controller
                     'ref_type'         => 'sales_return',
                     'ref_id'           => $salesReturn->id,
                     'amount'           => $refundAmount,
-                    'method'           => $request->payment_method,
+                    'payment_method'   => $request->payment_method,
                     'created_by'       => auth()->id(),
                     'note'             => 'Refund for sales return ' . $salesReturn->id . ' (Original Sale: ' . $sale->invoice_number . ')',
                 ]);

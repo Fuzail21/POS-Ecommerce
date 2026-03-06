@@ -11,222 +11,197 @@
     // $user is already passed from the controller
 @endphp
 
-        <div class="container-fluid page-header py-5">
-            <h1 class="text-center text-white display-6">Checkout</h1>
+<div class="page-header-band">
+    <div class="container text-center">
+        <h1>Checkout</h1>
+        <nav>
             <ol class="breadcrumb justify-content-center mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('store.landing') }}">Home</a></li>
-                <li class="breadcrumb-item active text-white">Checkout</li>
+                <li class="breadcrumb-item active">Checkout</li>
             </ol>
+        </nav>
+    </div>
+</div>
+
+@if(session('status'))
+    <div class="container mt-3">
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('status') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        @if (session('status'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('status') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        <div style="padding-top: 3rem; padding-bottom: 3rem;"> {{-- Replaced container-fluid py-5 --}}
-            <div style="padding-top: 3rem; padding-bottom: 3rem; max-width: 1600px; margin-left: auto; margin-right: auto; padding-left: 15px; padding-right: 15px;"> {{-- Replaced container py-5 --}}
-                <h1 class="mb-4">Billing details</h1>
-                <form action="{{ route('store.checkout.process') }}" method="POST" id="checkout-form">
-                    @csrf
+    </div>
+@endif
+@if(session('error'))
+    <div class="container mt-3">
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+@endif
 
-                    {{-- Hidden inputs for customer, cart data, and payment details --}}
-                    <input type="hidden" name="customer_id" value="{{ Auth::id() }}">
-                    <input type="hidden" name="branch_id" value="{{ \App\Models\Branch::first()->id ?? 1 }}">
-                    <input type="hidden" name="cart_data" id="cart_data_input">
-                    <input type="hidden" name="subtotal_before_discount" value="{{ $subtotal }}"> {{-- Original subtotal --}}
-                    <input type="hidden" name="coupon_code" value="{{ $couponCode }}"> {{-- Applied coupon code --}}
-                    <input type="hidden" name="coupon_discount_amount" value="{{ $couponDiscount }}"> {{-- Applied coupon discount amount --}}
-                    <input type="hidden" name="shipping" value="0">
-                    <input type="hidden" name="total_payable" id="total_payable_input" value="{{ number_format($subtotalAfterCoupon, 2, '.', '') }}"> {{-- Use subtotalAfterCoupon --}}
-                    <input type="hidden" name="amount_paid" id="amount_paid_input" value="{{ number_format($subtotalAfterCoupon, 2, '.', '') }}">
-                    <input type="hidden" name="balance_due" value="0">
-                    <input type="hidden" name="payment_method" id="payment_method_input" value="Cash On Delivery">
+<section class="py-5">
+    <div class="container">
+        <form action="{{ route('store.checkout.process') }}" method="POST" id="checkout-form">
+            @csrf
+            <input type="hidden" name="customer_id" value="{{ Auth::id() }}">
+            <input type="hidden" name="branch_id" value="{{ \App\Models\Branch::first()->id ?? 1 }}">
+            <input type="hidden" name="cart_data" id="cart_data_input">
+            <input type="hidden" name="subtotal_before_discount" value="{{ $subtotal }}">
+            <input type="hidden" name="coupon_code" value="{{ $couponCode }}">
+            <input type="hidden" name="coupon_discount_amount" value="{{ $couponDiscount }}">
+            <input type="hidden" name="shipping" value="0">
+            <input type="hidden" name="total_payable" id="total_payable_input" value="{{ number_format($subtotalAfterCoupon, 2, '.', '') }}">
+            <input type="hidden" name="amount_paid" id="amount_paid_input" value="{{ number_format($subtotalAfterCoupon, 2, '.', '') }}">
+            <input type="hidden" name="balance_due" value="0">
+            <input type="hidden" name="payment_method" id="payment_method_input" value="cash">
 
-                    <div class="row g-5">
-                        <div class="col-md-12 col-lg-6 col-xl-7">
-                            <div class="row">
-                                <div class="col-md-12 col-lg-6">
-                                    <div class="form-item w-100">
-                                        <label class="form-label my-3">First Name<sup>*</sup></label>
-                                        <input type="text" class="form-control" value="{{ $user->name }}" readonly>
-                                    </div>
-                                </div>
-                                <div class="col-md-12 col-lg-6">
-                                    <div class="form-item w-100">
-                                        <label class="form-label my-3">Last Name<sup>*</sup></label>
-                                        <input type="text" class="form-control" value="{{ $user->last_name }}" readonly>
-                                    </div>
-                                </div>
+            <div class="row g-4">
+                {{-- Billing Details --}}
+                <div class="col-lg-6">
+                    <div style="background:#fff; border:1px solid var(--clr-border); border-radius:var(--radius-card); padding:1.75rem;">
+                        <h5 style="font-weight:700; margin-bottom:1.5rem; font-size:1rem; color:var(--clr-dark);">
+                            <i class="fas fa-user-circle me-2" style="color:var(--clr-primary);"></i> Billing Details
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">First Name</label>
+                                <input type="text" class="form-control field-input" value="{{ $user->name }}" readonly>
                             </div>
-                            <div class="form-item">
-                                <label class="form-label my-3">Address <sup>*</sup></label>
-                                <input type="text" class="form-control" placeholder="House Number Street Name" value="{{ $user->address }}" readonly>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">Last Name</label>
+                                <input type="text" class="form-control field-input" value="{{ $user->last_name }}" readonly>
                             </div>
-                            <div class="form-item">
-                                <label class="form-label my-3">Town/City<sup>*</sup></label>
-                                <input type="text" class="form-control" value="{{ $user->city }}" readonly>
+                            <div class="col-12">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">Address</label>
+                                <input type="text" class="form-control field-input" value="{{ $user->address }}" readonly>
                             </div>
-                            <div class="form-item">
-                                <label class="form-label my-3">Country<sup>*</sup></label>
-                                <input type="text" class="form-control" value="{{ $user->country }}" readonly>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">City</label>
+                                <input type="text" class="form-control field-input" value="{{ $user->city }}" readonly>
                             </div>
-                            <div class="form-item">
-                                <label class="form-label my-3">Postcode/Zip<sup>*</sup></label>
-                                <input type="text" class="form-control" value="{{ $user->postcode }}" readonly>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">Country</label>
+                                <input type="text" class="form-control field-input" value="{{ $user->country }}" readonly>
                             </div>
-                            <div class="form-item">
-                                <label class="form-label my-3">Mobile<sup>*</sup></label>
-                                <input type="tel" class="form-control" value="{{ $user->phone }}" readonly>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">Postcode</label>
+                                <input type="text" class="form-control field-input" value="{{ $user->postcode }}" readonly>
                             </div>
-                            <div class="form-item mb-4">
-                                <label class="form-label my-3">Email Address<sup>*</sup></label>
-                                <input type="email" class="form-control" value="{{ $user->email }}" readonly>
+                            <div class="col-6">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">Phone</label>
+                                <input type="tel" class="form-control field-input" value="{{ $user->phone }}" readonly>
                             </div>
-                        </div>
-                        <div class="col-md-12 col-lg-12 col-xl-5">
-                            <div class="table-responsive" style="overflow: hidden;">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col">Products</th>
-                                            <th scope="col">Name</th>
-                                            <th scope="col">Color</th>
-                                            <th scope="col">Size</th>
-                                            <th scope="col">Price</th>
-                                            <th scope="col">Quantity</th>
-                                            <th scope="col">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php
-                                            // $subtotal is now passed from controller, no need to recalculate here
-                                            // $cart is also passed from controller
-                                        @endphp
-
-                                        @forelse($cart as $id => $details)
-                                            @php
-                                                $actualPrice = $details['actual_price'] ?? $details['price'];
-                                                $finalPrice = $details['price'];
-                                                $itemPrice = $finalPrice * $details['quantity'];
-                                                $originalTotal = $actualPrice * $details['quantity'];
-                                            @endphp
-                                            <tr id="cart-item-row-{{ $id }}" class="cart-item-row">
-                                                <th scope="row">
-                                                    <div class="d-flex align-items-center">
-                                                        <img src="{{ asset('storage/' . ($details['variant_img'] ?? $details['image'])) }}"
-                                                                class="img-fluid me-5 rounded-circle"
-                                                                style="width: 90px; height: 90px; object-fit: cover;"
-                                                                alt="{{ $details['name'] }}">
-                                                    </div>
-                                                </th>
-                                                <td style="min-width: 150px;">
-                                                    <p class="mb-0 mt-4" style="font-size:15px;">
-                                                        {{ Str::words($details['name'], 5, '...') }}
-                                                        @if (!empty($details['variant_name']))
-                                                            - {{ $details['variant_name'] }}
-                                                        @endif
-                                                    </p>
-                                                </td>
-                                                <td >
-                                                    <p class="mb-0 mt-4" style="font-size:15px;">
-                                                        {{ $details['variant_color'] }}
-                                                        @if (empty($details['variant_color']))
-                                                            - 
-                                                        @endif
-                                                    </p>
-                                                </td>
-                                                <td >
-                                                    <p class="mb-0 mt-4" style="font-size:15px;">
-                                                        {{ $details['variant_size'] }}
-                                                        @if (empty($details['variant_size']))
-                                                            - 
-                                                        @endif
-                                                    </p>
-                                                </td>
-
-                                                <td style="min-width: 90px;">
-                                                    <div class="mb-0 mt-4 price-per-item text-start" id="price-{{ $id }}">
-                                                        @if ($actualPrice != $finalPrice)
-                                                            <small class="text-muted text-decoration-line-through me-1" style="font-size:13px;">{{ number_format($actualPrice, 2) }} {{ $setting->currency_symbol ?? '$' }}</small>
-                                                        @endif
-                                                        <span class="fw-bold text-dark" style="font-size:13px;">{{ number_format($finalPrice, 2) }} {{ $setting->currency_symbol ?? '$' }}</span>
-                                                    </div>
-                                                </td>
-
-                                                <td>
-                                                    <div class="input-group quantity mt-4" style="min-width: 50px;">
-                                                        <input type="text" class="form-control form-control-sm text-center border-0 quantity-input"
-                                                                    value="{{ $details['quantity'] }}"
-                                                                    id="quantity-{{ $id }}"
-                                                                    data-max-stock="{{ $details['stock'] }}"
-                                                                    readonly>
-                                                    </div>
-                                                    <div id="stock-error-{{ $id }}" class="text-danger mt-1" style="font-size: 0.85em; display: none;"></div>
-                                                </td>
-                                                <td>
-                                                    <div class="mb-0 mt-4 item-total text-start" id="item-total-{{ $id }}">
-                                                        @if ($actualPrice != $finalPrice)
-                                                            <small class="text-muted text-decoration-line-through me-1" style="font-size:13px;">{{ number_format($originalTotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</small>
-                                                        @endif
-                                                        <span class="fw-bold text-dark" style="font-size:13px;">{{ number_format($itemPrice, 2) }} {{ $setting->currency_symbol ?? '$' }}</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr id="empty-cart-row">
-                                                <td colspan="7" class="text-center py-5">Your cart is empty!</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="col-md-12 col-lg-12">
-                                <div class="rounded"> {{-- Added p-4 for internal padding around the total summary --}}
-                                    <div class="d-flex justify-content-between py-4 border-bottom"> {{-- Added py-2 and border-bottom for clear separation --}}
-                                        <h5 class="mb-0 me-4">Subtotal:</h5>
-                                        <p class="mb-0 fw-bold">{{ number_format($subtotal, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
-                                    </div>
-                                    @if($couponDiscount > 0)
-                                    <div class="d-flex justify-content-between py-4 border-bottom"> {{-- Added py-2 and border-bottom --}}
-                                        <h5 class="mb-0 me-4">Coupon Discount:
-                                            @if($couponCode)
-                                                <span class="badge bg-success ms-2">{{ $couponCode }}</span>
-                                            @endif
-                                        </h5>
-                                        <p class="mb-0 text-danger fw-bold">-{{ number_format($couponDiscount, 2) }} {{ $setting->currency_symbol ?? '$' }}</p>
-                                    </div>
-                                    @endif
-                                    <div class="d-flex justify-content-between pt-3"> {{-- Use pt-3 for top padding and no bottom border --}}
-                                        <h5 class="mb-0 ps-0 me-4 text-primary">Total:</h5> {{-- Removed ps-4, added text-primary --}}
-                                        <p class="mb-0 pe-0 fw-bold text-primary" id="grand-total">{{ number_format($subtotalAfterCoupon, 2) }} {{ $setting->currency_symbol ?? '$' }}</p> {{-- Ensure this uses $subtotalAfterCoupon and shipping --}}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row g-4 text-center align-items-center justify-content-center border-bottom py-3">
-                                <div class="col-12">
-                                    <div class="form-check text-start my-3">
-                                        <input type="radio" class="form-check-input bg-primary border-0" id="Delivery-1" name="payment_method_radio" value="Cash On Delivery" checked>
-                                        <label class="form-check-label" for="Delivery-1">Cash On Delivery</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row g-4 text-center align-items-center justify-content-center pt-4">
-                                <button type="submit" class="btn border-secondary py-3 px-4 text-uppercase w-100 text-primary">Place Order</button>
+                            <div class="col-12">
+                                <label class="form-label" style="font-size:.78rem; font-weight:600; color:var(--clr-muted); text-transform:uppercase; letter-spacing:.5px;">Email</label>
+                                <input type="email" class="form-control field-input" value="{{ $user->email }}" readonly>
                             </div>
                         </div>
                     </div>
-                </form>
+                </div>
+
+                {{-- Order Summary & Payment --}}
+                <div class="col-lg-6">
+                    <div style="background:#fff; border:1px solid var(--clr-border); border-radius:var(--radius-card); overflow:hidden;">
+                        {{-- Items --}}
+                        <div style="background:#f8fafc; border-bottom:1px solid var(--clr-border); padding:1rem 1.25rem;">
+                            <h6 style="font-weight:700; font-size:.9rem; margin:0; color:var(--clr-dark);">
+                                <i class="fas fa-shopping-bag me-2" style="color:var(--clr-primary);"></i> Your Items
+                            </h6>
+                        </div>
+                        <div style="padding:1.25rem; max-height:320px; overflow-y:auto;">
+                            @forelse($cart as $id => $details)
+                            @php
+                                $actualPrice   = $details['actual_price'] ?? $details['price'];
+                                $finalPrice    = $details['price'];
+                                $itemPrice     = $finalPrice * $details['quantity'];
+                                $originalTotal = $actualPrice * $details['quantity'];
+                            @endphp
+                            <tr id="cart-item-row-{{ $id }}" class="cart-item-row" style="display:none;"></tr>
+                            <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                                <img src="{{ asset('storage/'.($details['variant_img'] ?? $details['image'])) }}"
+                                     style="width:50px; height:50px; border-radius:8px; object-fit:cover; border:1px solid var(--clr-border);"
+                                     alt="{{ $details['name'] }}">
+                                <div style="flex:1;">
+                                    <div style="font-size:.84rem; font-weight:600; color:var(--clr-dark);">
+                                        {{ Str::words($details['name'], 5, '...') }}
+                                        @if(!empty($details['variant_name'])) — {{ $details['variant_name'] }} @endif
+                                    </div>
+                                    <div style="font-size:.75rem; color:#94a3b8;">Qty: {{ $details['quantity'] }}</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div class="item-total" id="item-total-{{ $id }}" style="font-size:.875rem;">
+                                        @if($actualPrice != $finalPrice)
+                                            <small style="text-decoration:line-through; color:#94a3b8; font-size:.72rem; display:block;">
+                                                {{ $setting->currency_symbol ?? '' }} {{ number_format($originalTotal, 2) }}
+                                            </small>
+                                        @endif
+                                        <span class="fw-bold" style="color:var(--clr-dark);">
+                                            {{ $setting->currency_symbol ?? '' }} {{ number_format($itemPrice, 2) }}
+                                        </span>
+                                    </div>
+                                    {{-- Hidden but required by JS --}}
+                                    <input type="hidden" class="quantity-input" id="quantity-{{ $id }}" value="{{ $details['quantity'] }}" data-max-stock="{{ $details['stock'] }}">
+                                    <div id="stock-error-{{ $id }}" style="display:none;"></div>
+                                    <div id="price-{{ $id }}" style="display:none;">
+                                        <span class="fw-bold">{{ number_format($finalPrice, 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <p style="color:#94a3b8; font-size:.875rem; text-align:center; padding:1rem;">Cart is empty.</p>
+                            @endforelse
+                        </div>
+
+                        {{-- Totals --}}
+                        <div style="padding:1.25rem; border-top:1px solid var(--clr-border); background:#fafafa;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:.6rem;">
+                                <span style="font-size:.875rem; color:var(--clr-muted);">Subtotal</span>
+                                <span style="font-size:.875rem; font-weight:600;">{{ $setting->currency_symbol ?? '' }} {{ number_format($subtotal, 2) }}</span>
+                            </div>
+                            @if($couponDiscount > 0)
+                            <div style="display:flex; justify-content:space-between; margin-bottom:.6rem;">
+                                <span style="font-size:.875rem; color:var(--clr-muted);">
+                                    Coupon Discount @if($couponCode) <span class="badge bg-success ms-1" style="font-size:.65rem;">{{ $couponCode }}</span> @endif
+                                </span>
+                                <span style="font-size:.875rem; font-weight:600; color:#22c55e;">−{{ $setting->currency_symbol ?? '' }} {{ number_format($couponDiscount, 2) }}</span>
+                            </div>
+                            @endif
+                            <div style="display:flex; justify-content:space-between; padding-top:.75rem; border-top:2px solid var(--clr-border); margin-top:.5rem;">
+                                <span style="font-weight:700; font-size:.95rem; color:var(--clr-dark);">Total</span>
+                                <span id="grand-total" style="font-weight:800; font-size:1.05rem; color:var(--clr-primary);">
+                                    {{ $setting->currency_symbol ?? '' }} {{ number_format($subtotalAfterCoupon, 2) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Payment --}}
+                        <div style="padding:1.25rem; border-top:1px solid var(--clr-border);">
+                            <p style="font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--clr-muted); margin-bottom:.75rem;">Payment Method</p>
+                            <div style="background:var(--clr-light); border:1.5px solid var(--clr-border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:10px;">
+                                <input type="radio" class="form-check-input" id="Delivery-1" name="payment_method_radio" value="cash" checked style="margin:0;">
+                                <label for="Delivery-1" style="font-size:.875rem; font-weight:600; color:var(--clr-dark); cursor:pointer; margin:0;">
+                                    <i class="fas fa-money-bill-wave me-2" style="color:#22c55e;"></i> Cash On Delivery
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Place Order --}}
+                        <div style="padding:1.25rem; border-top:1px solid var(--clr-border);">
+                            <button type="submit" class="btn-prim w-100 justify-content-center" style="padding:14px; font-size:.95rem;">
+                                <i class="fas fa-check-circle"></i> Place Order
+                            </button>
+                            <div class="d-flex align-items-center justify-content-center gap-2 mt-3">
+                                <i class="fas fa-shield-alt" style="color:#94a3b8; font-size:.8rem;"></i>
+                                <span style="font-size:.74rem; color:#94a3b8;">Secure & encrypted payment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </form>
+    </div>
+</section>
 @section('frontend_js')
 <script>
     document.addEventListener('DOMContentLoaded', function() {

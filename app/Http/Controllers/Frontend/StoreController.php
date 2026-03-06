@@ -81,26 +81,35 @@ class StoreController extends Controller
 
     public function shop(Request $request){
         $categoryId = $request->query('category');
-    
+        $search     = $request->query('q');
+
         // 🟡 Load active discount rules once
         $now = now();
         $discountRules = DiscountRule::where('start_date', '<=', $now)
             ->where('end_date', '>=', $now)
             ->get();
-    
+
         $productsQuery = Product::with([
             'inventoryStocks',
             'baseUnit',
             'variants.inventoryStocks',
             'variants.product.baseUnit'
-        ])->latest();
-        
+        ])->whereNull('deleted_at')->latest();
+
         if ($categoryId) {
             $productsQuery->where('category_id', $categoryId);
         }
-    
+
+        if ($search) {
+            $productsQuery->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%");
+            });
+        }
+
         $products = $productsQuery->paginate(12)->withQueryString();
-    
+
         $categories = Category::withCount('products')
             ->whereNotNull('parent_id')
             ->get();
@@ -153,7 +162,7 @@ class StoreController extends Controller
             return $product;
         });
     
-        return view('store.shop', compact('products', 'categories'));
+        return view('store.shop', compact('products', 'categories', 'search', 'categoryId'));
     }
 
     // public function product($id)

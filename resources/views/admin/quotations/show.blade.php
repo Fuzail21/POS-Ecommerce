@@ -129,7 +129,17 @@
                         <a href="{{ route('quotations.index') }}" class="btn btn-secondary add-list">
                             <i class="las la-arrow-left mr-2"></i>Back
                         </a>
-                        <button onclick="printTable()" class="btn text-white" style="background-color: {{ $primaryColor }};">
+                        <a href="{{ route('quotations.pdf', $quotation->id) }}" class="btn btn-danger" target="_blank">
+                            <i class="fa fa-file-pdf"></i> Download PDF
+                        </a>
+                        <form action="{{ route('quotations.convert', $quotation->id) }}" method="POST" style="display:inline"
+                              onsubmit="return confirm('Convert this quotation to a sale? This cannot be undone.')">
+                            @csrf
+                            <button type="submit" class="btn btn-success ml-1">
+                                <i class="fas fa-exchange-alt"></i> Convert to Sale
+                            </button>
+                        </form>
+                        <button onclick="printTable()" class="btn text-white ml-1" style="background-color: {{ $primaryColor }};">
                             <i class="fas fa-print"></i> Print
                         </button>
                     </div>
@@ -228,12 +238,17 @@
                                             </tr>
 
                                             <tr>
-                                                <th class="text-left">Discount:
+                                                <th class="text-left">
+                                                    @if(($quotation?->discount_type ?? 'fixed') === 'percentage')
+                                                        Discount (%):
+                                                    @else
+                                                        Discount:
+                                                    @endif
                                                 </th>
                                                 <td class="text-right text-danger">- {{ $currencySymbol }} {{ number_format($quotation?->discount_percentage ?? 0, 2) }}</td>
                                             </tr>
                                             <tr>
-                                                <th class="text-left">Tax:</th>
+                                                <th class="text-left">Tax @if(($quotation?->tax_percentage ?? 0) > 0)({{ $quotation->tax_percentage }}%)@endif:</th>
                                                 <td class="text-right text-success">+ {{ $currencySymbol }} {{ number_format($quotation?->order_tax_amount ?? 0, 2) }}</td>
                                             </tr>
                                             <tr>

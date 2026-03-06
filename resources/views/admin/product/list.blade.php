@@ -101,12 +101,12 @@
                                                     <a class="badge bg-success mr-2 p-1 rounded" data-toggle="tooltip" title="Edit" href="{{ route('products.edit', $product->id) }}">
                                                         <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                                     </a>
-                                                    <a class="badge bg-warning mr-2 p-1 rounded" data-toggle="tooltip" title="Delete" href="{{ route('products.destroy', $product->id) }}" onclick="event.preventDefault(); if(confirm('Are you sure you want to delete this product?')) { document.getElementById('delete-form-{{$product->id}}').submit(); }">
-                                                        <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                                    </a>
-                                                    <form id="delete-form-{{$product->id}}" action="{{ route('products.destroy', $product->id) }}" method="POST" style="display: none;">
+                                                    <form action="{{ route('products.destroy', $product->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this product?')">
                                                         @csrf
                                                         @method('DELETE')
+                                                        <button type="submit" class="badge bg-warning border-0 mr-2 p-1 rounded" data-toggle="tooltip" title="Delete" style="cursor:pointer">
+                                                            <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                                        </button>
                                                     </form>
                                                     @if ($product->has_variants === 1)
                                                         <a class="badge bg-info p-1 rounded" data-toggle="tooltip" title="View Variants" href="{{ route('products.variants', $product->id) }}">

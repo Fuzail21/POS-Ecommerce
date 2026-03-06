@@ -1,359 +1,215 @@
 @extends('layouts.frontend.app')
 
-    @section('frontend_css')
-        <style>
-            .pagination-wrapper {
-                display: flex;
-                justify-content: center;
-            }
+@section('frontend_css')
+<style>
+    .sidebar-box {
+        background: #fff;
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius-card);
+        padding: 1.25rem;
+    }
+    .sidebar-label {
+        font-size: .72rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: .8px; color: #94a3b8; margin-bottom: .75rem;
+    }
+    .search-wrap .form-control {
+        border: 1.5px solid var(--clr-border);
+        border-radius: 10px 0 0 10px;
+        padding: 12px 16px; font-size: .875rem;
+    }
+    .search-wrap .form-control:focus {
+        border-color: var(--clr-primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    .search-wrap .btn-search {
+        background: var(--clr-primary); color: #fff;
+        border: none; border-radius: 0 10px 10px 0;
+        padding: 12px 20px; font-size: .875rem; font-weight: 600;
+    }
+</style>
+@endsection
 
-            .pagination {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap;
-                gap: 6px;
-                padding-left: 0;
-                list-style: none;
-            }
+@section('frontend_content')
+@php
+    use App\Models\Setting;
+    $setting = Setting::first();
+@endphp
 
-            .pagination .page-item {
-                width: 40px;
-                height: 40px;
-                flex-shrink: 0;
-            }
-
-            .pagination .page-link {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                height: 100%;
-                padding: 0;
-                border: 1px solid orange;
-                border-radius: 0;
-                color: #000;
-            }
-
-            .pagination .page-item.active .page-link {
-                background-color: limegreen;
-                border-color: limegreen;
-                color: white;
-                font-weight: bold;
-            }
-
-            .pagination .page-item:first-child .page-link {
-                border-top-left-radius: 8px;
-                border-bottom-left-radius: 8px;
-            }
-
-            .pagination .page-item:last-child .page-link {
-                border-top-right-radius: 8px;
-                border-bottom-right-radius: 8px;
-            }
-
-            .fruite-item {
-                border: 1px solid #dee2e6; /* This is typically the color for border-secondary */
-                border-radius: 0.25rem; /* Rounded corners, adjust as needed */
-                overflow: hidden; /* Ensures rounded corners apply correctly to children */
-                display: flex; /* Use flexbox to organize content vertically */
-                flex-direction: column; /* Stack children vertically */
-                height: 100%; /* Make sure the card takes full height of its container */
-            }
-
-            .fruite-item .p-4 {
-                border-top: 0; /* Remove the top border if it was inherited or previously applied */
-                flex-grow: 1; /* Allow the content area to grow and fill available space */
-                display: flex; /* Use flexbox for content within p-4 */
-                flex-direction: column; /* Stack content within p-4 vertically */
-                justify-content: space-between; /* Distribute space between price/button and stock */
-            }
-
-            .product-card-img-container {
-                height: 200px; /* Keep your fixed image height */
-                overflow: hidden;
-            }
-
-            /* Ensure the image takes up 100% width and height of its container */
-            .product-card-img-container img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-        </style>
-    @endsection
-
-    @section('frontend_content')
-            @php
-                use App\Models\Setting;
-
-                $setting = Setting::first();
-                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
-                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
-            @endphp
-
-
-        <!-- Single Page Header start -->
-        <div class="container-fluid page-header py-5">
-            <h1 class="text-center text-white display-6">Shop</h1>
+{{-- Page Header --}}
+<div class="page-header-band">
+    <div class="container text-center">
+        <h1>Shop</h1>
+        <nav>
             <ol class="breadcrumb justify-content-center mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('store.landing') }}">Home</a></li>
-                <li class="breadcrumb-item active text-white">Shop</li>
+                <li class="breadcrumb-item active">Shop</li>
             </ol>
-        </div>
-        <!-- Single Page Header End -->
+        </nav>
+    </div>
+</div>
 
+{{-- Shop Body --}}
+<section class="py-5">
+    <div class="container">
 
-        <!-- Fruits Shop Start-->
-        <div class="container-fluid fruite py-5">
-            <div class="container py-5">
-                {{-- <h1 class="mb-4">Fresh fruits shop</h1> --}}
-                <div class="row g-4">
-                    <div class="col-lg-12">
-                        {{-- <div class="row g-4">
-                            <div class="col-xl-3">
-                                <div class="input-group w-100 mx-auto d-flex">
-                                    <input type="search" class="form-control p-3" placeholder="keywords" aria-describedby="search-icon-1">
-                                    <span id="search-icon-1" class="input-group-text p-3"><i class="fa fa-search"></i></span>
-                                </div>
-                            </div>
-                            <div class="col-6"></div>
-                            <div class="col-xl-3">
-                                <div class="bg-light ps-3 py-3 rounded d-flex justify-content-between mb-4">
-                                    <label for="fruits">Default Sorting:</label>
-                                    <select id="fruits" name="fruitlist" class="border-0 form-select-sm bg-light me-3" form="fruitform">
-                                        <option value="volvo">Nothing</option>
-                                        <option value="saab">Popularity</option>
-                                        <option value="opel">Organic</option>
-                                        <option value="audi">Fantastic</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div> --}}
-                        <div class="row g-4">
-                            <div class="col-lg-3">
-                                <div class="row g-4">
-                                    <div class="col-lg-12">
-                                        <div class="mb-3">
-                                            <h4>Categories</h4>
-                                            <ul class="list-unstyled fruite-categorie">
-                                                @foreach ($categories as $category)
-                                                    <li>
-                                                        <div class="d-flex justify-content-between fruite-name">
-                                                            <a href="{{ route('store.shop', ['category' => $category->id]) }}">
-                                                                <i class="fas fa-apple-alt me-2"></i>{{ $category->name }}
-                                                            </a>
-                                                            <span>({{ $category->products_count }})</span>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    </div>
+        {{-- Search --}}
+        <form method="GET" action="{{ route('store.shop') }}" class="mb-4">
+            @if($categoryId)
+                <input type="hidden" name="category" value="{{ $categoryId }}">
+            @endif
+            <div class="row g-2 align-items-center">
+                <div class="col search-wrap">
+                    <div class="input-group">
+                        <input type="search" name="q" class="form-control"
+                               placeholder="Search products by name, SKU or barcode..."
+                               value="{{ $search ?? '' }}">
+                        <button type="submit" class="btn-search px-4">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                @if($search)
+                <div class="col-auto d-flex align-items-center gap-2">
+                    <a href="{{ route('store.shop', $categoryId ? ['category' => $categoryId] : []) }}"
+                       class="btn-outline" style="padding:10px 16px; text-decoration:none; font-size:.82rem;">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                    <span style="font-size:.82rem; color:#94a3b8;">
+                        {{ $products->total() }} results for &ldquo;{{ $search }}&rdquo;
+                    </span>
+                </div>
+                @endif
+            </div>
+        </form>
 
-                                    {{-- <div class="col-lg-12">
-                                        <div class="mb-3">
-                                            <h4 class="mb-2">Price</h4>
-                                            <input type="range" class="form-range w-100" id="rangeInput" name="rangeInput" min="0" max="500" value="0" oninput="amount.value=rangeInput.value">
-                                            <output id="amount" name="amount" min-velue="0" max-value="500" for="rangeInput">0</output>
+        <div class="row g-4">
+
+            {{-- Sidebar --}}
+            <div class="col-lg-3">
+                <div class="sidebar-box">
+                    <div class="sidebar-label">Categories</div>
+                    <a href="{{ route('store.shop') }}"
+                       class="cat-link {{ !$categoryId ? 'active' : '' }}">
+                        <span><i class="fas fa-th-large me-2" style="font-size:.8rem;"></i> All Products</span>
+                        <span class="cat-count">All</span>
+                    </a>
+                    @foreach($categories as $cat)
+                    <a href="{{ route('store.shop', ['category' => $cat->id]) }}"
+                       class="cat-link {{ $categoryId == $cat->id ? 'active' : '' }}">
+                        <span><i class="fas fa-tag me-2" style="font-size:.75rem;"></i> {{ $cat->name }}</span>
+                        <span class="cat-count">{{ $cat->products_count }}</span>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Products --}}
+            <div class="col-lg-9">
+                @if($products->isEmpty())
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x mb-3 d-block" style="color:#cbd5e1;"></i>
+                        <h5 style="color:#475569;">No products found</h5>
+                        <p style="color:#94a3b8; font-size:.875rem;">Try a different search term or browse all categories.</p>
+                    </div>
+                @else
+                    <div class="row g-4">
+                        @foreach($products as $product)
+                        <div class="col-sm-6 col-xl-4 d-flex">
+                            <div class="p-card w-100">
+                                <div class="p-card-img">
+                                    <a href="{{ route('store.product', $product->id) }}"
+                                       class="position-absolute w-100 h-100 top-0 start-0" style="z-index:1;"></a>
+
+                                    @if(!empty($product->product_img))
+                                        <img src="{{ asset('storage/'.$product->product_img) }}" alt="{{ $product->name }}">
+                                    @else
+                                        <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f1f5f9; gap:.4rem;">
+                                            <i class="fas fa-image" style="font-size:2rem; color:#cbd5e1;"></i>
+                                            <span style="font-size:.72rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">No Image</span>
                                         </div>
-                                    </div> --}}
-                                    
-                                    {{-- <div class="col-lg-12">
-                                        <h4 class="mb-3">Featured products</h4>
-                                        <div class="d-flex align-items-center justify-content-start">
-                                            <div class="rounded me-4" style="width: 100px; height: 100px;">
-                                                <img src="img/featur-1.jpg" class="img-fluid rounded" alt="">
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-2">Big Banana</h6>
-                                                <div class="d-flex mb-2">
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star"></i>
-                                                </div>
-                                                <div class="d-flex mb-2">
-                                                    <h5 class="fw-bold me-2">2.99 $</h5>
-                                                    <h5 class="text-danger text-decoration-line-through">4.11 $</h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex align-items-center justify-content-start">
-                                            <div class="rounded me-4" style="width: 100px; height: 100px;">
-                                                <img src="img/featur-2.jpg" class="img-fluid rounded" alt="">
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-2">Big Banana</h6>
-                                                <div class="d-flex mb-2">
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star"></i>
-                                                </div>
-                                                <div class="d-flex mb-2">
-                                                    <h5 class="fw-bold me-2">2.99 $</h5>
-                                                    <h5 class="text-danger text-decoration-line-through">4.11 $</h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex align-items-center justify-content-start">
-                                            <div class="rounded me-4" style="width: 100px; height: 100px;">
-                                                <img src="img/featur-3.jpg" class="img-fluid rounded" alt="">
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-2">Big Banana</h6>
-                                                <div class="d-flex mb-2">
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star text-secondary"></i>
-                                                    <i class="fa fa-star"></i>
-                                                </div>
-                                                <div class="d-flex mb-2">
-                                                    <h5 class="fw-bold me-2">2.99 $</h5>
-                                                    <h5 class="text-danger text-decoration-line-through">4.11 $</h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-center my-4">
-                                            <a href="#" class="btn border border-secondary px-4 py-3 rounded-pill text-primary w-100">Vew More</a>
-                                        </div>
-                                    </div> --}}
-                                    {{-- <div class="col-lg-12">
-                                        <div class="position-relative">
-                                            <img src="img/banner-fruits.jpg" class="img-fluid w-100 rounded" alt="">
-                                            <div class="position-absolute" style="top: 50%; right: 10px; transform: translateY(-50%);">
-                                                <h3 class="text-secondary fw-bold">Fresh <br> Fruits <br> Banner</h3>
-                                            </div>
-                                        </div>
-                                    </div> --}}
+                                    @endif
+
+                                    <span class="p-card-cat">{{ $product->category->name ?? 'General' }}</span>
+
+                                    @if($product->has_discount && $product->actual_price > 0)
+                                        @php $pct = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100); @endphp
+                                        <span class="p-card-sale">-{{ $pct }}%</span>
+                                    @endif
+
+                                    @if(!$product->in_stock)
+                                        <div class="p-card-oos">Out of Stock</div>
+                                    @endif
                                 </div>
-                            </div>
-                            <div class="col-lg-9">
-                                <div class="row g-4 justify-content-start">
-                                    @forelse($products as $product)
-                                        <div class="col-md-6 col-lg-6 col-xl-4">
-                                            <div class="rounded position-relative fruite-item border border-secondary">
-                                                {{-- Product Detail Link Overlay --}}
-                                                {{-- This link will cover the entire card area, but will be underneath interactive elements --}}
-                                                <a href="{{ route('store.product', $product->id) }}" class="d-block text-decoration-none text-dark position-absolute w-100 h-100 top-0 start-0" style="z-index: 1;">
-                                                    {{-- This empty link makes the whole card clickable for details --}}
-                                                </a>
-                                    
-                                                <div class="fruite-img product-card-img-container rounded-top" style="height: 250px; overflow: hidden;">
-                                                    {{-- Product Image --}}
-                                                    @if (!empty($product->product_img))
-                                                        <img src="{{ asset('storage/' . $product->product_img) }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="{{ $product->name }}">
-                                                    @else
-                                                        <img src="{{ $placeholderProductImg ?? asset('build/assets/frontend/img/default-product.jpg') }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="No Image">
-                                                    @endif
-                                    
-                                                    {{-- SALE Badge --}}
-                                                    @if ($product->has_discount && $product->actual_price > 0)
-                                                        @php
-                                                            $discountPercent = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100);
-                                                        @endphp
-                                                        <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-danger text-white fw-bold rounded" style="z-index: 2;">
-                                                            -{{ $discountPercent }}%
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                    
-                                                {{-- Category Label --}}
-                                                <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px; z-index: 2;">
-                                                    {{ $product->category->name ?? 'Uncategorized' }}
-                                                </div>
-                                    
-                                                <div class="p-4 rounded-bottom" style="position: relative; z-index: 2;"> {{-- Added position: relative and z-index --}}
-                                                    {{-- Title --}}
-                                                    <h4 class="mb-2" style="font-size: 1.25rem; line-height: 1.4;">{{ Str::words($product->name, 8, '...') }}</h4>
-                                                    <p>{{ Str::limit($product->description ?? 'No description available.', 70) }}</p>
-                                    
-                                                    {{-- Price Section --}}
-                                                    <div class="d-flex flex-column mb-2">
-                                                        @if($product->has_discount && $product->final_price < $product->actual_price)
-                                                            <div class="d-flex align-items-center gap-2">
-                                                                <span class="text-dark fs-5 fw-bold">
-                                                                    {{ number_format($product->final_price, 2) }} {{ $setting->currency_symbol ?? '$' }}
-                                                                </span>
-                                                                <span class="text-danger text-decoration-line-through">
-                                                                    {{ number_format($product->actual_price, 2) }} {{ $setting->currency_symbol ?? '$' }}
-                                                                </span>
-                                                            </div>
-                                                        @else
-                                                            <span class="text-dark fs-5 fw-bold">
-                                                                {{ number_format($product->actual_price, 2) }} {{ $setting->currency_symbol ?? '$' }}
-                                                            </span>
-                                                        @endif
-                                                        <span class="text-muted" style="font-size: 0.9em;">
-                                                            / {{ $product->baseUnit->name ?? 'unit' }}
-                                                        </span>
-                                                    </div>
-                                    
-                                                    {{-- Buttons --}}
-                                                    <div class="d-flex justify-content-between flex-lg-wrap" style="position: relative; z-index: 3;"> {{-- Added position: relative and z-index --}}
-                                                        @if($product->in_stock)
-                                                            @if($product->has_variants)
-                                                                <a href="{{ route('store.product', $product->id) }}" class="btn border border-secondary rounded-pill px-3 text-primary">
-                                                                    <i class="fa fa-eye me-2 text-primary"></i> View Product
-                                                                </a>
-                                                            @else
-                                                                <form action="{{ route('cart.add') }}" method="POST">
-                                                                    @csrf
-                                                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                                                    <input type="hidden" name="quantity" value="1">
-                                                                    <input type="hidden" name="stock" value="{{ $product->stock_quantity }}">
-                                                                    <input id="final_price_{{ $product->id }}" type="hidden" name="price" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
-                                                                    <button type="submit" class="btn border border-secondary rounded-pill px-3 text-primary">
-                                                                        <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
-                                                                    </button>
-                                                                </form>
-                                                            @endif
-                                                        @else
-                                                            <button type="button" class="btn border border-secondary rounded-pill px-3 text-danger" disabled>
-                                                                Out of Stock ({{ number_format($product->stock_quantity, 0) }} Left)
-                                                            </button>
-                                                        @endif
-                                                    </div>
-                                    
-                                                    <p class="mt-2 text-muted" style="font-size: 0.9em;">
-                                                        Stock: {{ number_format($product->stock_quantity, 0) }} {{ $product->baseUnit->name ?? 'units' }}
-                                                    </p>
-                                                </div>
-                                            </div>
+
+                                <div class="p-card-body">
+                                    <p class="p-card-title">{{ Str::words($product->name, 6, '...') }}</p>
+                                    <p class="p-card-desc">{{ Str::limit($product->description ?? '', 58) }}</p>
+
+                                    <div class="mt-auto">
+                                        <div class="d-flex align-items-baseline gap-2 mb-3">
+                                            @if($product->has_discount)
+                                                <span class="p-price">{{ $setting->currency_symbol ?? 'Rs' }} {{ number_format($product->final_price, 0) }}</span>
+                                                <span class="p-price-orig">{{ $setting->currency_symbol ?? 'Rs' }} {{ number_format($product->actual_price, 0) }}</span>
+                                            @else
+                                                <span class="p-price">{{ $setting->currency_symbol ?? 'Rs' }} {{ number_format($product->actual_price ?? 0, 0) }}</span>
+                                            @endif
+                                            <span class="p-unit">/ {{ $product->baseUnit->name ?? 'unit' }}</span>
                                         </div>
-                                    @empty
-                                        <div class="col-12 text-center py-5">
-                                            <h3>No products available at the moment.</h3>
-                                            <p>Please check back later!</p>
-                                        </div>
-                                    @endforelse
-                                    <div class="col-12">
-                                        <div class="pagination-wrapper d-flex justify-content-center mt-5">
-                                            {{ $products->links('pagination::bootstrap-5') }}
+                                        <p style="font-size:.73rem; color:#94a3b8; margin-bottom:.5rem;">
+                                            Stock: {{ number_format($product->stock_quantity, 0) }} {{ $product->baseUnit->name ?? 'units' }}
+                                        </p>
+                                        <div style="position:relative; z-index:3;">
+                                            @if($product->in_stock)
+                                                @if($product->has_variants)
+                                                    <a href="{{ route('store.product', $product->id) }}" class="btn-outline w-100 justify-content-center" style="text-decoration:none;">
+                                                        <i class="fas fa-eye"></i> View Options
+                                                    </a>
+                                                @else
+                                                    <form action="{{ route('cart.add') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                                        <input type="hidden" name="quantity" value="1">
+                                                        <input type="hidden" name="stock" value="{{ $product->stock_quantity }}">
+                                                        <input id="final_price_{{ $product->id }}" type="hidden" name="price"
+                                                               value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
+                                                        <button type="submit" class="btn-prim w-100 justify-content-center">
+                                                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            @else
+                                                <button class="btn-ghost w-100 text-center" disabled style="cursor:not-allowed; opacity:.6;">
+                                                    Out of Stock
+                                                </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        @endforeach
                     </div>
-                </div>
+
+                    <div class="d-flex justify-content-center mt-5">
+                        {{ $products->links('pagination::bootstrap-5') }}
+                    </div>
+                @endif
             </div>
         </div>
+    </div>
+</section>
 
-    @endsection
+@endsection
 
-    @section('frontend_js')
-    
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                let priceInput = document.getElementById('final_price_{{ $product->id }}');
-                if (priceInput) {
-                    priceInput.value = {{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }};
-                }
-            });
-        </script>
-
-    @endsection
+@section('frontend_js')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        @foreach($products as $product)
+        (function() {
+            var el = document.getElementById('final_price_{{ $product->id }}');
+            if (el) el.value = '{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}';
+        })();
+        @endforeach
+    });
+</script>
+@endsection

@@ -256,21 +256,38 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('q');
-    
-        $products = Product::with(['variants:id,product_id,variant_name', 'baseUnit:id,name'])
-            ->where('name', 'like', '%' . $query . '%')
+        $barcode = $request->input('barcode');
+
+        $products = Product::with(['variants:id,product_id,variant_name,actual_price', 'baseUnit:id,name', 'inventoryStocks:id,product_id,quantity_in_base_unit'])
+            ->where(function ($q) use ($query, $barcode) {
+                if ($barcode) {
+                    $q->where('barcode', $barcode);
+                } else {
+                    $q->where('name', 'like', '%' . $query . '%')
+                      ->orWhere('sku', 'like', '%' . $query . '%')
+                      ->orWhere('barcode', $query);
+                }
+            })
             ->limit(20)
             ->get()
             ->map(function ($product) {
+                $totalStock = $product->inventoryStocks->sum('quantity_in_base_unit');
                 return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'unit' => $product->baseUnit->name ?? '',
-                    'unit_id' => $product->base_unit_id,
-                    'variants' => $product->variants->map(fn($v) => ['id' => $v->id, 'name' => $v->variant_name])
+                    'id'           => $product->id,
+                    'name'         => $product->name,
+                    'unit'         => $product->baseUnit->name ?? '',
+                    'unit_id'      => $product->base_unit_id,
+                    'price'        => (float) $product->actual_price,
+                    'stock'        => (int) $totalStock,
+                    'has_variants' => (bool) $product->has_variants,
+                    'variants'     => $product->variants->map(fn($v) => [
+                        'id'    => $v->id,
+                        'name'  => $v->variant_name,
+                        'price' => (float) ($v->actual_price ?? $product->actual_price),
+                    ]),
                 ];
             });
-        
+
         return response()->json($products);
     }
 

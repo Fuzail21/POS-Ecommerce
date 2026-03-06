@@ -2,12 +2,9 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\VendorController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\LoanController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\PurchaseController ;
@@ -27,12 +24,17 @@ use App\Http\Middleware\CheckOpenRegister;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\DiscountRuleController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StockTransferController;
+use App\Http\Controllers\PaymentGatewayController;
+use App\Http\Controllers\PurchaseReturnController;
 
 // Store
 use App\Http\Controllers\Frontend\StoreController;
 use App\Http\Controllers\Frontend\CartController;
-use App\Http\Controllers\Frontend\CustomerAuth\AuthenticatedSessionController as CustomerAuthenticatedSessionController; // For customer login
-use App\Http\Controllers\Frontend\CustomerAuth\RegisteredUserController as CustomerRegisteredUserController; // For customer registration
+use App\Http\Controllers\Frontend\CustomerAuth\AuthenticatedSessionController as CustomerAuthenticatedSessionController;
+use App\Http\Controllers\Frontend\CustomerAuth\RegisteredUserController as CustomerRegisteredUserController;
+use App\Http\Controllers\Frontend\CustomerAuth\CustomerPasswordResetController;
 use App\Http\Controllers\Frontend\CheckoutController; // New controller for checkout process
 use App\Http\Controllers\Frontend\CustomerProfileController; 
 
@@ -52,23 +54,27 @@ Route::middleware('auth', 'verified')->group(function () {
     
     Route::get('/dashboard', [POSController::class, 'dashboard'])->name('dashboard');
 
-    // Users
-    Route::get('/user/list', [UserController::class, 'index'])->name('user.list');
-    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
-    Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
-    Route::get('/user/edit/{id}', [UserController::class, 'edit'])->name('user.edit');
-    Route::post('/user/edit/{id}', [UserController::class, 'update'])->name('user.update');
-    Route::get('/user/delete/{id}', [UserController::class, 'destroy'])->name('user.delete');
+    // Users — Admin only
+    Route::middleware('role:Admin')->group(function () {
+        Route::get('/user/list', [UserController::class, 'index'])->name('user.list');
+        Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
+        Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
+        Route::get('/user/edit/{id}', [UserController::class, 'edit'])->name('user.edit');
+        Route::post('/user/edit/{id}', [UserController::class, 'update'])->name('user.update');
+        Route::delete('/user/delete/{id}', [UserController::class, 'destroy'])->name('user.delete');
+    });
 
 
 
-    // Role
-    Route::get('/role/list', [RoleController::class, 'index'])->name('role.list');
-    Route::get('/role/create', [RoleController::class, 'create'])->name('role.create');
-    Route::post('/role/store', [RoleController::class, 'store'])->name('role.store');
-    Route::get('/role/edit/{id}', [RoleController::class, 'edit'])->name('role.edit');
-    Route::post('/role/edit/{id}', [RoleController::class, 'update'])->name('role.update');
-    Route::get('/role/delete/{id}', [RoleController::class, 'destroy'])->name('role.delete');
+    // Role — Admin only
+    Route::middleware('role:Admin')->group(function () {
+        Route::get('/role/list', [RoleController::class, 'index'])->name('role.list');
+        Route::get('/role/create', [RoleController::class, 'create'])->name('role.create');
+        Route::post('/role/store', [RoleController::class, 'store'])->name('role.store');
+        Route::get('/role/edit/{id}', [RoleController::class, 'edit'])->name('role.edit');
+        Route::post('/role/edit/{id}', [RoleController::class, 'update'])->name('role.update');
+        Route::delete('/role/delete/{id}', [RoleController::class, 'destroy'])->name('role.delete');
+    });
 
 
 
@@ -79,7 +85,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [WarehouseController::class, 'store'])->name('warehouse.store');
         Route::get('/edit/{id}', [WarehouseController::class, 'edit'])->name('warehouse.edit');
         Route::put('/update/{id}', [WarehouseController::class, 'update'])->name('warehouse.update');
-        Route::get('/delete/{id}', [WarehouseController::class, 'destroy'])->name('warehouse.destroy');
+        Route::delete('/delete/{id}', [WarehouseController::class, 'destroy'])->name('warehouse.destroy');
     });
 
 
@@ -91,7 +97,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [BranchController::class, 'store'])->name('store');
         Route::get('/edit/{id}', [BranchController::class, 'edit'])->name('edit');
         Route::post('/update/{id}', [BranchController::class, 'update'])->name('update');
-        Route::get('/delete/{id}', [BranchController::class, 'destroy'])->name('delete');
+        Route::delete('/delete/{id}', [BranchController::class, 'destroy'])->name('delete');
     });
 
 
@@ -103,7 +109,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [UnitController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [UnitController::class, 'edit'])->name('edit');
         Route::post('/{id}', [UnitController::class, 'update'])->name('update');
-        Route::get('/{id}', [UnitController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [UnitController::class, 'destroy'])->name('destroy');
     });
 
 
@@ -115,7 +121,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [CategoryController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [CategoryController::class, 'edit'])->name('edit');
         Route::post('/{id}', [CategoryController::class, 'update'])->name('update');
-        Route::get('/{id}', [CategoryController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [CategoryController::class, 'destroy'])->name('destroy');
     });
 
 
@@ -127,7 +133,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [ProductController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [ProductController::class, 'edit'])->name('edit');
         Route::post('/{id}', [ProductController::class, 'update'])->name('update');
-        Route::get('/{id}', [ProductController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [ProductController::class, 'destroy'])->name('destroy');
         Route::get('/{id}/variants', [ProductController::class, 'viewVariants'])->name('variants');
     });
     Route::get('/api/search-products', [ProductController::class, 'search']);
@@ -142,7 +148,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [SupplierController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [SupplierController::class, 'edit'])->name('edit');
         Route::post('/{id}', [SupplierController::class, 'update'])->name('update');
-        Route::get('/{id}', [SupplierController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [SupplierController::class, 'destroy'])->name('destroy');
     });
     // Supplier Product
     Route::get('/reports/supplier-products', [StockAdjustmentController::class, 'supplierProductReport'])->name('reports.supplier_products');
@@ -155,7 +161,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::post('/store', [CustomerController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [CustomerController::class, 'edit'])->name('edit');
         Route::post('/{id}', [CustomerController::class, 'update'])->name('update');
-        Route::get('/{id}', [CustomerController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [CustomerController::class, 'destroy'])->name('destroy');
 
         Route::get('/card/{id}', [CustomerController::class, 'showCard'])->name('card');
 
@@ -174,9 +180,17 @@ Route::middleware('auth', 'verified')->group(function () {
         // Purchase Items View
         // Route::get('/purchase/items/{id}', [PurchaseController::class, 'showItems'])->name('items');
         Route::get('/invoice/{id}', [PurchaseController::class, 'invoice'])->name('invoice');
+        Route::get('/{id}/pdf', [PurchaseController::class, 'downloadPdf'])->name('pdf');
 
     });
 
+    // Purchase Returns
+    Route::prefix('purchase-returns')->name('purchase_returns.')->group(function () {
+        Route::get('/', [PurchaseReturnController::class, 'index'])->name('index');
+        Route::get('/purchases/{purchase}/return', [PurchaseReturnController::class, 'create'])->name('create');
+        Route::post('/purchases/{purchase}', [PurchaseReturnController::class, 'store'])->name('store');
+        Route::get('/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('show');
+    });
 
 
     //Sales
@@ -188,11 +202,12 @@ Route::middleware('auth', 'verified')->group(function () {
         // Purchase Items View
         // Route::get('/purchase/items/{id}', [SaleController::class, 'showItems'])->name('items');
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
+        Route::get('/{id}/pdf', [SaleController::class, 'downloadPdf'])->name('pdf');
 
     });
      Route::get('e-commerce/orders', [SaleController::class, 'orders'])->name('orders.index');
      Route::get('orders/{order}', [SaleController::class, 'show'])->name('orders.show');
-     Route::put('orders/{order}/status', [SaleController::class, 'updateStatus'])->name('orders.updateStatus');
+     Route::put('orders/{order}/status', [SaleController::class, 'updateStatus'])->name('orders.updateStatus')->middleware('auth');
 
 
     //Sales Return
@@ -213,7 +228,7 @@ Route::middleware('auth', 'verified')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->name('list');
         Route::get('/create', [FinanceController::class, 'create'])->name('create');
         Route::post('/store', [FinanceController::class, 'store'])->name('store');
-        Route::get('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}', [FinanceController::class, 'destroy'])->name('destroy');
 
         Route::get('/invoice/{id}', [SaleController::class, 'invoice'])->name('invoice');
     });
@@ -222,6 +237,15 @@ Route::middleware('auth', 'verified')->group(function () {
     // Stocks
     Route::get('/stock/list', [StockAdjustmentController::class, 'stockIndex'])->name('stock.list');
     Route::get('/stock-ledger', [StockAdjustmentController::class, 'stockLedger'])->name('stock.ledger');
+    Route::get('/stock/adjustment/create', [StockAdjustmentController::class, 'adjustmentCreate'])->name('stock.adjustment.create');
+    Route::post('/stock/adjustment', [StockAdjustmentController::class, 'adjustmentStore'])->name('stock.adjustment.store');
+
+    // Stock Transfers
+    Route::prefix('stock/transfers')->name('stock.transfers.')->group(function () {
+        Route::get('/', [StockTransferController::class, 'index'])->name('index');
+        Route::get('/create', [StockTransferController::class, 'create'])->name('create');
+        Route::post('/', [StockTransferController::class, 'store'])->name('store');
+    });
 
 
     // POS
@@ -236,7 +260,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/expense_categories/list', [ExpenseController::class, 'index'])->name('expense_categories.list');
     Route::post('/expense_categories/store', [ExpenseController::class, 'store'])->name('expense_categories.store');
     Route::put('/expense_categories/{id}', [ExpenseController::class, 'update'])->name('expense_categories.update');
-    Route::get('/expense_categories/{id}', [ExpenseController::class, 'destroy'])->name('expense_categories.destroy');
+    Route::delete('/expense_categories/{id}', [ExpenseController::class, 'destroy'])->name('expense_categories.destroy');
 
 
 
@@ -246,7 +270,7 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::post('/expense/store', [ExpenseController::class, 'expenseStore'])->name('expense.store');
     Route::get('/expenses/edit/{id}', [ExpenseController::class, 'expenseEdit'])->name('expense.edit');
     Route::put('/expenses/update/{id}', [ExpenseController::class, 'expenseUpdate'])->name('expense.update');
-    Route::get('/expenses/delete/{id}', [ExpenseController::class, 'expenseDestroy'])->name('expense.destroy');
+    Route::delete('/expenses/delete/{id}', [ExpenseController::class, 'expenseDestroy'])->name('expense.destroy');
     
 
 
@@ -256,23 +280,25 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/pos/check-register', [POSController::class, 'checkRegister'])->name('pos.checkRegister');
     Route::get('/pos/register-details', [POSController::class, 'getRegisterDetails'])->name('pos.getRegisterDetails');
 
-    // POS Settings
-    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
+    // POS Settings — Admin only
+    Route::middleware('role:Admin')->group(function () {
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings/save', [SettingController::class, 'saveSettings'])->name('settings.save');
+        Route::post('/mail-settings/save', [SettingController::class, 'saveMailSettings'])->name('mail-settings.save');
+    });
 
-    // Mail Setting
-    Route::post('/mail-settings/save', [SettingController::class, 'saveMailSettings'])->name('mail-settings.save');
 
 
-
-    // Quotation 
+    // Quotation
     Route::get('/quotations', [QuotationController::class, 'index'])->name('quotations.index');
     Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
     Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
     Route::get('/quotations/show/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
     Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
     Route::put('/quotations/{quotation}', [QuotationController::class, 'update'])->name('quotations.update');
-    Route::get('/quotations/{quotation}', [QuotationController::class, 'destroy'])->name('quotations.destroy');
+    Route::delete('/quotations/{quotation}', [QuotationController::class, 'destroy'])->name('quotations.destroy');
+    Route::get('/quotations/{quotation}/pdf', [QuotationController::class, 'downloadPdf'])->name('quotations.pdf');
+    Route::post('/quotations/{quotation}/convert', [QuotationController::class, 'convertToSale'])->name('quotations.convert');
 
 
     // Route::post('/quotations/{quotation}/restore', [QuotationController::class, 'restore'])->name('quotations.restore');
@@ -284,6 +310,16 @@ Route::middleware('auth', 'verified')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+
+    // Reports — Admin, Manager, Accountant only
+    Route::middleware('role:Admin,Manager,Accountant')->prefix('reports')->name('reports.')->group(function () {
+        Route::get('/sales', [ReportController::class, 'sales'])->name('sales');
+        Route::get('/purchases', [ReportController::class, 'purchases'])->name('purchases');
+        Route::get('/expenses', [ReportController::class, 'expenses'])->name('expenses');
+        Route::get('/profit-loss', [ReportController::class, 'profitLoss'])->name('profit-loss');
+        Route::get('/inventory-valuation', [ReportController::class, 'inventoryValuation'])->name('inventory-valuation');
+    });
 
 
     // Discount Rules
@@ -315,8 +351,14 @@ Route::prefix('store')->group(function () {
     Route::post('/login', [CustomerAuthenticatedSessionController::class, 'store']);
     Route::post('/logout', [CustomerAuthenticatedSessionController::class, 'destroy'])->name('customer.logout');
 
-    // Route::get('/register', [CustomerRegisteredUserController::class, 'create'])->name('customer.register');
-    // Route::post('/register', [CustomerRegisteredUserController::class, 'store']);
+    Route::get('/register', [CustomerRegisteredUserController::class, 'create'])->name('customer.register');
+    Route::post('/register', [CustomerRegisteredUserController::class, 'store']);
+
+    // Customer Password Reset
+    Route::get('/forgot-password', [CustomerPasswordResetController::class, 'create'])->name('customer.password.request');
+    Route::post('/forgot-password', [CustomerPasswordResetController::class, 'store'])->name('customer.password.email');
+    Route::get('/reset-password/{token}', [CustomerPasswordResetController::class, 'resetForm'])->name('customer.password.reset');
+    Route::post('/reset-password', [CustomerPasswordResetController::class, 'resetPassword'])->name('customer.password.update');
 
     Route::post('/product-variant', [StoreController::class, 'getProductVariant'])->name('product.getVariant');
 
@@ -326,11 +368,23 @@ Route::prefix('store')->group(function () {
         Route::post('/checkout/process', [CheckoutController::class, 'process'])->name('store.checkout.process');
         Route::get('/thank-you', [CheckoutController::class, 'thankYou'])->name('store.thankyou');
 
+        // Order History
+        Route::get('/orders', [CheckoutController::class, 'orders'])->name('store.orders');
+        Route::get('/orders/{id}', [CheckoutController::class, 'orderDetail'])->name('store.order.detail');
+
         // Customer Profile
         Route::get('/profile', [CustomerProfileController::class, 'edit'])->name('customer.profile.edit');
         Route::put('/profile', [CustomerProfileController::class, 'update'])->name('customer.profile.update');
         Route::delete('/profile', [CustomerProfileController::class, 'destroy'])->name('customer.profile.destroy');
+
+        // Payment Gateway — Redirect (authenticated customer)
+        Route::get('/payment/jazzcash/{sale}', [PaymentGatewayController::class, 'redirectJazzCash'])->name('payment.jazzcash');
+        Route::get('/payment/easypaisa/{sale}', [PaymentGatewayController::class, 'redirectEasyPaisa'])->name('payment.easypaisa');
     });
+
+    // Payment Gateway Callbacks (public — posted by the gateway)
+    Route::post('/payment/jazzcash/callback', [PaymentGatewayController::class, 'callbackJazzCash'])->name('payment.jazzcash.callback')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+    Route::post('/payment/easypaisa/callback', [PaymentGatewayController::class, 'callbackEasyPaisa'])->name('payment.easypaisa.callback')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 });
 
 

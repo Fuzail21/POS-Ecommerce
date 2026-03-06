@@ -69,11 +69,7 @@
                 </button>
             </div>
 
-            <div class="mt-4 text-center">
-                <a href="{{ route('register') }}" class="text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 hover:underline">
-                    Don't have an account? Create one
-                </a>
-            </div>
+            {{-- Admin self-registration is disabled. Accounts are created by administrators. --}}
 
         </form>
     </div>

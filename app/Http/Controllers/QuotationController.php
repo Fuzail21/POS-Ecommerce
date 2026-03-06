@@ -11,6 +11,10 @@ use App\Models\ProductVariant; // Assuming ProductVariant model exists
 use App\Models\Category;
 use App\Models\Branch;
 use App\Models\Unit;
+use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\InventoryStock;
+use App\Models\StockLedger;
 use Illuminate\Http\Request;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
@@ -176,53 +180,73 @@ class QuotationController extends Controller
     // }
 
     public function create(Request $request){
-        $title = "Create Sale Quotation"; // Changed title for clarity
-        $categories = Category::all();
-        $branches = Branch::all();
-        $customers = Customer::all();
-        $units = Unit::all();
-        $setting = Setting::first();
+        $title       = "Create Sale Quotation";
+        $categories  = Category::all();
+        $branches    = Branch::all();
+        $customers   = Customer::all();
+        $units       = Unit::all();
+        $setting     = Setting::first();
+        $search      = $request->input('search');
+        $branchId    = $request->input('branch_id');
+        $warehouseId = null;
+        $products    = collect();
 
-        $search = $request->input('search');
-        $products = collect();
-
-        // ✅ Load active discount rules
-        $now = now();
-        $activeDiscounts = \App\Models\DiscountRule::where('start_date', '<=', $now)
-            ->where('end_date', '>=', $now)
-            ->get();
-
-        $query = Product::whereNull('deleted_at')
-            ->with([
-                'baseUnit',
-                'variants.inventoryStocks',
-                'variants.product.baseUnit',
-                'inventoryStocks',
-            ]);
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%");
-            });
-        } else {
-            $query->latest()->take(12);
+        if ($branchId) {
+            $branch      = Branch::find($branchId);
+            $warehouseId = $branch?->warehouse_id;
         }
 
-            $products = $query->get()->map(function ($product) use ($activeDiscounts) {
-                $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                $product->stock_quantity = $baseQuantity / $conversionFactor;
-                $product->in_stock = $product->stock_quantity > 0;
+        // AJAX with no branch selected — return placeholder
+        if ($request->ajax() && !$warehouseId) {
+            return '<div class="col-12 text-center text-muted py-5">
+                        <p class="mb-0"><i class="fas fa-store fa-2x mb-2 d-block"></i>Select a branch above to see available products.</p>
+                    </div>';
+        }
 
+        if ($warehouseId) {
+            $now             = now();
+            $activeDiscounts = \App\Models\DiscountRule::where('start_date', '<=', $now)
+                ->where('end_date', '>=', $now)
+                ->get();
+
+            $query = Product::whereNull('deleted_at')
+                ->where(function ($q) use ($warehouseId) {
+                    $q->whereHas('inventoryStocks', function ($sq) use ($warehouseId) {
+                        $sq->where('warehouse_id', $warehouseId)
+                           ->where('quantity_in_base_unit', '>', 0);
+                    })->orWhereHas('variants.inventoryStocks', function ($sq) use ($warehouseId) {
+                        $sq->where('warehouse_id', $warehouseId)
+                           ->where('quantity_in_base_unit', '>', 0);
+                    });
+                })
+                ->with([
+                    'baseUnit',
+                    'variants.product.baseUnit',
+                    'variants.inventoryStocks' => fn($q) => $q->where('warehouse_id', $warehouseId),
+                    'inventoryStocks'          => fn($q) => $q->where('warehouse_id', $warehouseId),
+                ]);
+
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%");
+                });
+            } else {
+                $query->latest()->take(12);
+            }
+
+            $products = $query->get()->map(function ($product) use ($activeDiscounts) {
+                $conversionFactor        = $product->baseUnit->conversion_factor ?? 1;
+                $baseQuantity            = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                $product->stock_quantity = $baseQuantity / $conversionFactor;
+                $product->in_stock       = $product->stock_quantity > 0;
                 $product->discounted_price = $product->actual_price;
 
-                // ✅ Check if this product or its category has a discount
                 foreach ($activeDiscounts as $rule) {
                     $targets = collect(json_decode($rule->target_ids));
                     if (
-                        ($rule->type === 'product' && $targets->contains($product->id)) ||
+                        ($rule->type === 'product'  && $targets->contains($product->id)) ||
                         ($rule->type === 'category' && $targets->contains($product->category_id))
                     ) {
                         $product->discounted_price = $product->actual_price - ($product->actual_price * ($rule->discount / 100));
@@ -231,17 +255,16 @@ class QuotationController extends Controller
                 }
 
                 foreach ($product->variants as $variant) {
-                    $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                    $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                    $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                    $variant->in_stock = $variant->stock_quantity > 0;
-
+                    $variantConversionFactor  = $variant->product->baseUnit->conversion_factor ?? 1;
+                    $variantQuantity          = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                    $variant->stock_quantity  = $variantQuantity / $variantConversionFactor;
+                    $variant->in_stock        = $variant->stock_quantity > 0;
                     $variant->discounted_price = $variant->actual_price;
 
                     foreach ($activeDiscounts as $rule) {
                         $targets = collect(json_decode($rule->target_ids));
                         if (
-                            ($rule->type === 'product' && $targets->contains($product->id)) ||
+                            ($rule->type === 'product'  && $targets->contains($product->id)) ||
                             ($rule->type === 'category' && $targets->contains($product->category_id))
                         ) {
                             $variant->discounted_price = $variant->actual_price - ($variant->actual_price * ($rule->discount / 100));
@@ -252,92 +275,95 @@ class QuotationController extends Controller
 
                 return $product;
             });
+        }
 
-            // ✅ AJAX: Return product cards with discounted prices
-            if ($request->ajax()) {
-                $html = '';
-
-                foreach ($products as $product) {
-                    $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                    $productImgSrc = !empty($product->product_img)
-                    ? asset('storage/' . $product->product_img)
-                    : 'https://placehold.co/100x100/f0f0f0/808080?text=N/A';
-                    $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
-                    $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
-                    // Product image
-                    if (!empty($product->product_img)) {
-                        $html .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
-                    } else {
-                        $html .= '<div style="width: 100px; height: 100px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
-                    }
-                    $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
-                    if ($product->variants->count()) {
-                        $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
-                        $html .= '<option disabled selected>Choose Variant</option>';
-                        foreach ($product->variants as $variant) {
-                            $disabled = !$variant->in_stock ? 'disabled' : '';
-                            $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
-                            $finalVariantPrice = $variant->discounted_price;
-                            $hasVariantDiscount = $finalVariantPrice < $variant->actual_price;
-                            $label = htmlspecialchars($variant->variant_name) . ' - ';
-                            if ($hasVariantDiscount) {
-                                $label .= '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> ';
-                                $label .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalVariantPrice, 2) . '</strong>';
-                            } else {
-                                $label .= $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
-                            }
-                            $label .= ' ' . $stockText;
-                            $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
-                                'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                                'data-price="' . $finalVariantPrice . '" ' .
-                                'data-stock="' . $variant->stock_quantity . '" ' .
-                                'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                $label .
-                                '</option>';
-                        }
-                        $html .= '</select>';
-                        $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
-                    } else {
-                        $finalPrice = $product->discounted_price;
-                        $hasDiscount = $finalPrice < $product->actual_price;
-                        $html .= '<p class="mb-1">';
-                        if ($hasDiscount) {
-                            $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
-                            $html .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
-                        } else {
-                            $html .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
-                        }
-                        $html .= '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
-                        if ($product->in_stock) {
-                            $html .= '<button ' .
-                                'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
-                                'data-id="product-' . $product->id . '" ' .
-                                'data-name="' . htmlspecialchars($product->name) . '" ' .
-                                'data-price="' . $finalPrice . '" ' .
-                                'data-stock="' . $product->stock_quantity . '" ' .
-                                'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                'Add to Cart' .
-                                '</button>';
-                        } else {
-                            $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
-                        }
-                    }
-
-                    $html .= '</div></div>';
-                }
-
-                return $html;
+        // AJAX: return product card HTML
+        if ($request->ajax()) {
+            if ($products->isEmpty()) {
+                return '<div class="col-12 text-center text-muted py-5">
+                            <p class="mb-0">No products with available stock at this branch.</p>
+                        </div>';
             }
 
-            return view('admin.quotations.create', compact(
-                'categories',
-                'units',
-                'products',
-                'title',
-                'customers',
-                'branches',
-                'setting'
-            ));
+            $html = '';
+            foreach ($products as $product) {
+                $isOutOfStock  = !$product->in_stock && $product->variants->count() === 0;
+                $productImgSrc = !empty($product->product_img)
+                    ? asset('storage/' . $product->product_img)
+                    : null;
+
+                $html .= '<div class="col-md-3 mb-2 product-item d-flex">';
+                $html .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 '
+                    . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
+
+                if ($productImgSrc) {
+                    $html .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin:auto;">';
+                } else {
+                    $html .= '<div style="width:100px;height:100px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;border-radius:8px;margin:auto;">N/A</div>';
+                }
+
+                $html .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
+
+                if ($product->variants->count()) {
+                    $html .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
+                    $html .= '<option disabled selected>Choose Variant</option>';
+                    foreach ($product->variants as $variant) {
+                        $disabled    = !$variant->in_stock ? 'disabled' : '';
+                        $stockText   = $variant->in_stock ? '(Stock: ' . (int)$variant->stock_quantity . ')' : '(Out of Stock)';
+                        $finalPrice  = $variant->discounted_price;
+                        $hasDiscount = $finalPrice < $variant->actual_price;
+                        $label = htmlspecialchars($variant->variant_name) . ' - ';
+                        if ($hasDiscount) {
+                            $label .= '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> ';
+                            $label .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                        } else {
+                            $label .= $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
+                        }
+                        $label .= ' ' . $stockText;
+                        $html .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" '
+                            . 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" '
+                            . 'data-price="' . $finalPrice . '" '
+                            . 'data-stock="' . (int)$variant->stock_quantity . '" '
+                            . 'data-unit-id="' . $product->default_display_unit_id . '">'
+                            . $label . '</option>';
+                    }
+                    $html .= '</select>';
+                    $html .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
+                } else {
+                    $finalPrice  = $product->discounted_price;
+                    $hasDiscount = $finalPrice < $product->actual_price;
+                    $html .= '<p class="mb-1">';
+                    if ($hasDiscount) {
+                        $html .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
+                        $html .= '<strong style="color:red;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</strong>';
+                    } else {
+                        $html .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
+                    }
+                    $html .= '<br><small>(Stock: ' . (int)$product->stock_quantity . ')</small></p>';
+                    if ($product->in_stock) {
+                        $html .= '<button '
+                            . 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" '
+                            . 'data-id="product-' . $product->id . '" '
+                            . 'data-name="' . htmlspecialchars($product->name) . '" '
+                            . 'data-price="' . $finalPrice . '" '
+                            . 'data-stock="' . (int)$product->stock_quantity . '" '
+                            . 'data-unit-id="' . $product->default_display_unit_id . '">'
+                            . 'Add to Cart</button>';
+                    } else {
+                        $html .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
+                    }
+                }
+
+                $html .= '</div></div>';
+            }
+
+            return $html;
+        }
+
+        return view('admin.quotations.create', compact(
+            'categories', 'units', 'products', 'title',
+            'customers', 'branches', 'setting'
+        ));
     }
 
     /**
@@ -428,6 +454,7 @@ class QuotationController extends Controller
                 'tax_percentage' => $taxPercentage,
                 'order_tax_amount' => $tax,
                 'discount_percentage' => $discount,
+                'discount_type' => $request->input('discount_type', 'fixed'),
                 'shipping_cost' => $shipping,
                 'grand_total' => $finalGrandTotal,
                 'status' => $request->status,
@@ -453,8 +480,14 @@ class QuotationController extends Controller
 
             DB::commit();
             if ($quotation->status === 'sent') {
-                $quotation->load(['items.product', 'items.productVariant']);
-                Mail::to($quotation->customer->email)->send(new QuotationSentMail($quotation));
+                try {
+                    $quotation->load(['customer', 'items.product', 'items.productVariant']);
+                    if ($quotation->customer?->email) {
+                        Mail::to($quotation->customer->email)->send(new QuotationSentMail($quotation));
+                    }
+                } catch (\Exception $mailEx) {
+                    \Log::warning('Quotation email failed: ' . $mailEx->getMessage());
+                }
             }
             return redirect()->route('quotations.index')->with('success', 'Quotation created successfully!');
 
@@ -512,62 +545,62 @@ class QuotationController extends Controller
 
         $search = $request->input('search');
 
+        // Resolve warehouse from the quotation's branch (same logic as create/sale)
+        $warehouseId = null;
+        $branchId    = $request->input('branch_id', $quotation->branch_id);
+        if ($branchId) {
+            $branch      = Branch::find($branchId);
+            $warehouseId = $branch?->warehouse_id;
+        }
+
         $products = collect();
 
-        if ($search) {
-            $products = Product::whereNull('deleted_at')
-                ->where(function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('sku', 'like', "%{$search}%")
-                        ->orWhere('barcode', 'like', "%{$search}%");
-                })
-                ->with([
-                    'baseUnit',
-                    'variants.inventoryStocks',
-                    'variants.product.baseUnit',
-                    'inventoryStocks',
-                ])
-                ->get()
-                ->map(function ($product) {
-                    $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                    $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                    $product->stock_quantity = $baseQuantity / $conversionFactor;
-                    $product->in_stock = $product->stock_quantity > 0;
-
-                    foreach ($product->variants as $variant) {
-                        $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                        $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                        $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                        $variant->in_stock = $variant->stock_quantity > 0;
-                    }
-                    return $product;
+        $buildQuery = function ($base) use ($search, $warehouseId) {
+            if ($search) {
+                $base->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%");
                 });
-        } else {
-            $products = Product::whereNull('deleted_at')
-                ->latest()
-                ->take(10)
-                ->with([
-                    'baseUnit',
-                    'variants.inventoryStocks',
-                    'variants.product.baseUnit',
-                    'inventoryStocks',
-                ])
-                ->get()
-                ->map(function ($product) {
-                    $conversionFactor = $product->baseUnit->conversion_factor ?? 1;
-                    $baseQuantity = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                    $product->stock_quantity = $baseQuantity / $conversionFactor;
-                    $product->in_stock = $product->stock_quantity > 0;
+            } else {
+                $base->latest()->take(10);
+            }
 
-                    foreach ($product->variants as $variant) {
-                        $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
-                        $variantQuantity = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
-                        $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
-                        $variant->in_stock = $variant->stock_quantity > 0;
-                    }
-                    return $product;
+            if ($warehouseId) {
+                $base->where(function ($q) use ($warehouseId) {
+                    $q->whereHas('inventoryStocks', fn($sq) =>
+                        $sq->where('warehouse_id', $warehouseId)->where('quantity_in_base_unit', '>', 0)
+                    )->orWhereHas('variants.inventoryStocks', fn($sq) =>
+                        $sq->where('warehouse_id', $warehouseId)->where('quantity_in_base_unit', '>', 0)
+                    );
                 });
-        }
+                return $base->with([
+                    'baseUnit',
+                    'variants.product.baseUnit',
+                    'variants.inventoryStocks' => fn($q) => $q->where('warehouse_id', $warehouseId),
+                    'inventoryStocks'          => fn($q) => $q->where('warehouse_id', $warehouseId),
+                ]);
+            }
+
+            return $base->with(['baseUnit', 'variants.inventoryStocks', 'variants.product.baseUnit', 'inventoryStocks']);
+        };
+
+        $products = $buildQuery(Product::whereNull('deleted_at'))
+            ->get()
+            ->map(function ($product) {
+                $conversionFactor        = $product->baseUnit->conversion_factor ?? 1;
+                $baseQuantity            = $product->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                $product->stock_quantity = $baseQuantity / $conversionFactor;
+                $product->in_stock       = $product->stock_quantity > 0;
+
+                foreach ($product->variants as $variant) {
+                    $variantConversionFactor = $variant->product->baseUnit->conversion_factor ?? 1;
+                    $variantQuantity         = $variant->inventoryStocks->sum('quantity_in_base_unit') ?? 0;
+                    $variant->stock_quantity = $variantQuantity / $variantConversionFactor;
+                    $variant->in_stock       = $variant->stock_quantity > 0;
+                }
+                return $product;
+            });
 
         if ($request->ajax()) {
             $html = '';
@@ -756,6 +789,7 @@ class QuotationController extends Controller
                 'order_tax_amount' => $tax,
                 'tax_percentage' => $taxPercentage,
                 'discount_percentage' => $discount,
+                'discount_type' => $request->input('discount_type', 'fixed'),
                 'shipping_cost' => $shipping,
                 'grand_total' => $finalGrandTotal,
                 'status' => $request->status,
@@ -784,8 +818,14 @@ class QuotationController extends Controller
 
             DB::commit();
             if ($quotation->status === 'sent') {
-                $quotation->load(['items.product', 'items.productVariant']);
-                Mail::to($quotation->customer->email)->send(new QuotationSentMail($quotation));
+                try {
+                    $quotation->load(['customer', 'items.product', 'items.productVariant']);
+                    if ($quotation->customer?->email) {
+                        Mail::to($quotation->customer->email)->send(new QuotationSentMail($quotation));
+                    }
+                } catch (\Exception $mailEx) {
+                    \Log::warning('Quotation email failed: ' . $mailEx->getMessage());
+                }
             }
             return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully!');
 
@@ -867,4 +907,135 @@ class QuotationController extends Controller
     //         return back()->with('error', 'Failed to permanently delete quotation: ' . $e->getMessage());
     //     }
     // }
+
+    public function convertToSale(Quotation $quotation)
+    {
+        if ($quotation->status === 'converted') {
+            return back()->with('error', 'This quotation has already been converted to a sale.');
+        }
+
+        $quotation->load(['items.product.baseUnit', 'items.productVariant']);
+
+        $branch      = Branch::find($quotation->branch_id);
+        $warehouseId = $branch->warehouse_id ?? null;
+
+        if (!$warehouseId) {
+            return back()->with('error', 'The quotation branch does not have an associated warehouse.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // PRE-FLIGHT STOCK CHECK — abort conversion if any item is short
+            foreach ($quotation->items as $item) {
+                $productId = $item->product_id;
+                $variantId = $item->product_variant_id;
+
+                // Use product base unit conversion to compute base qty
+                $conversionFactor = $item->product->baseUnit->conversion_factor ?? 1;
+                $baseQtyNeeded    = $item->quantity * $conversionFactor;
+
+                $available = InventoryStock::where('product_id', $productId)
+                    ->where('variant_id', $variantId)
+                    ->where('warehouse_id', $warehouseId)
+                    ->value('quantity_in_base_unit') ?? 0;
+
+                if ($available < $baseQtyNeeded) {
+                    throw new \Exception(
+                        'Insufficient stock for "' . ($item->product->name ?? 'product') .
+                        '". Available: ' . (int)$available . ', Requested: ' . (int)$baseQtyNeeded . '.'
+                    );
+                }
+            }
+
+            // Generate invoice number
+            $year       = date('Y');
+            $lastSale   = Sale::whereYear('created_at', $year)
+                ->where('invoice_number', 'like', "{$year}-invoice-%")
+                ->orderBy('id', 'desc')->first();
+            $nextNumber = 1;
+            if ($lastSale && preg_match("/{$year}-invoice-(\d+)/", $lastSale->invoice_number, $matches)) {
+                $nextNumber = (int)$matches[1] + 1;
+            }
+            $invoiceNo = "{$year}-invoice-" . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+            $sale = Sale::create([
+                'customer_id'     => $quotation->customer_id,
+                'branch_id'       => $quotation->branch_id,
+                'invoice_number'  => $invoiceNo,
+                'sale_date'       => now(),
+                'total_amount'    => $quotation->grand_total,
+                'discount_amount' => 0,
+                'tax_amount'      => $quotation->items->sum('tax_amount'),
+                'final_amount'    => $quotation->grand_total,
+                'shipping'        => $quotation->shipping_cost,
+                'paid_amount'     => 0,
+                'due_amount'      => $quotation->grand_total,
+                'sale_origin'     => 'Quotation',
+                'status'          => 'pending',
+                'created_by'      => auth()->id(),
+            ]);
+
+            foreach ($quotation->items as $item) {
+                $productId        = $item->product_id;
+                $variantId        = $item->product_variant_id;
+                $conversionFactor = $item->product->baseUnit->conversion_factor ?? 1;
+                $baseQtyNeeded    = $item->quantity * $conversionFactor;
+
+                SaleItem::create([
+                    'sale_id'               => $sale->id,
+                    'product_id'            => $productId,
+                    'variant_id'            => $variantId,
+                    'unit_id'               => null,
+                    'quantity'              => $item->quantity,
+                    'unit_price'            => $item->unit_price,
+                    'total_price'           => $item->subtotal,
+                    'quantity_in_base_unit' => $baseQtyNeeded,
+                    'discount'              => $item->discount_amount,
+                    'tax'                   => $item->tax_amount,
+                ]);
+
+                $stock = InventoryStock::where([
+                    'product_id'   => $productId,
+                    'variant_id'   => $variantId,
+                    'warehouse_id' => $warehouseId,
+                ])->first();
+
+                $stock->decrement('quantity_in_base_unit', $baseQtyNeeded);
+
+                StockLedger::create([
+                    'product_id'                   => $productId,
+                    'variant_id'                   => $variantId,
+                    'warehouse_id'                 => $warehouseId,
+                    'ref_type'                     => 'sale',
+                    'ref_id'                       => $sale->id,
+                    'quantity_change_in_base_unit' => $baseQtyNeeded,
+                    'unit_cost'                    => $item->unit_price,
+                    'direction'                    => 'out',
+                    'created_by'                   => auth()->id(),
+                ]);
+            }
+
+            // Mark quotation as converted
+            $quotation->update(['status' => 'converted']);
+
+            DB::commit();
+            return redirect()->route('sales.invoice', $sale->id)
+                             ->with('success', 'Quotation converted to sale #' . $invoiceNo . ' successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to convert quotation: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadPdf(Quotation $quotation)
+    {
+        $quotation->load(['customer', 'branch', 'items.product', 'items.productVariant']);
+        $setting = \App\Models\Setting::first();
+        $currencySymbol = $setting->currency_symbol ?? '$';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.quotation', compact('quotation', 'setting', 'currencySymbol'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('quotation-' . $quotation->quotation_number . '.pdf');
+    }
 }

@@ -35,4 +35,23 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Gateways (Pakistan)
+    |--------------------------------------------------------------------------
+    | gateway: 'smspk' or 'ecosms'
+    */
+    'sms' => [
+        'gateway'  => env('SMS_GATEWAY', 'smspk'),
+        'smspk' => [
+            'api_key'  => env('SMSPK_API_KEY'),
+            'sender_id' => env('SMSPK_SENDER_ID', 'POS'),
+        ],
+        'ecosms' => [
+            'username' => env('ECOSMS_USERNAME'),
+            'password' => env('ECOSMS_PASSWORD'),
+            'sender_id' => env('ECOSMS_SENDER_ID', 'POS'),
+        ],
+    ],
+
 ];

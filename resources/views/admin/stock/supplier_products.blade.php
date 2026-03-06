@@ -93,7 +93,7 @@
                                             @if($product->has_variants && $product->variants->count())
                                                 @foreach($product->variants as $variant)
                                                     @php
-                                                        $stock = $variant->inventoryStock->quantity_in_base_unit ?? 0;
+                                                        $stock = $variant->inventoryStocks->sum('quantity_in_base_unit');
                                                         $actualStock = $baseConversionFactor > 0 ? ($stock / $baseConversionFactor) : 0;
                                                         $lowStockThreshold = $variant->low_stock ?? ($product->low_stock ?? 0);
                                                         $isLowStock = $actualStock <= $lowStockThreshold;
@@ -103,7 +103,7 @@
                                                         <td>{{ $variant->sku }}</td>
                                                         <td>
                                                             {{ number_format($actualStock, 0) }} {{ $product->baseUnit->name ?? '' }}
-                                                            @if (!$variant->inventoryStock)
+                                                            @if ($variant->inventoryStocks->isEmpty())
                                                                 <span class="text-danger">(No Record)</span>
                                                             @endif
                                                         </td>
@@ -119,7 +119,7 @@
                                                 @endforeach
                                             @else
                                                 @php
-                                                    $stock = $product->inventoryStock->quantity_in_base_unit ?? 0;
+                                                    $stock = $product->inventoryStocks->sum('quantity_in_base_unit');
                                                     $actualStock = $baseConversionFactor > 0 ? ($stock / $baseConversionFactor) : 0;
                                                     $lowStockThreshold = $product->low_stock ?? 0;
                                                     $isLowStock = $actualStock <= $lowStockThreshold;
@@ -129,7 +129,7 @@
                                                     <td>{{ $product->sku }}</td>
                                                     <td>
                                                         {{ number_format($actualStock, 0) }} {{ $product->baseUnit->name ?? '' }}
-                                                        @if (!$product->inventoryStock)
+                                                        @if ($product->inventoryStocks->isEmpty())
                                                             <span class="text-danger">(No Record)</span>
                                                         @endif
                                                     </td>

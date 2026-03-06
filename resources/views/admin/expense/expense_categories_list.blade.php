@@ -82,9 +82,13 @@
                                          <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" onclick="openCategoryModal('edit', { id: {{ $expenseCategory->id }}, name: '{{ $expenseCategory->name }}' })" title="Edit">
                                              <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                          </a>
-                                         <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('expense_categories.destroy', $expenseCategory->id) }}">
-                                             <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                         </a>
+                                         <form action="{{ route('expense_categories.destroy', $expenseCategory->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this expense category?')">
+                                             @csrf
+                                             @method('DELETE')
+                                             <button type="submit" class="badge bg-warning border-0 mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" style="cursor:pointer">
+                                                 <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                             </button>
+                                         </form>
                                      </div>
                                   </td>
                                 </tr>

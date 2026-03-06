@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\StockAdjustment;
 use App\Models\Product;
+use App\Models\InventoryStock;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use App\Models\StockLedger;
 use App\Models\Supplier;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StockAdjustmentController extends Controller
 {
@@ -18,17 +22,16 @@ class StockAdjustmentController extends Controller
         $query = Product::with([
             'category',
             'baseUnit',
-            'variants.inventoryStock',
+            'variants.inventoryStocks',
             'variants.displayUnit',
-            'inventoryStock',
+            'inventoryStocks',
             'branch'
         ]);
 
-        // Always ensure products have an inventory stock record (either directly or via variants)
-        // This is the core change to only show products "inside inventory"
+        // Only show products that have at least one inventory_stocks record
         $query->where(function ($q) {
-            $q->whereHas('inventoryStock') // Product itself has an inventory record
-              ->orWhereHas('variants.inventoryStock'); // Or at least one of its variants has an inventory record
+            $q->whereHas('inventoryStocks')
+              ->orWhereHas('variants.inventoryStocks');
         });
 
 
@@ -185,28 +188,30 @@ class StockAdjustmentController extends Controller
 
         // Only proceed with fetching products if a supplier has been selected
         if ($selectedSupplier) {
-            // Start a query on the Product model
-            $productsQuery = Product::whereHas('suppliers', function ($q) use ($selectedSupplier) {
-                // Filter products that are associated with the selected supplier
-                $q->where('suppliers.id', $selectedSupplier);
-            });
+            // Find product IDs that have been purchased from this supplier via purchase history
+            $purchasedProductIds = \App\Models\PurchaseItem::whereHas('purchase', function ($q) use ($selectedSupplier) {
+                $q->where('supplier_id', $selectedSupplier);
+            })->pluck('product_id')->unique()->values();
+
+            // Start a query on the Product model using purchase-based product IDs
+            $productsQuery = Product::whereIn('id', $purchasedProductIds)->whereNull('deleted_at');
 
             // Define the eager loads. The 'variants' relationship eager load is conditional.
             $eagerLoads = [
-                'inventoryStock', // For main product's stock
-                'baseUnit',       // For conversion factor to base unit
-                'variants.inventoryStock', // For variant's stock (will be loaded for all variants initially)
-                'variants.displayUnit'     // For variant's display unit (if used in blade)
+                'inventoryStocks', // For main product's stock (hasMany)
+                'baseUnit',        // For conversion factor to base unit
+                'variants.inventoryStocks', // For variant's stock (hasMany)
+                'variants.displayUnit'      // For variant's display unit (if used in blade)
             ];
 
             // If low stock filter is active, add a constraint to eager load only low stock variants
             if ($filter === 'low_stock') {
                 $eagerLoads['variants'] = function ($query) {
                     $query->where(function ($variantQuery) {
-                        $variantQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                        $variantQuery->whereHas('inventoryStocks', function ($invStockQuery) {
                             $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'product_variants.low_stock');
                         })
-                        ->orWhereDoesntHave('inventoryStock'); // Include variants with no inventory record
+                        ->orWhereDoesntHave('inventoryStocks'); // Include variants with no inventory record
                     });
                 };
 
@@ -216,11 +221,11 @@ class StockAdjustmentController extends Controller
                     $query->where(function ($subQuery) {
                         $subQuery->whereDoesntHave('variants') // Ensures we are looking at non-variant products
                                  ->where(function ($noVariantStockQuery) {
-                                     $noVariantStockQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                                     $noVariantStockQuery->whereHas('inventoryStocks', function ($invStockQuery) {
                                          // Compare the quantity in base unit with the product's low_stock threshold
                                          $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'products.low_stock');
                                      })
-                                     ->orWhereDoesntHave('inventoryStock'); // Include products with no inventory record (effectively zero stock)
+                                     ->orWhereDoesntHave('inventoryStocks'); // Include products with no inventory record (effectively zero stock)
                                  });
                     });
 
@@ -228,11 +233,11 @@ class StockAdjustmentController extends Controller
                     $query->orWhere(function ($subQuery) {
                         $subQuery->whereHas('variants', function ($variantQuery) {
                             $variantQuery->where(function ($variantStockCheckQuery) {
-                                $variantStockCheckQuery->whereHas('inventoryStock', function ($invStockQuery) {
+                                $variantStockCheckQuery->whereHas('inventoryStocks', function ($invStockQuery) {
                                     // Compare the quantity in base unit with the variant's low_stock threshold
                                     $invStockQuery->whereColumn('quantity_in_base_unit', '<=', 'product_variants.low_stock');
                                 })
-                                ->orWhereDoesntHave('inventoryStock'); // Include variants with no inventory record
+                                ->orWhereDoesntHave('inventoryStocks'); // Include variants with no inventory record
                             });
                         });
                     });
@@ -250,5 +255,71 @@ class StockAdjustmentController extends Controller
         return view('admin.stock.supplier_products', compact(
             'suppliers', 'products', 'selectedSupplier', 'filter', 'title'
         ));
+    }
+
+    public function adjustmentCreate()
+    {
+        $title      = 'Stock Adjustment';
+        $products   = Product::whereNull('deleted_at')->with(['variants', 'baseUnit'])->orderBy('name')->get();
+        $warehouses = Warehouse::orderBy('name')->get();
+
+        return view('admin.stock.adjustment-create', compact('products', 'warehouses', 'title'));
+    }
+
+    public function adjustmentStore(Request $request)
+    {
+        $request->validate([
+            'product_id'   => 'required|exists:products,id',
+            'variant_id'   => 'nullable|exists:product_variants,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'quantity'     => 'required|numeric|not_in:0',
+            'reason'       => 'required|string|max:500',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $adjustQty = (float) $request->quantity; // positive = add, negative = remove
+            $baseQty   = abs($adjustQty);
+            $direction = $adjustQty > 0 ? 'in' : 'out';
+
+            $stock = InventoryStock::firstOrCreate(
+                [
+                    'product_id'   => $request->product_id,
+                    'variant_id'   => $request->variant_id,
+                    'warehouse_id' => $request->warehouse_id,
+                ],
+                ['quantity_in_base_unit' => 0]
+            );
+
+            if ($direction === 'out' && $stock->quantity_in_base_unit < $baseQty) {
+                throw new \Exception(
+                    'Cannot remove ' . $baseQty . ' units. Only ' . $stock->quantity_in_base_unit . ' available.'
+                );
+            }
+
+            $direction === 'in'
+                ? $stock->increment('quantity_in_base_unit', $baseQty)
+                : $stock->decrement('quantity_in_base_unit', $baseQty);
+
+            StockLedger::create([
+                'product_id'                   => $request->product_id,
+                'variant_id'                   => $request->variant_id,
+                'warehouse_id'                 => $request->warehouse_id,
+                'ref_type'                     => 'adjustment',
+                'ref_id'                       => 0,
+                'quantity_change_in_base_unit' => $baseQty,
+                'unit_cost'                    => 0,
+                'direction'                    => $direction,
+                'created_by'                   => auth()->id(),
+            ]);
+
+            DB::commit();
+            return redirect()->route('stock.list')
+                ->with('success', 'Stock adjusted successfully. ' . ($direction === 'in' ? '+' : '-') . $baseQty . ' units recorded.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Stock adjustment failed: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Adjustment failed: ' . $e->getMessage());
+        }
     }
 }

@@ -72,9 +72,13 @@
                                                         <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('warehouse.edit', $warehouse->id) }}">
                                                             <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                                         </a>
-                                                        <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('warehouse.destroy', $warehouse->id) }}">
-                                                            <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                                        </a>
+                                                        <form action="{{ route('warehouse.destroy', $warehouse->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this warehouse?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="badge bg-warning border-0 mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" style="cursor:pointer">
+                                                                <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                                            </button>
+                                                        </form>
                                                     </div>
                                                 </td>
                                             </tr>

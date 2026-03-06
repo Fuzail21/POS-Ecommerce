@@ -1,14 +1,5 @@
 @extends('layouts.app')
 
-@section('css')
-<style>
-    #datatable_info,
-    #datatable_paginate,
-    #datatable_length {
-        display: none !important;
-    }
-</style>
-@endsection
 
 @section('content')
 
@@ -49,15 +40,29 @@
                       </div>
                   @endif
 
-                  <div class="card-header d-flex justify-content-between">
+                  <div class="card-header d-flex justify-content-between align-items-center">
                      <div class="header-title">
                         <h4 class="card-title">Expense</h4>
                      </div>
+                     <form method="GET" action="{{ route('expense.list') }}" class="d-flex align-items-center gap-2">
+                         <input type="month" name="month" value="{{ $month ?? '' }}"
+                                class="form-control form-control-sm" style="width:180px;">
+                         <button type="submit" class="btn btn-sm text-white" style="background-color: {{ $primaryColor }};">Filter</button>
+                         @if($month)
+                             <a href="{{ route('expense.list') }}" class="btn btn-sm btn-secondary">Clear</a>
+                         @endif
+                     </form>
                   </div>
 
                   <div class="card-body">
+                    @if($month)
+                    <p class="text-muted mb-2">
+                        Showing expenses for <strong>{{ \Carbon\Carbon::createFromFormat('Y-m', $month)->format('F Y') }}</strong>
+                        &mdash; Total: <strong>{{ $setting->currency_symbol ?? '$' }} {{ number_format($expenses->sum('amount'), 2) }}</strong>
+                    </p>
+                    @endif
                     <div class="table-responsive">
-                        <table id="datatable" class="table data-tables table-striped">
+                        <table class="table table-striped table-bordered">
                             <thead>
                                 <tr class="ligth">
                                     <th>#</th>
@@ -83,9 +88,13 @@
                                             <a class="badge bg-success mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Edit" href="{{ route('expense.edit', $expense->id) }}">
                                                 <i class="ri-pencil-line" style="font-size: 1.1rem;"></i>
                                             </a>
-                                            <a class="badge bg-warning mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" href="{{ route('expense.destroy', $expense->id) }}">
-                                                <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
-                                            </a>
+                                            <form action="{{ route('expense.destroy', $expense->id) }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this expense?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="badge bg-warning border-0 mr-2 p-1" data-toggle="tooltip" data-placement="top" title="Delete" style="cursor:pointer">
+                                                    <i class="ri-delete-bin-line" style="font-size: 1.1rem;"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

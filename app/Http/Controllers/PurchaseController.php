@@ -16,12 +16,17 @@ use App\Models\SupplierLedger;
 use App\Models\Unit;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PurchaseInvoiceSentMail;
+use App\Traits\BranchScoped;
 
 class PurchaseController extends Controller
 {
+    use BranchScoped;
+
     public function index(){
         $title = "Purchases List";
-        $purchases = Purchase::with(['supplier', 'branch', 'warehouse'])->latest()->paginate(20);
+        $query = Purchase::with(['supplier', 'branch', 'warehouse'])->latest();
+        $this->applyBranchScope($query);
+        $purchases = $query->paginate(20);
         return view('admin.purchase.list', compact('purchases', 'title'));
     }
 
@@ -93,8 +98,8 @@ class PurchaseController extends Controller
 
             // Step 2–4: Insert purchase_items, stock_ledger, update inventory_stocks
             foreach ($request->products as $product) {
-                $productId = $product['id'];
-                $variantId = $product['variant_id'] ?? null;
+                $productId = (int) $product['id'];
+                $variantId = !empty($product['variant_id']) ? (int) $product['variant_id'] : null;
                 $unitId = $product['unit'];
                 $quantity = $product['quantity'];
                 $unitCost = $product['unit_cost'];
@@ -106,17 +111,16 @@ class PurchaseController extends Controller
 
                 // Insert into purchase_items
                 PurchaseItem::create([
-                    'purchase_id' => $purchase->id,
-                    'product_id' => $productId,
-                    'variant_id' => $variantId,
-                    'batch_no' => null,
-                    'expiry_date' => null,
-                    'quantity' => $product['quantity'],
-                    'unit_id' => $unitId,
+                    'purchase_id'           => $purchase->id,
+                    'product_id'            => $productId,
+                    'variant_id'            => $variantId,
+                    'batch_no'              => null,
+                    'expiry_date'           => null,
+                    'quantity'              => $product['quantity'],
+                    'unit_id'               => $unitId,
                     'quantity_in_base_unit' => $baseQty,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => $subTotal,
-                    'created_at' => auth()->id(),
+                    'unit_cost'             => $unitCost,
+                    'total_cost'            => $subTotal,
                 ]);
 
                 // Insert into stock_ledger
@@ -133,27 +137,29 @@ class PurchaseController extends Controller
                 ]);
 
                 // Update or insert inventory stock
-                $stock = InventoryStock::firstOrNew([
-                    'product_id' => $productId,
-                    'variant_id' => $variantId,
-                    'warehouse_id' => $purchase->warehouse_id, // $request->warehouse_id
-                ]);
-                $stock->quantity_in_base_unit += $baseQty;
-                $stock->save();
+                $stock = InventoryStock::firstOrCreate(
+                    [
+                        'product_id'   => $productId,
+                        'variant_id'   => $variantId,
+                        'warehouse_id' => $purchase->warehouse_id,
+                    ],
+                    ['quantity_in_base_unit' => 0]
+                );
+                $stock->increment('quantity_in_base_unit', $baseQty);
             }
 
             // Step 5: Record payment if applicable
             if ($request->payment_now > 0) {
                 Payment::create([
-                    'entity_type' => 'supplier',
-                    'entity_id' => $request->supplier_id,
-                    'transaction_type' => 'in',
-                    'amount' => $request->payment_now,
-                    'payment_method' => $request->payment_mode,
-                    'ref_type' => 'purchase',
-                    'ref_id' => $purchase->id,
-                    'note' => null,
-                    'created_by' => auth()->id(),
+                    'entity_type'      => 'supplier',
+                    'entity_id'        => $request->supplier_id,
+                    'transaction_type' => 'out', // 'out' = money leaves the business to the supplier
+                    'amount'           => $request->payment_now,
+                    'payment_method'   => $request->payment_mode,
+                    'ref_type'         => 'purchase',
+                    'ref_id'           => $purchase->id,
+                    'note'             => null,
+                    'created_by'       => auth()->id(),
                 ]);
             }
 
@@ -169,14 +175,22 @@ class PurchaseController extends Controller
 
             DB::commit();
 
-            $purchase = Purchase::with(['supplier', 'branch', 'items.product', 'items.variant', 'items.unit'])->latest()->first();
-            Mail::to($purchase->supplier->email)->send(new PurchaseInvoiceSentMail($purchase));
-            
+            // Send email — non-critical, must not block purchase completion
+            try {
+                $purchaseForMail = Purchase::with(['supplier', 'items.product', 'items.variant', 'items.unit'])->find($purchase->id);
+                if ($purchaseForMail?->supplier?->email) {
+                    Mail::to($purchaseForMail->supplier->email)->send(new PurchaseInvoiceSentMail($purchaseForMail));
+                }
+            } catch (\Exception $mailEx) {
+                \Log::warning('Purchase invoice email failed: ' . $mailEx->getMessage());
+            }
+
             return redirect()->route('purchases.list')->with('success', 'Purchase created successfully.');
 
         } catch (\Exception $e) {
             DB::rollback();
-            return response()->json(['error' => 'Something went wrong', 'details' => $e->getMessage()], 500);
+            \Log::error('Purchase creation failed: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
@@ -263,6 +277,18 @@ class PurchaseController extends Controller
 
 
         return view('admin.purchase.invoice', compact('purchase', 'title')); // passes $purchase to the view
+    }
+
+    public function downloadPdf($id){
+        $purchase = Purchase::with(['supplier', 'branch', 'warehouse', 'items.unit', 'items.product', 'items.variant'])
+                    ->findOrFail($id);
+        $setting = \App\Models\Setting::first();
+        $currencySymbol = $setting->currency_symbol ?? '$';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.purchase-invoice', compact('purchase', 'setting', 'currencySymbol'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download('purchase-invoice-' . $purchase->invoice_number . '.pdf');
     }
 
 }

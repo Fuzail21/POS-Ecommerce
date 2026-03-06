@@ -134,13 +134,9 @@
                                         <td>{{ $ledger->warehouse->name ?? '-' }}</td>
                                         <td>{{ ucfirst($ledger->ref_type) }}</td>
                                         <td>
-                                            @if (in_array($ledger->ref_type, ['purchase', 'sale', 'cancelled_order_return', 'return']))
-                                            {{ in_array($ledger->ref_type, ['purchase', 'cancelled_order_return', 'return']) ? '+' : '-' }}
+                                            {{ $ledger->direction === 'in' ? '+' : '-' }}
                                             {{ number_format($ledger->converted_qty, 0) }}
                                             {{ $ledger->unit_name }}
-                                            @else
-                                            -
-                                            @endif
                                         </td>
                                         <td>{{ number_format($ledger->unit_cost, 0) ?? '-' }}</td>
                                         <td>

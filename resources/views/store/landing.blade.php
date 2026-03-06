@@ -1,520 +1,179 @@
 @extends('layouts.frontend.app')
 
-    @section('frontend_css')
-        <style>
-            .product-card-img-container {
-                height: 200px; /* Set your desired fixed height for the image container */
-                overflow: hidden; /* Hide any overflow if the image is taller than the container */
-                display: flex; /* Use flexbox to center the image if it's smaller */
-                align-items: center; /* Vertically center the image */
-                justify-content: center; /* Horizontally center the image */
-            }
+@section('frontend_content')
+@php
+    use App\Models\Setting;
+    $setting = Setting::first();
+    $primaryColor = $setting->primary_color ?? '#2563eb';
+@endphp
 
-            .product-card-img-container img {
-                width: 100%; /* Ensure image takes full width of its container */
-                height: 100%; /* Ensure image takes full height of its container */
-                object-fit: cover; /* This is crucial: it crops the image to fit the container while maintaining aspect ratio */
-                object-position: center; /* Center the image within the container */
-            }
-        </style>
-    @endsection
-
-    @section('frontend_content')
-            @php
-                use App\Models\Setting;
-
-                $setting = Setting::first();
-                $primaryColor = $setting->primary_color ?? '#0d6efd'; // default blue
-                $secondaryColor = $setting->secondary_color ?? '#6c757d'; // default gray
-            @endphp
-
-        <!-- Hero Start -->
-        <div class="container-fluid py-5 mb-5 hero-header">
-            <div class="container py-5">
-                <div class="row g-5 align-items-center">
-                    <div class="col-md-12 col-lg-7">
-                        <h4 class="mb-3 text-secondary">100% Organic Products</h4>
-                        <h1 class="mb-5 display-3 text-primary">E-commerce Store</h1>
-                        {{-- <div class="position-relative mx-auto">
-                            <input class="form-control border-2 border-secondary w-75 py-3 px-4 rounded-pill" type="number" placeholder="Search">
-                            <button type="submit" class="btn btn-primary border-2 border-secondary py-3 px-4 position-absolute rounded-pill text-white h-100" style="top: 0; right: 25%;">Submit Now</button>
-                        </div> --}}
-                    </div>
-                    {{-- <div class="col-md-12 col-lg-5">
-                        <div id="carouselId" class="carousel slide position-relative" data-bs-ride="carousel">
-                            <div class="carousel-inner" role="listbox">
-                                <div class="carousel-item active rounded">
-                                    <img src="img/hero-img-1.png" class="img-fluid w-100 h-100 bg-secondary rounded" alt="First slide">
-                                    <a href="#" class="btn px-4 py-2 text-white rounded">Fruites</a>
-                                </div>
-                                <div class="carousel-item rounded">
-                                    <img src="img/hero-img-2.jpg" class="img-fluid w-100 h-100 rounded" alt="Second slide">
-                                    <a href="#" class="btn px-4 py-2 text-white rounded">Vesitables</a>
-                                </div>
-                            </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselId" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Previous</span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#carouselId" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Next</span>
-                            </button>
-                        </div>
-                    </div> --}}
+{{-- ─── Hero ─── --}}
+<section class="hero-wrap position-relative">
+    <div class="container position-relative" style="z-index:1;">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="hero-badge">
+                    <i class="fas fa-bolt"></i> Premium Quality, Best Prices
                 </div>
-            </div>
-        </div>
-        <!-- Hero End -->
-
-
-        <!-- Featurs Section Start -->
-        <div class="container-fluid featurs py-5">
-            <div class="container py-5">
-                <div class="row g-4">
-                    <div class="col-md-6 col-lg-3">
-                        <div class="featurs-item text-center rounded bg-light p-4">
-                            <div class="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                <i class="fas fa-car-side fa-3x text-white"></i>
-                            </div>
-                            <div class="featurs-content text-center">
-                                <h5>Free Shipping</h5>
-                                <p class="mb-0">Free on order over $300</p>
-                            </div>
-                        </div>
+                <h1 class="hero-title mb-3">
+                    Shop Smart,<br>
+                    <span class="hero-accent">Live Better</span>
+                </h1>
+                <p class="hero-sub">
+                    Discover thousands of products with unbeatable deals. Quality guaranteed and delivered to your door.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ route('store.shop') }}" class="btn-prim" style="padding:13px 28px; font-size:.95rem; text-decoration:none;">
+                        Shop Now <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                    <a href="{{ route('store.shop') }}" class="btn-outline" style="padding:13px 28px; font-size:.95rem;">
+                        Browse All
+                    </a>
+                </div>
+                <div class="d-flex align-items-center gap-0 mt-4 flex-wrap">
+                    <div class="text-center me-4">
+                        <div class="hero-stat-val">{{ $products->count() }}+</div>
+                        <div class="hero-stat-lbl">Products</div>
                     </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="featurs-item text-center rounded bg-light p-4">
-                            <div class="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                <i class="fas fa-user-shield fa-3x text-white"></i>
-                            </div>
-                            <div class="featurs-content text-center">
-                                <h5>Security Payment</h5>
-                                <p class="mb-0">100% security payment</p>
-                            </div>
-                        </div>
+                    <div class="text-center hero-divider me-4">
+                        <div class="hero-stat-val">100%</div>
+                        <div class="hero-stat-lbl">Authentic</div>
                     </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="featurs-item text-center rounded bg-light p-4">
-                            <div class="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                <i class="fas fa-exchange-alt fa-3x text-white"></i>
-                            </div>
-                            <div class="featurs-content text-center">
-                                <h5>30 Day Return</h5>
-                                <p class="mb-0">30 day money guarantee</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3">
-                        <div class="featurs-item text-center rounded bg-light p-4">
-                            <div class="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                <i class="fa fa-phone-alt fa-3x text-white"></i>
-                            </div>
-                            <div class="featurs-content text-center">
-                                <h5>24/7 Support</h5>
-                                <p class="mb-0">Support every time fast</p>
-                            </div>
-                        </div>
+                    <div class="text-center hero-divider">
+                        <div class="hero-stat-val">Fast</div>
+                        <div class="hero-stat-lbl">Delivery</div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Featurs Section End -->
+    </div>
+</section>
 
-
-        <!-- Fruits Shop Start-->
-        <div class="container-fluid fruite py-5">
-            <div class="container py-5">
-                <div class="tab-class text-center">
-                    <div class="row g-4">
-                        <div class="col-lg-4 text-start mb-3">
-                            <h1>Latest Products</h1>
-                        </div>
-                        {{-- <div class="col-lg-8 text-end">
-                            <ul class="nav nav-pills d-inline-flex text-center mb-5">
-                                <li class="nav-item">
-                                    <a class="d-flex m-2 py-2 bg-light rounded-pill active" data-bs-toggle="pill" href="#tab-1">
-                                        <span class="text-dark" style="width: 130px;">All Products</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="d-flex py-2 m-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-2">
-                                        <span class="text-dark" style="width: 130px;">Vegetables</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="d-flex m-2 py-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-3">
-                                        <span class="text-dark" style="width: 130px;">Fruits</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="d-flex m-2 py-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-4">
-                                        <span class="text-dark" style="width: 130px;">Bread</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="d-flex m-2 py-2 bg-light rounded-pill" data-bs-toggle="pill" href="#tab-5">
-                                        <span class="text-dark" style="width: 130px;">Meat</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div> --}}
-                    </div>
-                    <div class="tab-content">
-                        <div id="tab-1" class="tab-pane fade show p-0 active">
-                            <div class="row g-4">
-                                <div class="col-lg-12">
-                                    <div class="row g-4">
-                                        <div class="row g-4">
-                                            @forelse($products as $product)
-                                                <div class="col-md-6 col-lg-4 col-xl-3 d-flex">
-                                                    <div class="rounded position-relative fruite-item w-100 border border-secondary">
-                                                        {{-- Product Detail Link Overlay --}}
-                                                        {{-- This link will cover the entire card area, but will be underneath interactive elements --}}
-                                                        <a href="{{ route('store.product', $product->id) }}" class="d-block text-decoration-none text-dark position-absolute w-100 h-100 top-0 start-0" style="z-index: 1;">
-                                                            {{-- This empty link makes the whole card clickable for details --}}
-                                                        </a>
-                                            
-                                                        <div class="fruite-img product-card-img-container rounded-top" style="height: 250px; overflow: hidden;">
-                                                            @if (!empty($product->product_img))
-                                                                <img src="{{ asset('storage/' . $product->product_img) }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="{{ $product->name }}">
-                                                            @else
-                                                                <img src="{{ $placeholderProductImg ?? asset('build/assets/frontend/img/default-product.jpg') }}" class="img-fluid w-100 h-100 rounded-top" style="object-fit: cover;" alt="No Image">
-                                                            @endif
-                                            
-                                                            {{-- SALE Badge --}}
-                                                            @if ($product->has_discount && $product->actual_price > 0)
-                                                                @php
-                                                                    $discountPercent = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100);
-                                                                @endphp
-                                                                <div class="position-absolute top-0 end-0 m-2 px-2 py-1 bg-danger text-white fw-bold rounded" style="z-index: 2;">
-                                                                    -{{ $discountPercent }}%
-                                                                </div>
-                                                            @endif
-                                                        </div>
-                                                        <div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px; z-index: 2;">
-                                                            {{ $product->category->name ?? 'Uncategorized' }}
-                                                        </div>
-                                            
-                                                        <div class="p-4 d-flex flex-column" style="position: relative; z-index: 2;">
-                                                            <h4 class="mb-2" style="font-size: 1.25rem; line-height: 1.4;">{{ Str::words($product->name, 5, '...') }}</h4>
-                                                            <p class="text-muted flex-grow-1 mb-3" style="font-size: 0.9rem;">{{ Str::limit($product->description ?? 'No description available.', 70) }}</p>
-                                                            <div class="d-flex flex-column align-items-center text-center mt-auto">
-                                                                <div class="mb-2">
-                                                                    <p class="text-dark fs-5 fw-bold mb-0">
-                                                                        @if ($product->has_discount)
-                                                                            <del class="text-danger me-2">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}</del>
-                                                                            <span>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->final_price, 2) }}</span>
-                                                                        @else
-                                                                            {{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price ?? 0, 2) }}
-                                                                        @endif
-                                                                        / {{ $product->displayUnit->name ?? 'unit' }}
-                                                                    </p>
-                                            
-                                                                    @if ($product->in_stock)
-                                                                        <small class="text-success fw-bold">In Stock: {{ number_format($product->stock_quantity, 0) }}</small>
-                                                                    @else
-                                                                        <small class="text-danger fw-bold">Out of Stock</small>
-                                                                    @endif
-                                                                </div>
-                                            
-                                                                {{-- Add to cart form/button (this needs to be clickable) --}}
-                                                                @if($product->in_stock)
-                                                                    @if($product->has_variants)
-                                                                        <a href="{{ route('store.product', $product->id) }}" class="btn border border-secondary rounded-pill px-3 text-primary">
-                                                                            <i class="fa fa-eye me-2 text-primary"></i> View Product
-                                                                        </a>
-                                                                    @else
-                                                                        <form action="{{ route('cart.add') }}" method="POST">
-                                                                            @csrf
-                                                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                                                            <input type="hidden" name="quantity" value="1">
-                                                                            <input type="hidden" name="stock" value="{{ $product->stock_quantity }}">
-                                                                            <input id="final_price_{{ $product->id }}" type="hidden" name="price" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
-                                                                            <button type="submit" class="btn border border-secondary rounded-pill px-3 text-primary">
-                                                                                <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
-                                                                            </button>
-                                                                        </form>
-                                                                    @endif
-                                                                @else
-                                                                    <button type="button" class="btn border border-secondary rounded-pill px-3 text-danger" disabled>
-                                                                        Out of Stock ({{ number_format($product->stock_quantity, 0) }} Left)
-                                                                    </button>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @empty
-                                                <div class="col-12 text-center">
-                                                    <p>No products found.</p>
-                                                </div>
-                                            @endforelse
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>      
+{{-- ─── Features ─── --}}
+<section class="py-5" style="background:#f8fafc;">
+    <div class="container">
+        <div class="row g-4">
+            @foreach([
+                ['icon' => 'fas fa-truck',     'title' => 'Free Shipping',    'text' => 'On all orders, no minimum'],
+                ['icon' => 'fas fa-shield-alt', 'title' => 'Secure Payment',  'text' => '100% safe transactions'],
+                ['icon' => 'fas fa-undo',       'title' => 'Easy Returns',    'text' => '30-day hassle-free policy'],
+                ['icon' => 'fas fa-headset',    'title' => '24/7 Support',    'text' => 'Always here to help you'],
+            ] as $f)
+            <div class="col-md-6 col-lg-3">
+                <div class="feat-card h-100">
+                    <div class="feat-icon"><i class="{{ $f['icon'] }}"></i></div>
+                    <h6>{{ $f['title'] }}</h6>
+                    <p>{{ $f['text'] }}</p>
+                </div>
             </div>
+            @endforeach
         </div>
-        <!-- Fruits Shop End-->
+    </div>
+</section>
 
-
-        <!-- Featurs Start -->
-        {{-- <div class="container-fluid service py-5">
-            <div class="container py-5">
-                <div class="row g-4 justify-content-center">
-                    <div class="col-md-6 col-lg-4">
-                        <a href="#">
-                            <div class="service-item bg-secondary rounded border border-secondary">
-                                <img src="img/featur-1.jpg" class="img-fluid rounded-top w-100" alt="">
-                                <div class="px-4 rounded-bottom">
-                                    <div class="service-content bg-primary text-center p-4 rounded">
-                                        <h5 class="text-white">Fresh Apples</h5>
-                                        <h3 class="mb-0">20% OFF</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="#">
-                            <div class="service-item bg-dark rounded border border-dark">
-                                <img src="img/featur-2.jpg" class="img-fluid rounded-top w-100" alt="">
-                                <div class="px-4 rounded-bottom">
-                                    <div class="service-content bg-light text-center p-4 rounded">
-                                        <h5 class="text-primary">Tasty Fruits</h5>
-                                        <h3 class="mb-0">Free delivery</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-4">
-                        <a href="#">
-                            <div class="service-item bg-primary rounded border border-primary">
-                                <img src="img/featur-3.jpg" class="img-fluid rounded-top w-100" alt="">
-                                <div class="px-4 rounded-bottom">
-                                    <div class="service-content bg-secondary text-center p-4 rounded">
-                                        <h5 class="text-white">Exotic Vegitable</h5>
-                                        <h3 class="mb-0">Discount 30$</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+{{-- ─── Latest Products ─── --}}
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-3">
+            <div>
+                <h2 class="sec-title mb-1">Latest Products</h2>
+                <p class="sec-sub mb-0">Fresh arrivals handpicked for you</p>
             </div>
-        </div> --}}
-        <!-- Featurs End -->
+            <a href="{{ route('store.shop') }}" class="btn-outline d-none d-md-inline-flex" style="text-decoration:none;">
+                View All <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
 
-        <!-- Banner Section Start-->
-        {{-- <div class="container-fluid banner bg-secondary my-5">
-            <div class="container py-5">
-                <div class="row g-4 align-items-center">
-                    <div class="col-lg-6">
-                        <div class="py-4">
-                            <h1 class="display-3 text-white">Fresh Exotic Fruits</h1>
-                            <p class="fw-normal display-3 text-dark mb-4">in Our Store</p>
-                            <p class="mb-4 text-dark">The generated Lorem Ipsum is therefore always free from repetition injected humour, or non-characteristic words etc.</p>
-                            <a href="#" class="banner-btn btn border-2 border-white rounded-pill text-dark py-3 px-5">BUY</a>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <div class="position-relative">
-                            <img src="img/baner-1.png" class="img-fluid w-100 rounded" alt="">
-                            <div class="d-flex align-items-center justify-content-center bg-white rounded-circle position-absolute" style="width: 140px; height: 140px; top: 0; left: 0;">
-                                <h1 style="font-size: 100px;">1</h1>
-                                <div class="d-flex flex-column">
-                                    <span class="h2 mb-0">50$</span>
-                                    <span class="h4 text-muted mb-0">kg</span>
-                                </div>
+        <div class="row g-4">
+            @forelse($products as $product)
+            <div class="col-sm-6 col-lg-4 col-xl-3 d-flex">
+                <div class="p-card w-100">
+                    <div class="p-card-img">
+                        <a href="{{ route('store.product', $product->id) }}"
+                           class="position-absolute w-100 h-100 top-0 start-0" style="z-index:1;"></a>
+
+                        @if(!empty($product->product_img))
+                            <img src="{{ asset('storage/'.$product->product_img) }}" alt="{{ $product->name }}">
+                        @else
+                            <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f1f5f9; gap:.4rem;">
+                                <i class="fas fa-image" style="font-size:2rem; color:#cbd5e1;"></i>
+                                <span style="font-size:.72rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.5px;">No Image</span>
                             </div>
-                        </div>
+                        @endif
+
+                        <span class="p-card-cat">{{ $product->category->name ?? 'General' }}</span>
+
+                        @if($product->has_discount && $product->actual_price > 0)
+                            @php $pct = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100); @endphp
+                            <span class="p-card-sale">-{{ $pct }}%</span>
+                        @endif
+
+                        @if(!$product->in_stock)
+                            <div class="p-card-oos">Out of Stock</div>
+                        @endif
                     </div>
-                </div>
-            </div>
-        </div> --}}
-        <!-- Banner Section End -->
 
+                    <div class="p-card-body">
+                        <p class="p-card-title">{{ Str::words($product->name, 6, '...') }}</p>
+                        <p class="p-card-desc">{{ Str::limit($product->description ?? '', 58) }}</p>
 
-        <!-- Bestsaler Product Start -->
-        {{-- <div class="container-fluid py-5">
-            <div class="container py-5">
-                <div class="text-center mx-auto mb-5" style="max-width: 700px;">
-                    <h1 class="display-4">Bestseller Products</h1>
-                    <p>Latin words, combined with a handful of model sentence structures, to generate Lorem Ipsum which looks reasonable.</p>
-                </div>
-                <div class="row g-4">
-                    <div class="col-lg-6 col-xl-4">
-                        <div class="p-4 rounded bg-light">
-                            <div class="row align-items-center">
-                                <div class="col-6">
-                                    <img src="img/best-product-1.jpg" class="img-fluid rounded-circle w-100" alt="">
-                                </div>
-                                <div class="col-6">
-                                    <a href="#" class="h5">Organic Tomato</a>
-                                    <div class="d-flex my-3">
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <h4 class="mb-3">3.12 $</h4>
-                                    <a href="#" class="btn border border-secondary rounded-pill px-3 text-primary"><i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart</a>
-                                </div>
+                        <div class="mt-auto">
+                            <div class="d-flex align-items-baseline gap-2 mb-3">
+                                @if($product->has_discount)
+                                    <span class="p-price">{{ $setting->currency_symbol ?? 'Rs' }} {{ number_format($product->final_price, 0) }}</span>
+                                    <span class="p-price-orig">{{ $setting->currency_symbol ?? 'Rs' }} {{ number_format($product->actual_price, 0) }}</span>
+                                @else
+                                    <span class="p-price">{{ $setting->currency_symbol ?? 'Rs' }} {{ number_format($product->actual_price ?? 0, 0) }}</span>
+                                @endif
+                                <span class="p-unit">/ {{ $product->displayUnit->name ?? 'unit' }}</span>
+                            </div>
+
+                            <div style="position:relative; z-index:3;">
+                                @if($product->in_stock)
+                                    @if($product->has_variants)
+                                        <a href="{{ route('store.product', $product->id) }}" class="btn-outline w-100 justify-content-center" style="text-decoration:none;">
+                                            <i class="fas fa-eye"></i> View Options
+                                        </a>
+                                    @else
+                                        <form action="{{ route('cart.add') }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <input type="hidden" name="stock" value="{{ $product->stock_quantity }}">
+                                            <input type="hidden" name="price" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
+                                            <button type="submit" class="btn-prim w-100 justify-content-center">
+                                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                                            </button>
+                                        </form>
+                                    @endif
+                                @else
+                                    <button class="btn-ghost w-100 text-center" disabled style="cursor:not-allowed; opacity:.6;">
+                                        Out of Stock
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div> --}}
-        <!-- Bestsaler Product End -->
-
-
-        <!-- Fact Start -->
-        {{-- <div class="container-fluid py-5">
-            <div class="container">
-                <div class="bg-light p-5 rounded">
-                    <div class="row g-4 justify-content-center">
-                        <div class="col-md-6 col-lg-6 col-xl-3">
-                            <div class="counter bg-white rounded p-5">
-                                <i class="fa fa-users text-secondary"></i>
-                                <h4>satisfied customers</h4>
-                                <h1>1963</h1>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-6 col-xl-3">
-                            <div class="counter bg-white rounded p-5">
-                                <i class="fa fa-users text-secondary"></i>
-                                <h4>quality of service</h4>
-                                <h1>99%</h1>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-6 col-xl-3">
-                            <div class="counter bg-white rounded p-5">
-                                <i class="fa fa-users text-secondary"></i>
-                                <h4>quality certificates</h4>
-                                <h1>33</h1>
-                            </div>
-                        </div>
-                        <div class="col-md-6 col-lg-6 col-xl-3">
-                            <div class="counter bg-white rounded p-5">
-                                <i class="fa fa-users text-secondary"></i>
-                                <h4>Available Products</h4>
-                                <h1>789</h1>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            @empty
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-box-open fa-3x mb-3 d-block" style="color:#cbd5e1;"></i>
+                <p style="color:#94a3b8;">No products available yet. Check back soon!</p>
             </div>
-        </div> --}}
-        <!-- Fact Start -->
+            @endforelse
+        </div>
 
+        <div class="text-center mt-4 d-md-none">
+            <a href="{{ route('store.shop') }}" class="btn-outline" style="text-decoration:none;">View All Products</a>
+        </div>
+    </div>
+</section>
 
-        <!-- Tastimonial Start -->
-        {{-- <div class="container-fluid testimonial py-5">
-            <div class="container py-5">
-                <div class="testimonial-header text-center">
-                    <h4 class="text-primary">Our Testimonial</h4>
-                    <h1 class="display-5 mb-5 text-dark">Our Client Saying!</h1>
-                </div>
-                <div class="owl-carousel testimonial-carousel">
-                    <div class="testimonial-item img-border-radius bg-light rounded p-4">
-                        <div class="position-relative">
-                            <i class="fa fa-quote-right fa-2x text-secondary position-absolute" style="bottom: 30px; right: 0;"></i>
-                            <div class="mb-4 pb-4 border-bottom border-secondary">
-                                <p class="mb-0">Lorem Ipsum is simply dummy text of the printing Ipsum has been the industry's standard dummy text ever since the 1500s,
-                                </p>
-                            </div>
-                            <div class="d-flex align-items-center flex-nowrap">
-                                <div class="bg-secondary rounded">
-                                    <img src="img/testimonial-1.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
-                                </div>
-                                <div class="ms-4 d-block">
-                                    <h4 class="text-dark">Client Name</h4>
-                                    <p class="m-0 pb-3">Profession</p>
-                                    <div class="d-flex pe-5">
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-item img-border-radius bg-light rounded p-4">
-                        <div class="position-relative">
-                            <i class="fa fa-quote-right fa-2x text-secondary position-absolute" style="bottom: 30px; right: 0;"></i>
-                            <div class="mb-4 pb-4 border-bottom border-secondary">
-                                <p class="mb-0">Lorem Ipsum is simply dummy text of the printing Ipsum has been the industry's standard dummy text ever since the 1500s,
-                                </p>
-                            </div>
-                            <div class="d-flex align-items-center flex-nowrap">
-                                <div class="bg-secondary rounded">
-                                    <img src="img/testimonial-1.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
-                                </div>
-                                <div class="ms-4 d-block">
-                                    <h4 class="text-dark">Client Name</h4>
-                                    <p class="m-0 pb-3">Profession</p>
-                                    <div class="d-flex pe-5">
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="testimonial-item img-border-radius bg-light rounded p-4">
-                        <div class="position-relative">
-                            <i class="fa fa-quote-right fa-2x text-secondary position-absolute" style="bottom: 30px; right: 0;"></i>
-                            <div class="mb-4 pb-4 border-bottom border-secondary">
-                                <p class="mb-0">Lorem Ipsum is simply dummy text of the printing Ipsum has been the industry's standard dummy text ever since the 1500s,
-                                </p>
-                            </div>
-                            <div class="d-flex align-items-center flex-nowrap">
-                                <div class="bg-secondary rounded">
-                                    <img src="img/testimonial-1.jpg" class="img-fluid rounded" style="width: 100px; height: 100px;" alt="">
-                                </div>
-                                <div class="ms-4 d-block">
-                                    <h4 class="text-dark">Client Name</h4>
-                                    <p class="m-0 pb-3">Profession</p>
-                                    <div class="d-flex pe-5">
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                        <i class="fas fa-star text-primary"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
-        <!-- Tastimonial End -->
-    @endsection
+@endsection
 
-    @section('frontend_js')
-    
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                let priceInput = document.getElementById('final_price_{{ $product->id }}');
-                if (priceInput) {
-                    priceInput.value = {{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }};
-                }
-            });
-        </script>
-
-    @endsection
-
-       
+@section('frontend_js')
+<script>
+    // Landing page JS placeholder — no product-specific JS needed here
+</script>
+@endsection

@@ -265,85 +265,10 @@
                     </div>
                     <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                         <div class="row" id="product-list">
-                            @php
-                                $productsHtml = '';
-                                if (!empty($products)) {
-                                    foreach ($products as $product) {
-                                        $isOutOfStock = !$product->in_stock && $product->variants->count() === 0;
-                                        $productImgSrc = !empty($product->product_img) ? asset('storage/' . $product->product_img) : 'https://placehold.co/70x70/f0f0f0/808080?text=N/A';
-                        
-                                        $productsHtml .= '<div class="col-md-3 mb-2 product-item d-flex">';
-                                        $productsHtml .= '<div class="card p-2 text-center h-100 d-flex flex-column justify-content-between w-100 ' . ($isOutOfStock ? 'bg-light text-muted pointer-events-none opacity-50' : '') . '">';
-                        
-                                        // Product image
-                                        if (!empty($product->product_img)) {
-                                            $productsHtml .= '<img src="' . $productImgSrc . '" alt="Product Image" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px; margin: auto;">';
-                                        } else {
-                                            $productsHtml .= '<div style="width: 70px; height: 70px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin: auto;">N/A</div>';
-                                        }
-                        
-                                        $productsHtml .= '<h6 class="mt-2 mb-1">' . htmlspecialchars($product->name) . '</h6>';
-                        
-                                        if ($product->variants->count()) {
-                                            $productsHtml .= '<select class="form-control mb-2 variant-selector mt-auto" data-product-id="' . $product->id . '">';
-                                            $productsHtml .= '<option disabled selected>Choose Variant</option>';
-                                            
-                                            foreach ($product->variants as $variant) {
-                                                $finalPrice = $variant->final_price ?? $variant->actual_price;
-                                                $hasDiscount = $finalPrice < $variant->actual_price;
-                                                $disabled = !$variant->in_stock ? 'disabled' : '';
-                                                $stockText = !$variant->in_stock ? '(Out of Stock)' : '(Stock: ' . $variant->stock_quantity . ')';
-                        
-                                                $priceDisplay = $hasDiscount
-                                                    ? '<del>' . $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2) . '</del> <span style="color: #FF2700; font-weight: bold;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</span>'
-                                                    : $setting->currency_symbol . ' ' . number_format($variant->actual_price, 2);
-                        
-                                                $productsHtml .= '<option ' . $disabled . ' value="variant-' . $variant->id . '" ' .
-                                                                 'data-name="' . htmlspecialchars($product->name . ' - ' . $variant->variant_name) . '" ' .
-                                                                 'data-price="' . $finalPrice . '" ' .
-                                                                 'data-stock="' . $variant->stock_quantity . '" ' .
-                                                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                                                 htmlspecialchars($variant->variant_name) . ' - ' . $priceDisplay . ' ' . $stockText .
-                                                                 '</option>';
-                                            }
-                        
-                                            $productsHtml .= '</select>';
-                                            $productsHtml .= '<button class="btn btn-sm btn-success w-100 add-variant-to-cart mb-2" disabled>Add to Cart</button>';
-                                        } else {
-                                            $finalPrice = $product->final_price ?? $product->actual_price;
-                                            $hasDiscount = $finalPrice < $product->actual_price;
-                        
-                                            $productsHtml .= '<p class="mb-1">';
-                                            if ($hasDiscount) {
-                                                $productsHtml .= '<del>' . $setting->currency_symbol . ' ' . number_format($product->actual_price, 2) . '</del> ';
-                                                $productsHtml .= '<span style="color: #FF2700; font-weight: bold;">' . $setting->currency_symbol . ' ' . number_format($finalPrice, 2) . '</span>';
-                                            } else {
-                                                $productsHtml .= $setting->currency_symbol . ' ' . number_format($product->actual_price, 2);
-                                            }
-                                            $productsHtml .= '<br><small>(Stock: ' . $product->stock_quantity . ')</small></p>';
-                        
-                                            if ($product->in_stock) {
-                                                $productsHtml .= '<button ' .
-                                                                 'class="btn btn-sm btn-success w-100 mt-auto add-simple-to-cart" ' .
-                                                                 'data-id="product-' . $product->id . '" ' .
-                                                                 'data-name="' . htmlspecialchars($product->name) . '" ' .
-                                                                 'data-price="' . $finalPrice . '" ' .
-                                                                 'data-stock="' . $product->stock_quantity . '" ' .
-                                                                 'data-unit-id="' . $product->default_display_unit_id . '">' .
-                                                                 'Add to Cart' .
-                                                                 '</button>';
-                                            } else {
-                                                $productsHtml .= '<button class="btn btn-sm btn-secondary w-100 mt-auto" disabled>Out of Stock</button>';
-                                            }
-                                        }
-                        
-                                        $productsHtml .= '</div>';
-                                        $productsHtml .= '</div>';
-                                    }
-                                }
-                        
-                                echo $productsHtml;
-                            @endphp
+                            <div class="col-12 text-center text-muted py-5" id="branch-placeholder">
+                                <i class="fas fa-store fa-2x mb-2 d-block"></i>
+                                <p class="mb-0">Select a branch above to see available products.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -626,9 +551,6 @@
             selectedCustomerInput.value = customerSelect.value;
         });
 
-        branchSelect.addEventListener('change', () => {
-            selectedBranchInput.value = branchSelect.value;
-        });
 
         function updateCartUI() {
             cartItemsEl.innerHTML = '';
@@ -835,38 +757,55 @@
             balanceDisplay.value = '';
         });
 
-        // --- AJAX Search Implementation for POS page ---
+        // --- Branch-aware AJAX Product Loading for POS ---
         const productSearchForm = document.getElementById('product-search-form');
-        const searchInput = document.getElementById('search-input');
-        const productListDiv = document.getElementById('product-list');
+        const searchInput       = document.getElementById('search-input');
+        const productListDiv    = document.getElementById('product-list');
+
+        const placeholderHtml = `<div class="col-12 text-center text-muted py-5" id="branch-placeholder">
+            <i class="fas fa-store fa-2x mb-2 d-block"></i>
+            <p class="mb-0">Select a branch above to see available products.</p>
+        </div>`;
+
+        function loadProducts(branchId, searchQuery) {
+            productListDiv.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
+            let url = `{{ route('pos.index') }}?branch_id=${encodeURIComponent(branchId)}`;
+            if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    productListDiv.innerHTML = html;
+                    attachProductEventListeners();
+                })
+                .catch(() => {
+                    productListDiv.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading products. Please try again.</div>';
+                });
+        }
+
+        branchSelect.addEventListener('change', () => {
+            selectedBranchInput.value = branchSelect.value;
+            // Clear cart when branch changes
+            Object.keys(cart).forEach(key => delete cart[key]);
+            updateCartUI();
+            searchInput.value = '';
+            const branchId = branchSelect.value;
+            if (!branchId) {
+                productListDiv.innerHTML = placeholderHtml;
+                return;
+            }
+            loadProducts(branchId, '');
+        });
 
         productSearchForm.addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
-
-            const searchQuery = searchInput.value;
-
-            // Show a loading indicator (optional)
-            productListDiv.innerHTML = '<div class="col-12 text-center py-5">Loading products...</div>';
-
-            fetch(`{{ route('sales.create') }}?search=${encodeURIComponent(searchQuery)}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest' // Identify as an AJAX request
-                }
-            })
-            .then(response => response.text()) // Get the HTML response
-            .then(html => {
-                // Update only the product list section with the HTML received directly from the controller
-                productListDiv.innerHTML = html;
-
-                // Re-attach event listeners to newly loaded products
-                attachProductEventListeners();
-            })
-            .catch(error => {
-                console.error('Error fetching products:', error);
-                productListDiv.innerHTML = '<div class="col-12 text-center text-danger py-5">Error loading products. Please try again.</div>';
-            });
+            e.preventDefault();
+            const branchId = branchSelect.value;
+            if (!branchId) {
+                alert('Please select a branch first.');
+                return;
+            }
+            loadProducts(branchId, searchInput.value);
         });
-        // --- End AJAX Search Implementation ---
+        // --- End Branch-aware AJAX ---
 
 
         function showStockError(message) {

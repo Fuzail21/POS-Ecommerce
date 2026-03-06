@@ -103,23 +103,20 @@
                             @foreach($products as $index => $product)
                                 @php
                                     $conversion = $product->baseUnit->conversion_factor ?? 1;
-                                    $baseQty = $product->inventoryStock ? $product->inventoryStock->quantity_in_base_unit : 0;
-                                    $lowStockThreshold = $product->low_stock ?? 0; // Get low stock threshold from product
-                                
-                                    // Always fallback to 1 to avoid divide by zero
-                                    $actualQty = ($conversion && $conversion > 0) ? ($baseQty / $conversion) : $baseQty;
-                                
-                                    $isLow = $actualQty <= $lowStockThreshold; // Use the threshold from the database
+                                    $baseQty = $product->inventoryStocks->sum('quantity_in_base_unit');
+                                    $lowStockThreshold = $product->low_stock ?? 0;
+                                    $actualQty = ($conversion > 0) ? ($baseQty / $conversion) : $baseQty;
+                                    $isLow = $actualQty <= $lowStockThreshold;
                                 @endphp
 
 
                                 @if($product->has_variants && $product->variants->count())
                                     @foreach($product->variants as $variant)
                                         @php
-                                            $baseQty = $variant->inventoryStock->quantity_in_base_unit ?? 0;
-                                            $conversion = $product->baseUnit->conversion_factor ?? 1; // Ensure conversion is available for variants
+                                            $baseQty = $variant->inventoryStocks->sum('quantity_in_base_unit');
+                                            $conversion = $product->baseUnit->conversion_factor ?? 1;
                                             $actualQty = $conversion > 0 ? ($baseQty / $conversion) : 0;
-                                            $lowStockThreshold = $variant->low_stock ?? ($product->low_stock ?? 0); // Get variant-specific threshold, fallback to product's
+                                            $lowStockThreshold = $variant->low_stock ?? ($product->low_stock ?? 0);
                                             $isLow = $actualQty <= $lowStockThreshold;
                                         @endphp
                                         <tr class="{{ $isLow ? 'table-warning' : '' }}">
@@ -140,9 +137,9 @@
                                     @endforeach
                                 @else
                                     @php
-                                        $baseQty = $product->inventoryStock ? $product->inventoryStock->quantity_in_base_unit : 0;
+                                        $baseQty = $product->inventoryStocks->sum('quantity_in_base_unit');
                                         $actualQty = $conversion > 0 ? ($baseQty / $conversion) : 0;
-                                        $lowStockThreshold = $product->low_stock ?? 0; // Get low stock threshold from product
+                                        $lowStockThreshold = $product->low_stock ?? 0;
                                         $isLow = $actualQty <= $lowStockThreshold;
                                     @endphp
 

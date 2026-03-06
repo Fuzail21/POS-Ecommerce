@@ -1,153 +1,182 @@
-@extends('layouts.frontend.app') {{-- Assuming you have a layout --}}
+@extends('layouts.frontend.app')
 
 @section('frontend_content')
 
 @php
     use App\Models\Setting;
     $setting = Setting::first();
-    $primaryColor = $setting->primary_color ?? '#0d6efd';
-    $secondaryColor = $setting->secondary_color ?? '#6c757d';
 @endphp
 
-
-                <!-- Single Page Header start -->
-        <div class="container-fluid page-header py-5">
-            <h1 class="text-center text-white display-6">Product Detail</h1>
+<div class="page-header-band">
+    <div class="container text-center">
+        <h1>Product Detail</h1>
+        <nav>
             <ol class="breadcrumb justify-content-center mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('store.landing') }}">Home</a></li>
                 <li class="breadcrumb-item"><a href="{{ route('store.shop') }}">Shop</a></li>
-                <li class="breadcrumb-item active text-white">Product Detail</li>
+                <li class="breadcrumb-item active">{{ Str::words($product->name, 5, '...') }}</li>
             </ol>
-        </div>
-        <!-- Single Page Header End -->
+        </nav>
+    </div>
+</div>
 
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
 
-        <!-- Single Product Start -->
-        <div class="container-fluid py-5 mt-5">
-            <div class="container py-5">
-                <div class="row g-4 mb-5">
-                    <div class="col-lg-12 col-xl-12">
-                        <div class="row g-4">
-                            <div class="col-lg-6">
-                                <div class="border rounded">
-                                    <a href="#">
-                                        @if (!empty($product->product_img))
-                                            <img src="{{ asset('storage/' . $product->product_img) }}" class="img-fluid rounded" alt="{{ $product->name }}" id="product_main_image">
-                                        @else
-                                            <img src="{{ asset('build/assets/frontend/img/default-product.jpg') }}" class="img-fluid rounded" alt="No Image" id="product_main_image">
-                                        @endif
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <h4 class="fw-bold mb-3">{{ $product->name }}</h4>
-                                <p class="mb-3">Category: {{ $product->category->name ?? 'Uncategorized' }}</p>
-
-                                {{-- Price Display --}}
-                                <h5 class="fw-bold mb-3">
-                                    <span id="display_final_price">
-                                        @if ($product->has_discount)
-                                            <del class="text-danger me-2">{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price, 2) }}</del>
-                                            <span>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->final_price, 2) }}</span>
-                                        @else
-                                            <span>{{ $setting->currency_symbol ?? '$' }} {{ number_format($product->actual_price ?? 0, 2) }}</span>
-                                        @endif
-                                    </span>
-                                    <span id="display_unit">/ {{ $product->displayUnit->name ?? 'unit' }}</span>
-                                </h5>
-
-                                <p class="mb-4">{{ $product->description ?? 'No description available.' }}</p>
-
-                                {{-- Quantity Input --}}
-                                <div class="input-group quantity mb-5" style="width: 100px;">
-                                    <div class="input-group-btn">
-                                        <button class="btn btn-sm btn-minus rounded-circle bg-light border" id="btn_minus">
-                                            <i class="fa fa-minus"></i>
-                                        </button>
-                                    </div>
-                                    <input type="text" class="form-control form-control-sm text-center border-0" value="1" id="product_quantity" min="1">
-                                    <div class="input-group-btn">
-                                        <button class="btn btn-sm btn-plus rounded-circle bg-light border" id="btn_plus">
-                                            <i class="fa fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {{-- Variant Selection (if product has variants) --}}
-                                @if ($product->has_variants && $product->variants->isNotEmpty())
-                                    {{-- Using separate color and size dropdowns as per your initial request --}}
-                                    <div class="mb-4">
-                                        <label for="color-select" class="form-label fw-bold">Select Color:</label>
-                                        <select class="form-select" id="color-select" name="color" style="width: 200px;">
-                                            <option value="">Select Color</option>
-                                            @foreach($colors as $color)
-                                                <option value="{{ $color }}">{{ $color }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label for="size-select" class="form-label fw-bold">Select Size:</label>
-                                        <select class="form-select" id="size-select" name="size" style="width: 200px;">
-                                            <option value="">Select Size</option>
-                                            {{-- Options will be populated by JavaScript based on color selection --}}
-                                        </select>
-                                    </div>
-                                @endif
-
-                                {{-- Add to Cart Form / Out of Stock --}}
-                                <form action="{{ route('cart.add') }}" method="POST" id="add_to_cart_form" style="z-index: 3; position: relative;">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                    <input type="hidden" name="quantity" id="cart_quantity_input" value="1">
-                                    <input type="hidden" name="stock" id="cart_stock_input" value="{{ $product->stock_quantity }}">
-                                    <input type="hidden" name="price" id="cart_price_input" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
-                                    <input type="hidden" name="variant_id" id="cart_variant_id_input" value=""> {{-- For selected variant ID --}}
-
-                                    @if ($product->in_stock)
-                                        <button type="submit" class="btn border border-secondary rounded-pill px-3 text-primary" id="add_to_cart_button">
-                                            <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
-                                        </button>
-                                        <button type="button" class="btn border border-secondary rounded-pill px-3 text-muted" style="display: none;" disabled id="out_of_stock_button">
-                                            <i class="fa fa-ban me-2"></i> Out of Stock
-                                        </button>
-                                    @else
-                                        <button type="submit" class="btn border border-secondary rounded-pill px-3 text-primary" style="display: none;" id="add_to_cart_button">
-                                            <i class="fa fa-shopping-bag me-2 text-primary"></i> Add to cart
-                                        </button>
-                                        <button type="button" class="btn border border-secondary rounded-pill px-3 text-muted" disabled id="out_of_stock_button">
-                                            <i class="fa fa-ban me-2"></i> Out of Stock
-                                        </button>
-                                    @endif
-                                </form>
-                                <p class="mt-2 text-muted" style="font-size: 0.9em;">
-                                    Available Stock: <span id="total_stock_display">
-                                        {{-- Initial display will be set by JavaScript on DOMContentLoaded --}}
-                                    </span> {{ $product->baseUnit->name ?? 'units' }}
-                                </p>
-                            </div>
-                            <div class="col-lg-12">
-                                <nav>
-                                    <div class="nav nav-tabs mb-3">
-                                        <button class="nav-link active border-white border-bottom-0" type="button" role="tab"
-                                            id="nav-about-tab" data-bs-toggle="tab" data-bs-target="#nav-about"
-                                            aria-controls="nav-about" aria-selected="true">Description</button>
-                                    </div>
-                                </nav>
-                                <div class="tab-content mb-5">
-                                    <div class="tab-pane active" id="nav-about" role="tabpanel" aria-labelledby="nav-about-tab">
-                                        {{-- Assuming product has a 'description' field --}}
-                                        <p>{!! nl2br(e($product->description ?? 'No detailed description available.')) !!}</p>
-                                        {{-- You can add more product attributes here if they exist --}}
-                                    </div>
-                                </div>
-                            </div>
+            {{-- Product Image --}}
+            <div class="col-lg-5">
+                <div style="background:#fff; border:1px solid var(--clr-border); border-radius:var(--radius-card); overflow:hidden; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-sm);">
+                    @if(!empty($product->product_img))
+                        <img src="{{ asset('storage/'.$product->product_img) }}"
+                             id="product_main_image"
+                             style="width:100%; height:100%; object-fit:cover;"
+                             alt="{{ $product->name }}">
+                    @else
+                        <div id="product_main_image" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#f1f5f9; gap:.75rem;">
+                            <i class="fas fa-image" style="font-size:3.5rem; color:#cbd5e1;"></i>
+                            <span style="font-size:.8rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.8px;">No Image</span>
                         </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Product Details --}}
+            <div class="col-lg-7">
+                <span style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--clr-primary); background:rgba(37,99,235,.08); padding:4px 14px; border-radius:50px;">
+                    {{ $product->category->name ?? 'General' }}
+                </span>
+
+                <h1 style="font-size:1.6rem; font-weight:800; color:var(--clr-dark); margin-top:.85rem; margin-bottom:.75rem; line-height:1.3;">
+                    {{ $product->name }}
+                </h1>
+
+                {{-- Price --}}
+                <div style="margin-bottom:1.5rem;">
+                    <h3 style="font-weight:800; color:var(--clr-dark); margin-bottom:.25rem;">
+                        <span id="display_final_price">
+                            @if($product->has_discount)
+                                <del style="font-size:1rem; color:#94a3b8; font-weight:400;">{{ $setting->currency_symbol ?? '' }} {{ number_format($product->actual_price, 2) }}</del>
+                                <span style="color:var(--clr-primary); margin-left:.4rem;">{{ $setting->currency_symbol ?? '' }} {{ number_format($product->final_price, 2) }}</span>
+                            @else
+                                <span style="color:var(--clr-primary);">{{ $setting->currency_symbol ?? '' }} {{ number_format($product->actual_price ?? 0, 2) }}</span>
+                            @endif
+                        </span>
+                        <span id="display_unit" style="font-size:.875rem; font-weight:500; color:var(--clr-muted);">/ {{ $product->displayUnit->name ?? 'unit' }}</span>
+                    </h3>
+                    @if($product->has_discount && $product->actual_price > 0)
+                    @php $pct = round((($product->actual_price - $product->final_price) / $product->actual_price) * 100); @endphp
+                    <span style="font-size:.75rem; font-weight:700; background:#fef2f2; color:#ef4444; padding:3px 10px; border-radius:50px;">-{{ $pct }}% OFF</span>
+                    @endif
+                </div>
+
+                <p style="font-size:.9rem; color:var(--clr-muted); line-height:1.75; margin-bottom:1.75rem;">
+                    {{ $product->description ?? 'No description available.' }}
+                </p>
+
+                {{-- Variant Selection --}}
+                @if($product->has_variants && $product->variants->isNotEmpty())
+                <div class="mb-3">
+                    <label for="color-select" style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--clr-muted); display:block; margin-bottom:.4rem;">Color</label>
+                    <select class="form-select" id="color-select" name="color" style="width:220px; border:1.5px solid var(--clr-border); border-radius:10px; font-size:.875rem; padding:10px 14px;">
+                        <option value="">Select Color</option>
+                        @foreach($colors as $color)
+                            <option value="{{ $color }}">{{ $color }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="size-select" style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--clr-muted); display:block; margin-bottom:.4rem;">Size</label>
+                    <select class="form-select" id="size-select" name="size" style="width:220px; border:1.5px solid var(--clr-border); border-radius:10px; font-size:.875rem; padding:10px 14px;">
+                        <option value="">Select Size</option>
+                    </select>
+                </div>
+                @endif
+
+                {{-- Quantity Selector --}}
+                <div class="mb-4">
+                    <label style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--clr-muted); display:block; margin-bottom:.5rem;">Quantity</label>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; border:1.5px solid var(--clr-border); border-radius:10px; overflow:hidden; background:#fff;">
+                            <button type="button" id="btn_minus"
+                                    style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; font-size:.8rem; color:var(--clr-dark); display:flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="text" id="product_quantity" value="1" min="1"
+                                   style="width:48px; height:40px; text-align:center; border:none; border-left:1px solid var(--clr-border); border-right:1px solid var(--clr-border); font-size:.9rem; font-weight:700; color:var(--clr-dark); outline:none;">
+                            <button type="button" id="btn_plus"
+                                    style="width:40px; height:40px; border:none; background:transparent; cursor:pointer; font-size:.8rem; color:var(--clr-dark); display:flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <span style="font-size:.8rem; color:var(--clr-muted);">
+                            Available: <strong id="total_stock_display" style="color:var(--clr-dark);"></strong> {{ $product->baseUnit->name ?? 'units' }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Add to Cart Form --}}
+                <form action="{{ route('cart.add') }}" method="POST" id="add_to_cart_form" style="z-index:3; position:relative;">
+                    @csrf
+                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                    <input type="hidden" name="quantity" id="cart_quantity_input" value="1">
+                    <input type="hidden" name="stock" id="cart_stock_input" value="{{ $product->stock_quantity }}">
+                    <input type="hidden" name="price" id="cart_price_input" value="{{ $product->has_discount ? $product->final_price : ($product->actual_price ?? 0) }}">
+                    <input type="hidden" name="variant_id" id="cart_variant_id_input" value="">
+
+                    <div class="d-flex gap-3 flex-wrap mb-4">
+                        @if($product->in_stock)
+                            <button type="submit" id="add_to_cart_button" class="btn-prim" style="padding:13px 28px; font-size:.9rem;">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                            <button type="button" id="out_of_stock_button" class="btn-ghost" style="padding:13px 28px; font-size:.9rem; display:none;" disabled>
+                                <i class="fas fa-ban"></i> Out of Stock
+                            </button>
+                        @else
+                            <button type="submit" id="add_to_cart_button" class="btn-prim" style="padding:13px 28px; font-size:.9rem; display:none;">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                            <button type="button" id="out_of_stock_button" class="btn-ghost" style="padding:13px 28px; font-size:.9rem;" disabled>
+                                <i class="fas fa-ban"></i> Out of Stock
+                            </button>
+                        @endif
+                        <a href="{{ route('store.shop') }}" class="btn-outline" style="padding:13px 24px; font-size:.9rem; text-decoration:none;">
+                            <i class="fas fa-arrow-left"></i> Back to Shop
+                        </a>
+                    </div>
+                </form>
+
+                {{-- Trust Badges --}}
+                <div style="border-top:1px solid var(--clr-border); padding-top:1.25rem; display:flex; gap:1.5rem; flex-wrap:wrap;">
+                    <div style="font-size:.8rem; color:var(--clr-muted); display:flex; align-items:center; gap:.4rem;">
+                        <i class="fas fa-shield-alt" style="color:#22c55e;"></i> Secure Payment
+                    </div>
+                    <div style="font-size:.8rem; color:var(--clr-muted); display:flex; align-items:center; gap:.4rem;">
+                        <i class="fas fa-truck" style="color:var(--clr-primary);"></i> Fast Delivery
+                    </div>
+                    <div style="font-size:.8rem; color:var(--clr-muted); display:flex; align-items:center; gap:.4rem;">
+                        <i class="fas fa-undo" style="color:#f59e0b;"></i> Easy Returns
                     </div>
                 </div>
             </div>
+
+            {{-- Description Panel --}}
+            <div class="col-12">
+                <div style="background:#fff; border:1px solid var(--clr-border); border-radius:var(--radius-card); overflow:hidden;">
+                    <div style="background:#f8fafc; border-bottom:1px solid var(--clr-border); padding:.875rem 1.5rem;">
+                        <span style="font-size:.85rem; font-weight:700; color:var(--clr-dark);">
+                            <i class="fas fa-align-left me-2" style="color:var(--clr-primary);"></i> Product Description
+                        </span>
+                    </div>
+                    <div style="padding:1.5rem; font-size:.9rem; color:var(--clr-muted); line-height:1.85;">
+                        {!! nl2br(e($product->description ?? 'No detailed description available.')) !!}
+                    </div>
+                </div>
+            </div>
+
         </div>
-        <!-- Single Product End -->
+    </div>
+</section>
 
 @endsection
 
@@ -217,9 +246,9 @@
 
                 // Update displayed prices
                 if (displayedHasDiscount) {
-                    displayFinalPrice.innerHTML = `<del class="text-danger me-2">${currencySymbol} ${displayedActualPrice.toFixed(2)}</del><span>${currencySymbol} ${displayedFinalPrice.toFixed(2)}</span>`;
+                    displayFinalPrice.innerHTML = `<del style="font-size:1rem; color:#94a3b8; font-weight:400;">${currencySymbol} ${displayedActualPrice.toFixed(2)}</del><span style="color:var(--clr-primary); margin-left:.4rem;">${currencySymbol} ${displayedFinalPrice.toFixed(2)}</span>`;
                 } else {
-                    displayFinalPrice.innerHTML = `<span>${currencySymbol} ${displayedActualPrice.toFixed(2)}</span>`;
+                    displayFinalPrice.innerHTML = `<span style="color:var(--clr-primary);">${currencySymbol} ${displayedActualPrice.toFixed(2)}</span>`;
                 }
                 console.log('Displayed Price:', displayFinalPrice.innerHTML);
 
@@ -253,7 +282,7 @@
                 } else {
                     btnMinus.disabled = false;
                 }
-                
+
                 // Also handle overall product in/out of stock state
                 // Disable if out of stock OR if product has variants and no variant is selected
                 if (currentStock <= 0 || (productHasVariants && !cartVariantIdInput.value)) {
@@ -300,7 +329,7 @@
                     const sortedSizes = Array.from(sizesForColor)
                                             .filter(size => size !== 'NULL')
                                             .sort();
-                    
+
                     sortedSizes.forEach(size => {
                         const option = document.createElement('option');
                         option.value = size;
